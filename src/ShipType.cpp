@@ -218,6 +218,13 @@ void ShipType::Init()
 	if (isInitted) return;
 	isInitted = true;
 
+	ShipType s;
+	s.tag = TAG_SHIP;
+	s.id = "kanara";
+	s.modelName = "kanara";
+	types.insert(std::make_pair(s.id, s));
+	player_ships.push_back(s.id);
+
 	// XXX json shipdef format
 
 #if 0
