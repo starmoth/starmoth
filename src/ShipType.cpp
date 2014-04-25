@@ -2,10 +2,6 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "ShipType.h"
-#include "LuaVector.h"
-#include "LuaUtils.h"
-#include "LuaTable.h"
-#include "LuaConstants.h"
 #include "FileSystem.h"
 #include "utils.h"
 #include "Lang.h"
@@ -34,6 +30,7 @@ float ShipType::GetFuelUseRate() const
 	return denominator > 0 ? -linThrust[THRUSTER_FORWARD]/denominator : 1e9;
 }
 
+#if 0
 // returns velocity of engine exhausts in m/s
 static double GetEffectiveExhaustVelocity(double fuelTankMass, double thrusterFuelUse, double forwardThrust) {
 	double denominator = fuelTankMass * thrusterFuelUse * 10;
@@ -45,9 +42,11 @@ static bool ShipIsUnbuyable(const ShipType::Id &id)
 	const ShipType &t = ShipType::types[id];
 	return (t.baseprice == 0);
 }
+#endif
 
 static std::string s_currentShipFile;
 
+#if 0
 int _define_ship(lua_State *L, ShipType::Tag tag, std::vector<ShipType::Id> *list)
 {
 	if (s_currentShipFile.empty())
@@ -211,6 +210,7 @@ int define_missile(lua_State *L)
 {
 	return _define_ship(L, ShipType::TAG_MISSILE, &ShipType::missile_ships);
 }
+#endif
 
 void ShipType::Init()
 {
@@ -218,6 +218,9 @@ void ShipType::Init()
 	if (isInitted) return;
 	isInitted = true;
 
+	// XXX json shipdef format
+
+#if 0
 	lua_State *l = luaL_newstate();
 
 	LUA_DEBUG_START(l);
@@ -282,5 +285,6 @@ void ShipType::Init()
 
 	if (ShipType::playable_atmospheric_ships.empty())
 		Error("No ships can fit atmospheric shields! The game cannot run.");
+#endif
 }
 

@@ -7,7 +7,6 @@
 #include "libs.h"
 #include "galaxy/SystemPath.h"
 #include "galaxy/StarSystem.h"
-#include "galaxy/CustomSystem.h"
 #include "SectorCache.h"
 #include "RefCounted.h"
 #include <string>
@@ -37,7 +36,7 @@ public:
 
 	class System {
 	public:
-		System(int x, int y, int z, Uint32 si): numStars(0), seed(0), customSys(nullptr), faction(nullptr), population(-1),
+		System(int x, int y, int z, Uint32 si): numStars(0), seed(0), faction(nullptr), population(-1),
 			explored(false), sx(x), sy(y), sz(z), idx(si) {};
 		~System() {};
 
@@ -49,7 +48,6 @@ public:
 		int numStars;
 		SystemBody::BodyType starType[4];
 		Uint32 seed;
-		const CustomSystem *customSys;
 		Faction *faction;
 		fixed population;
 		bool explored;
@@ -74,7 +72,6 @@ private:
 	bool m_factionsAssigned;
 
 	Sector(const SystemPath& path); // Only SectorCache(Job) are allowed to create sectors
-	void GetCustomSystems(Random& rng);
 	const std::string GenName(System &sys, int si, Random &rand);
 	// sets appropriate factions for all systems in the sector
 	void AssignFactions();

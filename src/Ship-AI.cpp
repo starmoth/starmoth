@@ -11,8 +11,6 @@
 #include "Planet.h"
 #include "SpaceStation.h"
 #include "Space.h"
-#include "LuaConstants.h"
-#include "LuaEvent.h"
 #include "KeyBindings.h"
 #include "EnumStrings.h"
 
@@ -77,7 +75,6 @@ bool Ship::AITimeStep(float timeStep)
 	if (m_curAICmd->TimeStepUpdate()) {
 		AIClearInstructions();
 //		ClearThrusterState();		// otherwise it does one timestep at 10k and gravity is fatal
-		LuaEvent::Queue("onAICompleted", this, EnumStrings::GetString("ShipAIError", AIMessage()));
 		return true;
 	}
 	else return false;

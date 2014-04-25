@@ -9,7 +9,6 @@
 #include "Lang.h"
 #include "Pi.h"
 #include "Game.h"
-#include "LuaEvent.h"
 
 Missile::Missile(ShipType::Id shipId, Body *owner, int power): Ship(shipId)
 {
@@ -109,8 +108,6 @@ void Missile::Explode()
 		if (dist < damageRadius) {
 			// linear damage decay with distance
 			(*i)->OnDamage(m_owner, kgDamage * (damageRadius - dist) / damageRadius, dummy);
-			if ((*i)->IsType(Object::SHIP))
-				LuaEvent::Queue("onShipHit", dynamic_cast<Ship*>(*i), m_owner);
 		}
 	}
 

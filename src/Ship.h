@@ -163,7 +163,7 @@ public:
 	bool CanHyperspaceTo(const SystemPath &dest) { return (CheckHyperspaceTo(dest) == HYPERJUMP_OK); }
 
 	Ship::HyperjumpStatus CheckHyperjumpCapability() const;
-	virtual Ship::HyperjumpStatus InitiateHyperjumpTo(const SystemPath &dest, int warmup_time, double duration, LuaRef checks);
+	virtual Ship::HyperjumpStatus InitiateHyperjumpTo(const SystemPath &dest, int warmup_time, double duration);
 	virtual void AbortHyperjump();
 	virtual Ship::HyperjumpStatus StartHyperspaceCountdown(const SystemPath &dest);
 	float GetHyperspaceCountdown() const { return m_hyperspace.countdown; }
@@ -311,7 +311,6 @@ private:
 	void UpdateAlertState();
 	void UpdateFuel(float timeStep, const vector3d &thrust);
     void SetShipId(const ShipType::Id &shipId);
-	void OnEquipmentChange(Equip::Type e);
 	void EnterHyperspace();
 	void InitGun(const char *tag, int num);
 	void InitMaterials();
@@ -343,7 +342,6 @@ private:
 		bool now;
 		bool ignoreFuel; // XXX: To remove once the fuel handling is out of the core
 		double duration;
-		LuaRef checks; // A Lua function to check all the conditions before the jump
 	} m_hyperspace;
 	HyperspaceCloud *m_hyperspaceCloud;
 

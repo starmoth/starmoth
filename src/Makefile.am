@@ -37,7 +37,6 @@ noinst_HEADERS = \
 	EquipSet.h \
 	EquipType.h \
 	FaceGenManager.h \
-	Factions.h \
 	FileSystem.h \
 	FontCache.h \
 	Form.h \
@@ -57,35 +56,6 @@ noinst_HEADERS = \
 	KeyBindings.h \
 	Lang.h \
 	LangStrings.inc.h \
-	Lua.h \
-	LuaComms.h \
-	LuaConsole.h \
-	LuaConstants.h \
-	LuaDev.h \
-	LuaEngine.h \
-	LuaEquipDef.h \
-	LuaEvent.h \
-	LuaFileSystem.h \
-	LuaFormat.h \
-	LuaGame.h \
-	LuaLang.h \
-	LuaMatrix.h \
-	LuaVector.h \
-	LuaFixed.h \
-	LuaManager.h \
-	LuaMissile.h \
-	LuaMusic.h \
-	LuaNameGen.h \
-	LuaObject.h \
-	LuaPushPull.h \
-	LuaRef.h \
-	LuaSerializer.h \
-	LuaShipDef.h \
-	LuaSpace.h \
-	LuaTable.h \
-	LuaTimer.h \
-	LuaUtils.h \
-	LuaWrappable.h \
 	MathUtil.h \
 	Missile.h \
 	ModelBody.h \
@@ -102,7 +72,6 @@ noinst_HEADERS = \
 	Planet.h \
 	Player.h \
 	PngWriter.h \
-	Polit.h \
 	Projectile.h \
 	PropertiedObject.h \
 	PropertyMap.h \
@@ -167,7 +136,6 @@ pioneer_SOURCES	= \
 	EnumStrings.cpp \
 	EquipType.cpp \
 	FaceGenManager.cpp \
-	Factions.cpp \
 	FileSourceZip.cpp \
 	FileSystem.cpp \
 	FontCache.cpp \
@@ -189,46 +157,6 @@ pioneer_SOURCES	= \
 	GameConfig.cpp \
 	KeyBindings.cpp \
 	Lang.cpp \
-	Lua.cpp \
-	LuaBody.cpp \
-	LuaCargoBody.cpp \
-	LuaComms.cpp \
-	LuaConsole.cpp \
-	LuaConstants.cpp \
-	LuaDev.cpp \
-	LuaEngine.cpp \
-	LuaEquipDef.cpp \
-	LuaEvent.cpp \
-	LuaFaction.cpp \
-	LuaFileSystem.cpp \
-	LuaFormat.cpp \
-	LuaGame.cpp \
-	LuaLang.cpp \
-	LuaMatrix.cpp \
-	LuaVector.cpp \
-	LuaFixed.cpp \
-	LuaManager.cpp \
-	LuaMissile.cpp \
-	LuaModelBody.cpp \
-	LuaMusic.cpp \
-	LuaNameGen.cpp \
-	LuaObject.cpp \
-	LuaPlanet.cpp \
-	LuaPlayer.cpp \
-	LuaPropertiedObject.cpp \
-	LuaRand.cpp \
-	LuaRef.cpp \
-	LuaSystemBody.cpp \
-	LuaSystemPath.cpp \
-	LuaSerializer.cpp \
-	LuaShip.cpp \
-	LuaShipDef.cpp \
-	LuaSpace.cpp \
-	LuaSpaceStation.cpp \
-	LuaStar.cpp \
-	LuaStarSystem.cpp \
-	LuaTimer.cpp \
-	LuaUtils.cpp \
 	MathUtil.cpp \
 	Missile.cpp \
 	ModelBody.cpp \
@@ -242,7 +170,6 @@ pioneer_SOURCES	= \
 	Planet.cpp \
 	Player.cpp \
 	PngWriter.cpp \
-	Polit.cpp \
 	Projectile.cpp \
 	PropertyMap.cpp \
 	SDLWrappers.cpp \
@@ -297,15 +224,11 @@ pioneer_LDADD = \
 
 pioneer_LDADD += \
 	$(FREETYPE_LIBS) $(GL_LIBS) \
-	$(SDL2_LIBS) $(SIGC_LIBS) $(LUA_LIBS) $(VORBIS_LIBS) \
+	$(SDL2_LIBS) $(SIGC_LIBS) $(VORBIS_LIBS) \
 	$(PNG_LIBS) $(ASSIMP_LIBS) $(EXTRA_LIBS)
 
 if BUILD_WIN32
 pioneer_LDFLAGS = -Wl,-Map=pioneer.map
-endif
-
-if !HAVE_LUA
-pioneer_LDADD += ../contrib/lua/liblua.a
 endif
 
 if DO_STRIP
@@ -349,13 +272,6 @@ uitest_SOURCES = \
 	IniConfig.cpp \
 	StringF.cpp \
 	Lang.cpp \
-	Lua.cpp \
-	LuaManager.cpp \
-	LuaUtils.cpp \
-	LuaObject.cpp \
-	LuaConstants.cpp \
-	LuaRef.cpp \
-	LuaPropertiedObject.cpp \
 	PngWriter.cpp \
 	EnumStrings.cpp \
 	PropertyMap.cpp \
@@ -375,11 +291,7 @@ uitest_LDADD = \
 
 uitest_LDADD += \
 	$(FREETYPE_LIBS) $(GL_LIBS) \
-	$(SDL2_LIBS) $(SIGC_LIBS) $(LUA_LIBS) $(PNG_LIBS)
-
-if !HAVE_LUA
-uitest_LDADD += ../contrib/lua/liblua.a
-endif
+	$(SDL2_LIBS) $(SIGC_LIBS) $(PNG_LIBS)
 
 textstress_SOURCES = \
 	textstress.cpp \
@@ -403,16 +315,9 @@ textstress_LDADD = \
 
 textstress_LDADD += \
 	$(FREETYPE_LIBS) $(GL_LIBS) \
-	$(SDL2_LIBS) $(SIGC_LIBS) $(LUA_LIBS) $(PNG_LIBS)
-
-if !HAVE_LUA
-textstress_LDADD += ../contrib/lua/liblua.a
-endif
+	$(SDL2_LIBS) $(SIGC_LIBS) $(PNG_LIBS)
 
 AM_CPPFLAGS += -isystem @top_srcdir@/contrib
-if !HAVE_LUA
-AM_CPPFLAGS += -isystem @top_srcdir@/contrib/lua
-endif
 
 if BUILD_WIN32
     pioneer_LDADD += win32/libwin32.a $(MINGW_LIBS)

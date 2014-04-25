@@ -16,9 +16,8 @@
 #include "Pi.h"
 #include "Space.h"
 #include "Game.h"
-#include "LuaEvent.h"
 
-Body::Body() : PropertiedObject(Lua::manager)
+Body::Body() : PropertiedObject()
 	, m_flags(0)
 	, m_interpPos(0.0)
 	, m_interpOrient(matrix3x3d::Identity())
@@ -182,8 +181,6 @@ void Body::SwitchToFrame(Frame *newFrame)
 	SetOrient(forient * GetOrient());
 	SetVelocity(vel + newFrame->GetStasisVelocity(GetPosition()));
 	SetFrame(newFrame);
-
-	LuaEvent::Queue("onFrameChanged", this);
 }
 
 void Body::UpdateFrame()

@@ -197,8 +197,8 @@ void Player::SetNavTarget(Body* const target, bool setSpeedTo)
 }
 //temporary targeting stuff ends
 
-Ship::HyperjumpStatus Player::InitiateHyperjumpTo(const SystemPath &dest, int warmup_time, double duration, LuaRef checks) {
-	HyperjumpStatus status = Ship::InitiateHyperjumpTo(dest, warmup_time, duration, checks);
+Ship::HyperjumpStatus Player::InitiateHyperjumpTo(const SystemPath &dest, int warmup_time, double duration) {
+	HyperjumpStatus status = Ship::InitiateHyperjumpTo(dest, warmup_time, duration);
 
 	if (status == HYPERJUMP_OK)
 		s_soundHyperdrive.Play("Hyperdrive_Charge");

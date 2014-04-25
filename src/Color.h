@@ -6,8 +6,6 @@
 
 #include <SDL_stdinc.h>
 
-struct lua_State;
-
 struct Color4f {
 	float r,g,b,a;
 	Color4f() : r(0.f), g(0.f), b(0.f), a(1.f) {}
@@ -18,9 +16,6 @@ struct Color4f {
 	operator const float *() const { return &r; }
 	Color4f &operator*=(const float v) { r*=v; g*=v; b*=v; a*=v; return *this; }
 	friend Color4f operator*(const Color4f &c, const float v) { return Color4f(c.r*v, c.g*v, c.b*v, c.a*v); }
-
-	void ToLuaTable(lua_State *l);
-	static Color4f FromLuaTable(lua_State *l, int idx);
 
 	float GetLuminance() const;
 
@@ -49,9 +44,6 @@ struct Color4ub {
 	Color4ub operator/(const float f) const { return Color4ub(r/f, g/f, b/f, a/f); }
 
 	Color4f ToColor4f() const { return Color4f(r/255.0f, g/255.0f, b/255.0f, a/255.0f); }
-
-	void ToLuaTable(lua_State *l);
-	static Color4ub FromLuaTable(lua_State *l, int idx);
 
 	Uint8 GetLuminance() const;
 

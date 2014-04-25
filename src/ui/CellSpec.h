@@ -7,8 +7,6 @@
 #include <vector>
 #include <cassert>
 
-struct lua_State;
-
 namespace UI {
 
 class CellSpec {
@@ -59,8 +57,6 @@ public:
 	inline CellSpec(const std::vector<float> &cp) : cellPercent(cp), numCells(cp.size()) {
 		NormaliseCells();
 	}
-
-	static CellSpec FromLuaTable(lua_State *l, int idx);
 
 	std::vector<float> cellPercent;
 	std::size_t numCells;

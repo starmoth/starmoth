@@ -3,10 +3,6 @@
 
 #include "SpaceStationType.h"
 #include "FileSystem.h"
-#include "Lua.h"
-#include "LuaVector.h"
-#include "LuaVector.h"
-#include "LuaTable.h"
 #include "Pi.h"
 #include "MathUtil.h"
 #include "Ship.h"
@@ -16,7 +12,7 @@
 
 #include <algorithm>
 
-static lua_State *s_lua;
+//static lua_State *s_lua;
 static std::string s_currentStationFile = "";
 std::vector<SpaceStationType> SpaceStationType::surfaceStationTypes;
 std::vector<SpaceStationType> SpaceStationType::orbitalStationTypes;
@@ -228,6 +224,7 @@ bool SpaceStationType::GetDockAnimPositionOrient(const unsigned int port, int st
 	return gotOrient;
 }
 
+#if 0
 static int _get_stage_durations(lua_State *L, const char *key, int &outNumStages, double **outDurationArray)
 {
 	LUA_DEBUG_START(L);
@@ -332,9 +329,13 @@ static int define_surface_station(lua_State *L)
 	SpaceStationType::surfaceStationTypes.push_back(station);
 	return 0;
 }
+#endif
 
 void SpaceStationType::Init()
 {
+	// XXX json station format
+
+#if 0
 	assert(s_lua == 0);
 	if (s_lua != 0) return;
 
@@ -363,6 +364,7 @@ void SpaceStationType::Init()
 		}
 	}
 	LUA_DEBUG_END(L, 0);
+#endif
 }
 
 void SpaceStationType::Uninit()
@@ -377,5 +379,5 @@ void SpaceStationType::Uninit()
 		delete[] (*i).undockAnimStageDuration;
 	}
 
-	lua_close(s_lua); s_lua = 0;
+	//lua_close(s_lua); s_lua = 0;
 }

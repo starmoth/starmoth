@@ -9,8 +9,6 @@
 #include "Random.h"
 #include "gameconsts.h"
 #include "GameConfig.h"
-#include "LuaSerializer.h"
-#include "LuaTimer.h"
 #include "CargoBody.h"
 #include "Space.h"
 #include "JobQueue.h"
@@ -21,8 +19,6 @@
 class DeathView;
 class GalacticView;
 class Intro;
-class LuaConsole;
-class LuaNameGen;
 class ModelCache;
 class Player;
 class SectorView;
@@ -76,7 +72,6 @@ public:
 	static float GetGameTickAlpha() { return gameTickAlpha; }
 	static bool KeyState(SDL_Keycode k) { return keyState[k]; }
 	static int KeyModState() { return keyModState; }
-	static bool IsConsoleActive();
 	static int JoystickButtonState(int joystick, int button);
 	static int JoystickHatState(int joystick, int hat);
 	static float JoystickAxisState(int joystick, int axis);
@@ -124,11 +119,6 @@ public:
 	static sigc::signal<void> onPlayerChangeFlightControlState;
 	static sigc::signal<void> onPlayerChangeEquipment;
 
-	static LuaSerializer *luaSerializer;
-	static LuaTimer *luaTimer;
-
-	static LuaNameGen *luaNameGen;
-
 	static RefCountedPtr<UI::Context> ui;
 
 	static Random rng;
@@ -156,7 +146,6 @@ public:
 	static DeathView *deathView;
 	static UIView *spaceStationView;
 	static UIView *infoView;
-	static LuaConsole *luaConsole;
 	static ShipCpanel *cpan;
 	static Sound::MusicPlayer &GetMusicPlayer() { return musicPlayer; }
 	static Graphics::Renderer *renderer; // blargh

@@ -8,7 +8,6 @@
 #include "CityOnPlanet.h"
 #include "DeathView.h"
 #include "FaceGenManager.h"
-#include "Factions.h"
 #include "FileSystem.h"
 #include "Frame.h"
 #include "GalacticView.h"
@@ -16,25 +15,6 @@
 #include "BaseSphere.h"
 #include "Intro.h"
 #include "Lang.h"
-#include "LuaComms.h"
-#include "LuaConsole.h"
-#include "LuaConstants.h"
-#include "LuaDev.h"
-#include "LuaEngine.h"
-#include "LuaEquipDef.h"
-#include "LuaEvent.h"
-#include "LuaFileSystem.h"
-#include "LuaFormat.h"
-#include "LuaGame.h"
-#include "LuaLang.h"
-#include "LuaManager.h"
-#include "LuaMissile.h"
-#include "LuaMusic.h"
-#include "LuaNameGen.h"
-#include "LuaRef.h"
-#include "LuaShipDef.h"
-#include "LuaSpace.h"
-#include "LuaTimer.h"
 #include "Missile.h"
 #include "ModelCache.h"
 #include "ModManager.h"
@@ -64,18 +44,14 @@
 #include "WorldView.h"
 #include "KeyBindings.h"
 #include "EnumStrings.h"
-#include "galaxy/CustomSystem.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/StarSystem.h"
-#include "gameui/Lua.h"
 #include "graphics/Graphics.h"
 #include "graphics/Light.h"
 #include "graphics/Renderer.h"
 #include "gui/Gui.h"
 #include "scenegraph/Model.h"
-#include "scenegraph/Lua.h"
 #include "ui/Context.h"
-#include "ui/Lua.h"
 #include <algorithm>
 #include <sstream>
 
@@ -88,9 +64,6 @@ sigc::signal<void, bool> Pi::onMouseWheel;
 sigc::signal<void> Pi::onPlayerChangeTarget;
 sigc::signal<void> Pi::onPlayerChangeFlightControlState;
 sigc::signal<void> Pi::onPlayerChangeEquipment;
-LuaSerializer *Pi::luaSerializer;
-LuaTimer *Pi::luaTimer;
-LuaNameGen *Pi::luaNameGen;
 int Pi::keyModState;
 std::map<SDL_Keycode,bool> Pi::keyState; // XXX SDL2 SDLK_LAST
 char Pi::mouseButton[6];
@@ -110,7 +83,6 @@ UIView *Pi::settingsView;
 SystemView *Pi::systemView;
 SystemInfoView *Pi::systemInfoView;
 ShipCpanel *Pi::cpan;
-LuaConsole *Pi::luaConsole;
 Game *Pi::game;
 Random Pi::rng;
 float Pi::frameTime;
@@ -251,73 +223,6 @@ static void draw_progress(UI::Gauge *gauge, UI::Label *label, float progress)
 	Pi::renderer->SwapBuffers();
 }
 
-static void LuaInit()
-{
-	LuaObject<PropertiedObject>::RegisterClass();
-
-	LuaObject<Body>::RegisterClass();
-	LuaObject<Ship>::RegisterClass();
-	LuaObject<SpaceStation>::RegisterClass();
-	LuaObject<Planet>::RegisterClass();
-	LuaObject<Star>::RegisterClass();
-	LuaObject<Player>::RegisterClass();
-	LuaObject<Missile>::RegisterClass();
-	LuaObject<CargoBody>::RegisterClass();
-	LuaObject<ModelBody>::RegisterClass();
-
-	LuaObject<StarSystem>::RegisterClass();
-	LuaObject<SystemPath>::RegisterClass();
-	LuaObject<SystemBody>::RegisterClass();
-	LuaObject<Random>::RegisterClass();
-	LuaObject<Faction>::RegisterClass();
-
-	Pi::luaSerializer = new LuaSerializer();
-	Pi::luaTimer = new LuaTimer();
-
-	LuaObject<LuaSerializer>::RegisterClass();
-	LuaObject<LuaTimer>::RegisterClass();
-
-	LuaConstants::Register(Lua::manager->GetLuaState());
-	LuaLang::Register();
-	LuaEngine::Register();
-	LuaEquipDef::Register();
-	LuaFileSystem::Register();
-	LuaGame::Register();
-	LuaComms::Register();
-	LuaFormat::Register();
-	LuaSpace::Register();
-	LuaShipDef::Register();
-	LuaMusic::Register();
-	LuaDev::Register();
-	LuaConsole::Register();
-
-	// XXX sigh
-	UI::Lua::Init();
-	GameUI::Lua::Init();
-	SceneGraph::Lua::Init();
-
-	// XXX load everything. for now, just modules
-	lua_State *l = Lua::manager->GetLuaState();
-	pi_lua_dofile(l, "libs/autoload.lua");
-	pi_lua_dofile_recursive(l, "ui");
-	pi_lua_dofile_recursive(l, "modules");
-
-	Pi::luaNameGen = new LuaNameGen(Lua::manager);
-}
-
-static void LuaUninit() {
-	delete Pi::luaNameGen;
-
-	delete Pi::luaSerializer;
-	delete Pi::luaTimer;
-
-	Lua::Uninit();
-}
-
-static void LuaInitGame() {
-	LuaEvent::Clear();
-}
-
 SceneGraph::Model *Pi::FindModel(const std::string &name, bool allowPlaceholder)
 {
 	SceneGraph::Model *m = 0;
@@ -443,16 +348,9 @@ void Pi::Init(const std::map<std::string,std::string> &options, bool no_gui)
 	jobQueue.reset(new JobQueue(numThreads));
 	Output("started %d worker threads\n", numThreads);
 
-	// XXX early, Lua init needs it
 	ShipType::Init();
 
-	// XXX UI requires Lua  but Pi::ui must exist before we start loading
-	// templates. so now we have crap everywhere :/
-	Lua::Init();
-
-	Pi::ui.Reset(new UI::Context(Lua::manager, Pi::renderer, Graphics::GetScreenWidth(), Graphics::GetScreenHeight()));
-
-	LuaInit();
+	Pi::ui.Reset(new UI::Context(Pi::renderer, Graphics::GetScreenWidth(), Graphics::GetScreenHeight()));
 
 	// Gui::Init shouldn't initialise any VBOs, since we haven't tested
 	// that the capability exists. (Gui does not use VBOs so far)
@@ -481,42 +379,31 @@ void Pi::Init(const std::map<std::string,std::string> &options, bool no_gui)
 	draw_progress(gauge, label, 0.2f);
 
 	FaceGenManager::Init();
-	draw_progress(gauge, label, 0.25f);
-
-	Faction::Init();
 	draw_progress(gauge, label, 0.3f);
-
-	CustomSystem::Init();
-	draw_progress(gauge, label, 0.4f);
-
-	// Reload home sector, they might have changed, due to custom systems
-	// Sectors might be changed in game, so have to re-create them again once we have a Game.
-	Faction::SetHomeSectors();
-	draw_progress(gauge, label, 0.45f);
 
 	modelCache = new ModelCache(Pi::renderer);
 	Shields::Init(Pi::renderer);
-	draw_progress(gauge, label, 0.5f);
+	draw_progress(gauge, label, 0.4f);
 
 //unsigned int control_word;
 //_clearfp();
 //_controlfp_s(&control_word, _EM_INEXACT | _EM_UNDERFLOW | _EM_ZERODIVIDE, _MCW_EM);
 //double fpexcept = Pi::timeAccelRates[1] / Pi::timeAccelRates[0];
 
-	draw_progress(gauge, label, 0.6f);
+	draw_progress(gauge, label, 0.5f);
 
 	BaseSphere::Init();
-	draw_progress(gauge, label, 0.7f);
+	draw_progress(gauge, label, 0.6f);
 
 	CityOnPlanet::Init();
-	draw_progress(gauge, label, 0.8f);
+	draw_progress(gauge, label, 0.7f);
 
 	SpaceStation::Init();
-	draw_progress(gauge, label, 0.9f);
+	draw_progress(gauge, label, 0.8f);
 
 	NavLights::Init(Pi::renderer);
 	Sfx::Init(Pi::renderer);
-	draw_progress(gauge, label, 0.95f);
+	draw_progress(gauge, label, 0.9f);
 
 	if (!no_gui && !config->Int("DisableSound")) {
 		Sound::Init();
@@ -642,21 +529,12 @@ void Pi::Init(const std::map<std::string,std::string> &options, bool no_gui)
 		fclose(pStatFile);
 	}
 #endif
-
-	luaConsole = new LuaConsole();
-	KeyBindings::toggleLuaConsole.onPress.connect(sigc::mem_fun(Pi::luaConsole, &LuaConsole::Toggle));
-}
-
-bool Pi::IsConsoleActive()
-{
-	return luaConsole && luaConsole->IsActive();
 }
 
 void Pi::Quit()
 {
 	Projectile::FreeModel();
 	delete Pi::intro;
-	delete Pi::luaConsole;
 	NavLights::Uninit();
 	Shields::Uninit();
 	Sfx::Uninit();
@@ -665,12 +543,9 @@ void Pi::Quit()
 	CityOnPlanet::Uninit();
 	BaseSphere::Uninit();
 	Galaxy::Uninit();
-	Faction::Uninit();
 	FaceGenManager::Destroy();
-	CustomSystem::Uninit();
 	Graphics::Uninit();
 	Pi::ui.Reset(0);
-	LuaUninit();
 	Gui::Uninit();
 	delete Pi::modelCache;
 	delete Pi::renderer;
@@ -686,8 +561,6 @@ void Pi::FlushCaches()
 {
 	StarSystemCache::ShrinkCache(SystemPath(), true);
 	Sector::cache.ClearCache();
-	// XXX Ideally the cache would now be empty, but we still have Faction::m_homesector :(
-	// assert(Sector::cache.IsEmpty());
 }
 
 void Pi::BoinkNoise()
@@ -712,16 +585,6 @@ void Pi::HandleEvents()
 	PROFILE_SCOPED()
 	SDL_Event event;
 
-	// XXX for most keypresses SDL will generate KEYUP/KEYDOWN and TEXTINPUT
-	// events. keybindings run off KEYUP/KEYDOWN. the console is opened/closed
-	// via keybinding. the console TextInput widget uses TEXTINPUT events. thus
-	// after switching the console, the stray TEXTINPUT event causes the
-	// console key (backtick) to appear in the text entry field. we hack around
-	// this by setting this flag if the console was switched. if its set, we
-	// swallow the TEXTINPUT event this hack must remain until we have a
-	// unified input system
-	bool skipTextInput = false;
-
 	Pi::mouseMotion[0] = Pi::mouseMotion[1] = 0;
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_QUIT) {
@@ -730,25 +593,10 @@ void Pi::HandleEvents()
 			Pi::Quit();
 		}
 
-		if (skipTextInput && event.type == SDL_TEXTINPUT) {
-			skipTextInput = false;
-			continue;
-		}
 		if (ui->DispatchSDLEvent(event))
 			continue;
 
-		bool consoleActive = Pi::IsConsoleActive();
-		if (!consoleActive)
-			KeyBindings::DispatchSDLEvent(&event);
-		else
-			KeyBindings::toggleLuaConsole.CheckSDLEventAndDispatch(&event);
-		if (consoleActive != Pi::IsConsoleActive()) {
-			skipTextInput = true;
-			continue;
-		}
-
-		if (Pi::IsConsoleActive())
-			continue;
+        KeyBindings::DispatchSDLEvent(&event);
 
 		Gui::HandleSDLEvent(&event);
 
@@ -994,8 +842,6 @@ void Pi::InitGame()
 	}
 
 	if (!config->Int("DisableSound")) AmbientSounds::Init();
-
-	LuaInitGame();
 }
 
 static void OnPlayerDockOrUndock()
@@ -1019,10 +865,6 @@ void Pi::StartGame()
 	cpan->SetAlertState(Ship::ALERT_NONE);
 	OnPlayerChangeEquipment(Equip::NONE);
 	SetView(worldView);
-
-	// fire event before the first frame
-	LuaEvent::Queue("onGameStart");
-	LuaEvent::Emit();
 }
 
 void Pi::Start()
@@ -1030,7 +872,7 @@ void Pi::Start()
 	Pi::intro = new Intro(Pi::renderer, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
 
 	ui->DropAllLayers();
-	ui->GetTopLayer()->SetInnerWidget(ui->CallTemplate("MainMenu"));
+    // XXX menu
 
 	Pi::ui->SetMousePointer("icons/cursors/mouse_cursor_2.png", UI::Point(15, 8));
 
@@ -1093,14 +935,6 @@ void Pi::EndGame()
 	Pi::musicPlayer.Stop();
 	Sound::DestroyAllEvents();
 
-	// final event
-	LuaEvent::Queue("onGameEnd");
-	LuaEvent::Emit();
-
-	luaTimer->RemoveAll();
-
-	Lua::manager->CollectGarbage();
-
 	if (!config->Int("DisableSound")) AmbientSounds::Uninit();
 	Sound::DestroyAllEvents();
 
@@ -1110,7 +944,6 @@ void Pi::EndGame()
 	player = 0;
 
 	FlushCaches();
-	//Faction::SetHomeSectors(); // We might need them to start a new game
 }
 
 void Pi::MainLoop()
@@ -1286,18 +1119,11 @@ void Pi::MainLoop()
 
 #if WITH_DEVKEYS
 		if (Pi::showDebugInfo && SDL_GetTicks() - last_stats > 1000) {
-			size_t lua_mem = Lua::manager->GetMemoryUsage();
-			int lua_memB = int(lua_mem & ((1u << 10) - 1));
-			int lua_memKB = int(lua_mem >> 10) % 1024;
-			int lua_memMB = int(lua_mem >> 20);
-
 			snprintf(
 				fps_readout, sizeof(fps_readout),
-				"%d fps (%.1f ms/f), %d phys updates, %d triangles, %.3f M tris/sec, %d glyphs/sec\n"
-				"Lua mem usage: %d MB + %d KB + %d bytes",
+				"%d fps (%.1f ms/f), %d phys updates, %d triangles, %.3f M tris/sec, %d glyphs/sec\n",
 				frame_stat, (1000.0/frame_stat), phys_stat, Pi::statSceneTris, Pi::statSceneTris*frame_stat*1e-6,
-				Text::TextureFont::GetGlyphCount(),
-				lua_memMB, lua_memKB, lua_memB
+				Text::TextureFont::GetGlyphCount()
 			);
 			frame_stat = 0;
 			phys_stat = 0;

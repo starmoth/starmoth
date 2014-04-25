@@ -302,22 +302,6 @@ if test "x$cross_compiling" = "xno" ; then
 
 fi
 
-dnl Optionally use external liblua
-AC_ARG_WITH([external-liblua], AS_HELP_STRING([--with-external-liblua], [Use external liblua in place of our internal copy]), [], [with_external_liblua=no; HAVE_LUA=no])
-if test "$with_external_liblua" = yes; then
-  PKG_CHECK_MODULES([LUA], [lua >= 5.2], [HAVE_LUA=yes], [foundlua=no])
-  if test "$foundlua" = no; then
-    PKG_CHECK_MODULES([LUA], [lua5.2 >= 5.2], [HAVE_LUA=yes], [AC_MSG_ERROR([External liblua was requested but is not available])])
-  fi
-fi
-AM_CONDITIONAL([HAVE_LUA], [test "$HAVE_LUA" = yes])
-case "$host" in
-  i686-pc-mingw32|x86_64-pc-mingw64)
-	;;
-  *)
-	LUA_CFLAGS="$LUA_CFLAGS -DLUA_USE_POSIX"
-esac
-
 dnl Check for OpenGL libs
 if test "x$MXE_CROSS" = "xyes" ; then
 	AC_SUBST([GL_CFLAGS], [])
@@ -398,7 +382,6 @@ AC_CONFIG_FILES([
 	src/win32/Makefile
 	src/posix/Makefile
 	contrib/Makefile
-	contrib/lua/Makefile
 	contrib/miniz/Makefile
 	contrib/jenkins/Makefile
 	contrib/json/Makefile

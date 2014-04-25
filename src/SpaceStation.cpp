@@ -8,13 +8,9 @@
 #include "Game.h"
 #include "gameconsts.h"
 #include "Lang.h"
-#include "LuaEvent.h"
-#include "LuaVector.h"
 #include "Pi.h"
 #include "Planet.h"
 #include "Player.h"
-#include "Polit.h"
-#include "Polit.h"
 #include "Serializer.h"
 #include "Ship.h"
 #include "Space.h"
@@ -366,7 +362,6 @@ bool SpaceStation::OnCollision(Object *b, Uint32 flags, double relVel)
 			s->ClearThrusterState();
 		} else {
 			s->SetDockedWith(this, port);				// bounces back to SS::SetDocked()
-			LuaEvent::Queue("onShipDocked", s, this);
 		}
 		return false;
 	} else {
@@ -440,7 +435,6 @@ void SpaceStation::DockingUpdate(const double timeStep)
 			} else {
 				dt.ship->SetThrusterState(2, -1.0);	// forward
 			}
-			LuaEvent::Queue("onShipUndocked", dt.ship, this);
 		}
 		if (dt.stage < -m_type->numUndockStages) {
 			// undock animation finished, clear port
@@ -452,7 +446,6 @@ void SpaceStation::DockingUpdate(const double timeStep)
 		else if (dt.stage > m_type->numDockingStages) {
 			// set docked
 			dt.ship->SetDockedWith(this, i);
-			LuaEvent::Queue("onShipDocked", dt.ship, this);
 			LockPort(i, false);
 			m_doorAnimationStep = -0.3; // close door
 		}
@@ -489,7 +482,6 @@ void SpaceStation::PositionDockedShip(Ship *ship, int port) const
 
 void SpaceStation::StaticUpdate(const float timeStep)
 {
-	DoLawAndOrder(timeStep);
 	DockingUpdate(timeStep);
 	m_navLights->Update(timeStep);
 }
@@ -622,40 +614,6 @@ vector3d SpaceStation::GetTargetIndicatorPosition(const Frame *relTo) const
 		}
 	}
 	return GetInterpPositionRelTo(relTo);
-}
-
-// XXX this whole thing should be done by Lua
-void SpaceStation::DoLawAndOrder(const double timeStep)
-{
-	Sint64 fine, crimeBitset;
-	Polit::GetCrime(&crimeBitset, &fine);
-	if (Pi::player->GetFlightState() != Ship::DOCKED
-			&& m_numPoliceDocked
-			&& (fine > 1000)
-			&& (GetPositionRelTo(Pi::player).Length() < 100000.0)) {
-		Ship *ship = new Ship(ShipType::POLICE);
-		int port = GetFreeDockingPort(ship);
-		// at 60 Hz updates (ie, 1x time acceleration),
-		// this spawns a police ship with probability ~0.83% each frame
-		// This makes it unlikely (but not impossible) that police will spawn on top of each other
-		// the expected number of game-time seconds between spawns: 120 (2*60 Hz)
-		// variance is quite high though
-		if (port != -1 && 2.0*Pi::rng.Double() < timeStep) {
-			m_numPoliceDocked--;
-			// Make police ship intent on killing the player
-			ship->AIKill(Pi::player);
-			ship->SetFrame(GetFrame());
-			ship->SetDockedWith(this, port);
-			Pi::game->GetSpace()->AddBody(ship);
-			ship->SetLabel(Lang::POLICE_SHIP_REGISTRATION);
-			ship->m_equipment.Set(Equip::SLOT_LASER, 0, Equip::PULSECANNON_DUAL_1MW);
-			ship->m_equipment.Add(Equip::LASER_COOLING_BOOSTER);
-			ship->m_equipment.Add(Equip::ATMOSPHERIC_SHIELDING);
-			ship->UpdateStats();
-		} else {
-			delete ship;
-		}
-	}
 }
 
 bool SpaceStation::IsPortLocked(const int bay) const

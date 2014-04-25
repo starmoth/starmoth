@@ -4,7 +4,6 @@
 #ifndef MODELVIEWER_H
 #define MODELVIEWER_H
 #include "libs.h"
-#include "LuaManager.h"
 #include "NavLights.h"
 #include "Shields.h"
 #include "graphics/Renderer.h"
@@ -15,7 +14,7 @@
 
 class ModelViewer {
 public:
-	ModelViewer(Graphics::Renderer *r, LuaManager *l);
+	ModelViewer(Graphics::Renderer *r);
 	~ModelViewer();
 
 	static void Run(const std::string &modelName);

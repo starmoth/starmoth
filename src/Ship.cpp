@@ -5,7 +5,6 @@
 #include "CityOnPlanet.h"
 #include "Lang.h"
 #include "EnumStrings.h"
-#include "LuaEvent.h"
 #include "Missile.h"
 #include "Player.h"
 #include "Projectile.h"
@@ -168,8 +167,6 @@ void Ship::Load(Serializer::Reader &rd, Space *space)
 	m_controller->Load(rd);
 
 	m_navLights->Load(rd);
-
-	m_equipment.onChange.connect(sigc::mem_fun(this, &Ship::OnEquipmentChange));
 }
 
 void Ship::InitGun(const char *tag, int num)
@@ -283,7 +280,6 @@ Ship::Ship(ShipType::Id shipId): DynamicBody(),
 	m_curAICmd = 0;
 	m_aiMessage = AIERROR_NONE;
 	m_decelerating = false;
-	m_equipment.onChange.connect(sigc::mem_fun(this, &Ship::OnEquipmentChange));
 
 	SetModel(m_type->modelName.c_str());
 	SetLabel("UNLABELED_SHIP");
@@ -379,19 +375,8 @@ bool Ship::OnDamage(Object *attacker, float kgDamage, const CollisionContact& co
 		Properties().Set("hullMassLeft", m_stats.hull_mass_left);
 		Properties().Set("hullPercent", 100.0f * (m_stats.hull_mass_left / float(m_type->hullMass)));
 		if (m_stats.hull_mass_left < 0) {
-			if (attacker) {
-				if (attacker->IsType(Object::BODY))
-					LuaEvent::Queue("onShipDestroyed", this, dynamic_cast<Body*>(attacker));
-
-				if (attacker->IsType(Object::SHIP))
-					Polit::NotifyOfCrime(static_cast<Ship*>(attacker), Polit::CRIME_MURDER);
-			}
-
 			Explode();
 		} else {
-			if (attacker && attacker->IsType(Object::SHIP))
-				Polit::NotifyOfCrime(static_cast<Ship*>(attacker), Polit::CRIME_PIRACY);
-
 			if (Pi::rng.Double() < kgDamage)
 				Sfx::Add(this, Sfx::TYPE_DAMAGE);
 
@@ -437,19 +422,6 @@ bool Ship::OnCollision(Object *b, Uint32 flags, double relVel)
 				return true;
 			}
 		}
-	}
-
-	if (
-		b->IsType(Object::CITYONPLANET) ||
-		b->IsType(Object::SHIP) ||
-		b->IsType(Object::PLAYER) ||
-		b->IsType(Object::SPACESTATION) ||
-		b->IsType(Object::PLANET) ||
-		b->IsType(Object::STAR) ||
-		b->IsType(Object::CARGOBODY))
-	{
-		LuaEvent::Queue("onShipCollided", this,
-			b->IsType(Object::CITYONPLANET) ? dynamic_cast<CityOnPlanet*>(b)->GetPlanet() : dynamic_cast<Body*>(b));
 	}
 
 	return DynamicBody::OnCollision(b, flags, relVel);
@@ -668,7 +640,7 @@ Ship::HyperjumpStatus Ship::CheckHyperspaceTo(const SystemPath &dest, int &outFu
 	return GetHyperspaceDetails(dest, outFuelRequired, outDurationSecs);
 }
 
-Ship::HyperjumpStatus Ship::InitiateHyperjumpTo(const SystemPath &dest, int warmup_time, double duration, LuaRef checks) {
+Ship::HyperjumpStatus Ship::InitiateHyperjumpTo(const SystemPath &dest, int warmup_time, double duration) {
 	if (!dest.HasValidSystem() || GetFlightState() != FLYING || warmup_time < 1)
 		return HYPERJUMP_SAFETY_LOCKOUT;
 	StarSystem *s = Pi::game->GetSpace()->GetStarSystem().Get();
@@ -680,7 +652,6 @@ Ship::HyperjumpStatus Ship::InitiateHyperjumpTo(const SystemPath &dest, int warm
 	m_hyperspace.now = false;
 	m_hyperspace.ignoreFuel = true;
 	m_hyperspace.duration = duration;
-	m_hyperspace.checks = checks;
 
 	return Ship::HYPERJUMP_OK;
 }
@@ -690,7 +661,6 @@ void Ship::AbortHyperjump() {
 	m_hyperspace.now = false;
 	m_hyperspace.ignoreFuel = false;
 	m_hyperspace.duration = 0;
-	m_hyperspace.checks = LuaRef();
 }
 
 Ship::HyperjumpStatus Ship::StartHyperspaceCountdown(const SystemPath &dest)
@@ -812,8 +782,6 @@ void Ship::Blastoff()
 
 	SetPosition(up*planetRadius - GetAabb().min.y*up);
 	SetThrusterState(1, 1.0);		// thrust upwards
-
-	LuaEvent::Queue("onShipTakeOff", this, GetFrame()->GetBody());
 }
 
 void Ship::TestLanded()
@@ -841,7 +809,6 @@ void Ship::TestLanded()
 				ClearThrusterState();
 				SetFlightState(LANDED);
 				Sound::BodyMakeNoise(this, "Rough_Landing", 1.0f);
-				LuaEvent::Queue("onShipLanded", this, GetFrame()->GetBody());
 			}
 		}
 	}
@@ -862,7 +829,6 @@ void Ship::SetLandedOn(Planet *p, float latitude, float longitude)
 	SetAngVelocity(vector3d(0, 0, 0));
 	ClearThrusterState();
 	SetFlightState(LANDED);
-	LuaEvent::Queue("onShipLanded", this, p);
 }
 
 void Ship::SetFrame(Frame *f)
@@ -973,7 +939,6 @@ void Ship::FireWeapon(int num)
 	else
 		Projectile::Add(this, t, pos, baseVel, dirVel);
 
-	Polit::NotifyOfCrime(this, Polit::CRIME_WEAPON_DISCHARGE);
 	Sound::BodyMakeNoise(this, "Pulse_Laser", 1.0f);
 }
 
@@ -1000,7 +965,6 @@ void Ship::UpdateAlertState()
 		// clear existing alert state if there was one
 		if (GetAlertState() != ALERT_NONE) {
 			SetAlertState(ALERT_NONE);
-			LuaEvent::Queue("onShipAlertChanged", this, EnumStrings::GetString("ShipAlertStatus", ALERT_NONE));
 		}
 		return;
 	}
@@ -1035,49 +999,39 @@ void Ship::UpdateAlertState()
 		}
 	}
 
-	bool changed = false;
 	switch (m_alertState) {
 		case ALERT_NONE:
 			if (ship_is_near) {
 				SetAlertState(ALERT_SHIP_NEARBY);
-				changed = true;
             }
 			if (ship_is_firing) {
 				m_lastFiringAlert = Pi::game->GetTime();
 				SetAlertState(ALERT_SHIP_FIRING);
-				changed = true;
 			}
 			break;
 
 		case ALERT_SHIP_NEARBY:
 			if (!ship_is_near) {
 				SetAlertState(ALERT_NONE);
-				changed = true;
 			}
 			else if (ship_is_firing) {
 				m_lastFiringAlert = Pi::game->GetTime();
 				SetAlertState(ALERT_SHIP_FIRING);
-				changed = true;
 			}
 			break;
 
 		case ALERT_SHIP_FIRING:
 			if (!ship_is_near) {
 				SetAlertState(ALERT_NONE);
-				changed = true;
 			}
 			else if (ship_is_firing) {
 				m_lastFiringAlert = Pi::game->GetTime();
 			}
 			else if (m_lastFiringAlert + 60.0 <= Pi::game->GetTime()) {
 				SetAlertState(ALERT_SHIP_NEARBY);
-				changed = true;
 			}
 			break;
 	}
-
-	if (changed)
-		LuaEvent::Queue("onShipAlertChanged", this, EnumStrings::GetString("ShipAlertStatus", GetAlertState()));
 }
 
 void Ship::UpdateFuel(const float timeStep, const vector3d &thrust)
@@ -1086,14 +1040,8 @@ void Ship::UpdateFuel(const float timeStep, const vector3d &thrust)
 	double totalThrust = (fabs(thrust.x) + fabs(thrust.y) + fabs(thrust.z))
 		/ -GetShipType()->linThrust[ShipType::THRUSTER_FORWARD];
 
-	FuelState lastState = GetFuelState();
 	SetFuel(GetFuel() - timeStep * (totalThrust * fuelUseRate));
-	FuelState currentState = GetFuelState();
-
 	UpdateFuelStats();
-
-	if (currentState != lastState)
-		LuaEvent::Queue("onShipFuelChanged", this, EnumStrings::GetString("ShipFuelStatus", currentState));
 }
 
 void Ship::StaticUpdate(const float timeStep)
@@ -1224,26 +1172,11 @@ void Ship::StaticUpdate(const float timeStep)
 	}
 
 	if (m_hyperspace.countdown > 0.0f) {
-		// Check the Lua function
-		bool abort = false;
-		lua_State * l = m_hyperspace.checks.GetLua();
-		if (l) {
-			m_hyperspace.checks.PushCopyToStack();
-			if (lua_isfunction(l, -1)) {
-				lua_call(l, 0, 1);
-				abort = !lua_toboolean(l, -1);
-				lua_pop(l, 1);
-			}
-		}
-		if (abort) {
-			AbortHyperjump();
-		} else {
-			m_hyperspace.countdown = m_hyperspace.countdown - timeStep;
-			if (!abort && m_hyperspace.countdown <= 0.0f) {
-				m_hyperspace.countdown = 0;
-				m_hyperspace.now = true;
-				SetFlightState(JUMPING);
-			}
+		m_hyperspace.countdown = m_hyperspace.countdown - timeStep;
+		if (m_hyperspace.countdown <= 0.0f) {
+			m_hyperspace.countdown = 0;
+			m_hyperspace.now = true;
+			SetFlightState(JUMPING);
 		}
 	}
 
@@ -1352,11 +1285,6 @@ bool Ship::SpawnCargo(CargoBody * c_body) const
 	return true;
 }
 
-void Ship::OnEquipmentChange(Equip::Type e)
-{
-	LuaEvent::Queue("onShipEquipmentChanged", this, EnumStrings::GetString("EquipType", e));
-}
-
 void Ship::EnterHyperspace() {
 	assert(GetFlightState() != Ship::HYPERSPACE);
 
@@ -1394,8 +1322,6 @@ void Ship::EnterHyperspace() {
 	}
 	m_hyperspace.ignoreFuel = false;
 
-	LuaEvent::Queue("onLeaveSystem", this);
-
 	SetFlightState(Ship::HYPERSPACE);
 
 	// virtual call, do class-specific things
@@ -1422,8 +1348,6 @@ void Ship::EnterSystem() {
 	OnEnterSystem();
 
 	SetFlightState(Ship::FLYING);
-
-	LuaEvent::Queue("onEnterSystem", this);
 }
 
 void Ship::OnEnterSystem() {
@@ -1447,7 +1371,6 @@ void Ship::SetShipType(const ShipType::Id &shipId)
 	onFlavourChanged.emit();
 	if (IsType(Object::PLAYER))
 		Pi::worldView->SetCamType(Pi::worldView->GetCamType());
-	LuaEvent::Queue("onShipTypeChanged", this);
 }
 
 void Ship::SetLabel(const std::string &label)

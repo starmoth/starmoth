@@ -6,14 +6,12 @@
 
 #include "PropertyMap.h"
 
-class LuaManager;
-
 class PropertiedObject {
 public:
 	PropertyMap &Properties() { return m_properties; }
 
 protected:
-	PropertiedObject(LuaManager *lua) : m_properties(lua) {}
+	PropertiedObject() {}
 
 private:
 	PropertyMap m_properties;

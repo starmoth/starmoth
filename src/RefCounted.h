@@ -6,9 +6,8 @@
 
 #include <atomic>
 #include "SmartPtr.h"
-#include "LuaWrappable.h"
 
-class RefCounted : public LuaWrappable {
+class RefCounted {
 public:
 	RefCounted() : m_refCount(0) {}
 	virtual ~RefCounted() {}

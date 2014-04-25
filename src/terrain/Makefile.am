@@ -70,6 +70,3 @@ libterrain_a_SOURCES = \
 	TerrainColorVolcanic.cpp
 
 AM_CPPFLAGS += -isystem @top_srcdir@/contrib
-if !HAVE_LUA
-AM_CPPFLAGS += -isystem @top_srcdir@/contrib/lua
-endif

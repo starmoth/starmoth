@@ -8,8 +8,6 @@
 #include "KeyBindings.h"
 #include "Lang.h"
 #include "libs.h"
-#include "LuaConstants.h"
-#include "LuaTable.h"
 #include "Missile.h"
 #include "Pi.h"
 #include "Player.h"
@@ -537,50 +535,14 @@ void UseEquipWidget::FireMissile(int idx)
 		Pi::cpan->MsgLog()->Message("", Lang::SELECT_A_TARGET);
 		return;
 	}
-	LuaObject<Ship>::CallMethod(Pi::player, "FireMissileAt", idx+1, static_cast<Ship*>(Pi::player->GetCombatTarget()));
+	// XXX fire missile
 }
 
 void UseEquipWidget::UpdateEquip()
 {
 	DeleteAllChildren();
-	std::vector<std::string> missiles;
-	lua_State *l = Lua::manager->GetLuaState();
-	{ // new scope to destroy the ScopedTable early on.
-		ScopedTable missiles_ref(LuaObject<Ship>::CallMethod<LuaRef>(Pi::player, "GetEquip", "MISSILE"));
-		missiles.assign(missiles_ref.Begin<std::string>(), missiles_ref.End<std::string>());
-	}
-	int numSlots = missiles.size();
 
-	if (numSlots) {
-		float spacing = 380.0f / numSlots;
-
-		for (int i = 0; i < numSlots; ++i) {
-			const Equip::Type t = static_cast<Equip::Type>(LuaConstants::GetConstant(l, "EquipType", missiles[i].c_str()));
-			if (t == Equip::NONE) continue;
-
-			Gui::ImageButton *b;
-			switch (t) {
-				case Equip::MISSILE_UNGUIDED:
-					b = new Gui::ImageButton("icons/missile_unguided.png");
-					break;
-				case Equip::MISSILE_GUIDED:
-					b = new Gui::ImageButton("icons/missile_guided.png");
-					break;
-				case Equip::MISSILE_SMART:
-					b = new Gui::ImageButton("icons/missile_smart.png");
-					break;
-				default:
-				case Equip::MISSILE_NAVAL:
-					b = new Gui::ImageButton("icons/missile_naval.png");
-					break;
-			}
-			Add(b, spacing * i, 40);
-			b->onClick.connect(sigc::bind(sigc::mem_fun(this, &UseEquipWidget::FireMissile), i));
-			b->SetToolTip(Equip::types[t].name);
-			b->SetRenderDimensions(16, 16);
-		}
-	}
-
+	// XXX missile slot UI
 	{
 		const Equip::Type t = Pi::player->m_equipment.Get(Equip::SLOT_ECM);
 		if (t != Equip::NONE) {

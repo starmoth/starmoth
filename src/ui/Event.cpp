@@ -2,8 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Event.h"
-#include "LuaObject.h"
-#include "EnumStrings.h"
+#include "utils.h"
 
 namespace UI {
 
@@ -156,93 +155,6 @@ KeySym KeySym::FromString(const std::string &spec)
 	}
 
 	return KeySym(sym, SDL_Keymod(mod));
-}
-
-static void _settable(lua_State *l, const char *key, const Point &value)
-{
-	lua_pushstring(l, key);
-
-	lua_newtable(l);
-	pi_lua_settable(l, "x", value.x);
-	pi_lua_settable(l, "y", value.y);
-
-	lua_rawset(l, -3);
-}
-
-void KeyboardEvent::ToLuaTable(lua_State *l) const
-{
-	lua_newtable(l);
-	pi_lua_settable(l, "type", EnumStrings::GetString("UIEventType", type));
-	pi_lua_settable(l, "action", EnumStrings::GetString("UIKeyboardAction", action));
-	pi_lua_settable(l, "repeat", repeat);
-
-	// XXX expose sym and mod constants
-}
-
-void TextInputEvent::ToLuaTable(lua_State *l) const
-{
-	lua_newtable(l);
-	pi_lua_settable(l, "type", EnumStrings::GetString("UIEventType", type));
-
-	lua_pushvalue(l, unicode);
-	lua_setfield(l, -2, "unicode");
-}
-
-void MouseButtonEvent::ToLuaTable(lua_State *l) const
-{
-	lua_newtable(l);
-	pi_lua_settable(l, "type", EnumStrings::GetString("UIEventType", type));
-
-	_settable(l, "pos", pos);
-
-	pi_lua_settable(l, "action", EnumStrings::GetString("UIMouseButtonAction", action));
-	pi_lua_settable(l, "button", EnumStrings::GetString("UIMouseButtonType", button));
-}
-
-void MouseMotionEvent::ToLuaTable(lua_State *l) const
-{
-	lua_newtable(l);
-	pi_lua_settable(l, "type", EnumStrings::GetString("UIEventType", type));
-
-	_settable(l, "pos", pos);
-	_settable(l, "rel", rel);
-}
-
-void MouseWheelEvent::ToLuaTable(lua_State *l) const
-{
-	lua_newtable(l);
-	pi_lua_settable(l, "type", EnumStrings::GetString("UIEventType", type));
-
-	_settable(l, "pos", pos);
-
-	pi_lua_settable(l, "direction", EnumStrings::GetString("UIMouseWheelDirection", direction));
-}
-
-void JoystickAxisMotionEvent::ToLuaTable(lua_State *l) const
-{
-	lua_newtable(l);
-	pi_lua_settable(l, "type", EnumStrings::GetString("UIEventType", type));
-	pi_lua_settable(l, "joystick", joystick);
-	pi_lua_settable(l, "value", value);
-	pi_lua_settable(l, "axis", axis);
-}
-
-void JoystickHatMotionEvent::ToLuaTable(lua_State *l) const
-{
-	lua_newtable(l);
-	pi_lua_settable(l, "type", EnumStrings::GetString("UIEventType", type));
-	pi_lua_settable(l, "joystick", joystick);
-	pi_lua_settable(l, "direction", EnumStrings::GetString("UIJoystickHatDirection", direction));
-	pi_lua_settable(l, "hat", hat);
-}
-
-void JoystickButtonEvent::ToLuaTable(lua_State *l) const
-{
-	lua_newtable(l);
-	pi_lua_settable(l, "type", EnumStrings::GetString("UIEventType", type));
-	pi_lua_settable(l, "joystick", joystick);
-	pi_lua_settable(l, "action", EnumStrings::GetString("UIJoystickButtonAction", action));
-	pi_lua_settable(l, "button", button);
 }
 
 }

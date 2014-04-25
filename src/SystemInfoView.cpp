@@ -7,7 +7,6 @@
 #include "SystemInfoView.h"
 #include "ShipCpanel.h"
 #include "Player.h"
-#include "Polit.h"
 #include "Space.h"
 #include "galaxy/SystemPath.h"
 #include "Lang.h"
@@ -15,7 +14,6 @@
 #include "Game.h"
 #include "graphics/Renderer.h"
 #include "graphics/Drawables.h"
-#include "Factions.h"
 
 SystemInfoView::SystemInfoView() : UIView()
 {
@@ -198,16 +196,6 @@ void SystemInfoView::UpdateEconomyTab()
 	if (crud.size()) data += string_join(crud, "\n")+"\n";
 	else data += std::string("#777")+std::string(Lang::NONE)+std::string("\n");
 	m_econMinExport->SetText(data);
-
-	crud.clear();
-	data = std::string("#ff0")+std::string(Lang::ILLEGAL_GOODS)+std::string("\n");
-	for (int i=1; i<Equip::TYPE_MAX; i++) {
-		if (!Polit::IsCommodityLegal(s, Equip::Type(i)))
-			crud.push_back(std::string("#777")+Equip::types[i].name);
-	}
-	if (crud.size()) data += string_join(crud, "\n")+"\n";
-	else data += std::string("#777")+std::string(Lang::NONE)+std::string("\n");
-	m_econIllegal->SetText(data);
 
 	m_econInfoTab->ResizeRequest();
 }
@@ -400,14 +388,6 @@ void SystemInfoView::SystemChanged(const SystemPath &path)
 		col1->Add((new Gui::Label(Lang::SYSTEM_TYPE))->Color(255,255,0), 0, 0);
 		col2->Add(new Gui::Label(m_system->GetShortDescription()), 0, 0);
 
-		col1->Add((new Gui::Label(Lang::GOVERNMENT_TYPE))->Color(255,255,0), 0, 2*YSEP);
-		col2->Add(new Gui::Label(m_system->GetSysPolit().GetGovernmentDesc()), 0, 2*YSEP);
-
-		col1->Add((new Gui::Label(Lang::ECONOMY_TYPE))->Color(255,255,0), 0, 3*YSEP);
-		col2->Add(new Gui::Label(m_system->GetSysPolit().GetEconomicDesc()), 0, 3*YSEP);
-
-		col1->Add((new Gui::Label(Lang::ALLEGIANCE))->Color(255,255,0), 0, 4*YSEP);
-		col2->Add(new Gui::Label(m_system->GetFaction()->name.c_str()), 0, 4*YSEP);
 		col1->Add((new Gui::Label(Lang::POPULATION))->Color(255,255,0), 0, 5*YSEP);
 		std::string popmsg;
 		fixed pop = m_system->GetTotalPop();

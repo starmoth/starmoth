@@ -867,33 +867,30 @@ void WorldView::Update()
 
 	bool targetObject = false;
 
-	// XXX ugly hack checking for console here
-	if (!Pi::IsConsoleActive()) {
-		if (GetCamType() == CAM_INTERNAL) {
-			if      (KeyBindings::frontCamera.IsActive())  ChangeInternalCameraMode(InternalCameraController::MODE_FRONT);
-			else if (KeyBindings::rearCamera.IsActive())   ChangeInternalCameraMode(InternalCameraController::MODE_REAR);
-			else if (KeyBindings::leftCamera.IsActive())   ChangeInternalCameraMode(InternalCameraController::MODE_LEFT);
-			else if (KeyBindings::rightCamera.IsActive())  ChangeInternalCameraMode(InternalCameraController::MODE_RIGHT);
-			else if (KeyBindings::topCamera.IsActive())    ChangeInternalCameraMode(InternalCameraController::MODE_TOP);
-			else if (KeyBindings::bottomCamera.IsActive()) ChangeInternalCameraMode(InternalCameraController::MODE_BOTTOM);
-		}
-		else {
-			MoveableCameraController *cam = static_cast<MoveableCameraController*>(m_activeCameraController);
-			if (KeyBindings::cameraRotateUp.IsActive()) cam->RotateUp(frameTime);
-			if (KeyBindings::cameraRotateDown.IsActive()) cam->RotateDown(frameTime);
-			if (KeyBindings::cameraRotateLeft.IsActive()) cam->RotateLeft(frameTime);
-			if (KeyBindings::cameraRotateRight.IsActive()) cam->RotateRight(frameTime);
-			if (KeyBindings::viewZoomOut.IsActive()) cam->ZoomEvent(ZOOM_SPEED*frameTime);		// Zoom out
-			if (KeyBindings::viewZoomIn.IsActive()) cam->ZoomEvent(-ZOOM_SPEED*frameTime);
-			if (KeyBindings::cameraRollLeft.IsActive()) cam->RollLeft(frameTime);
-			if (KeyBindings::cameraRollRight.IsActive()) cam->RollRight(frameTime);
-			if (KeyBindings::resetCamera.IsActive()) cam->Reset();
-			cam->ZoomEventUpdate(frameTime);
-		}
-
-		// note if we have to target the object in the crosshairs
-		targetObject = KeyBindings::targetObject.IsActive();
+	if (GetCamType() == CAM_INTERNAL) {
+		if      (KeyBindings::frontCamera.IsActive())  ChangeInternalCameraMode(InternalCameraController::MODE_FRONT);
+		else if (KeyBindings::rearCamera.IsActive())   ChangeInternalCameraMode(InternalCameraController::MODE_REAR);
+		else if (KeyBindings::leftCamera.IsActive())   ChangeInternalCameraMode(InternalCameraController::MODE_LEFT);
+		else if (KeyBindings::rightCamera.IsActive())  ChangeInternalCameraMode(InternalCameraController::MODE_RIGHT);
+		else if (KeyBindings::topCamera.IsActive())    ChangeInternalCameraMode(InternalCameraController::MODE_TOP);
+		else if (KeyBindings::bottomCamera.IsActive()) ChangeInternalCameraMode(InternalCameraController::MODE_BOTTOM);
 	}
+	else {
+		MoveableCameraController *cam = static_cast<MoveableCameraController*>(m_activeCameraController);
+		if (KeyBindings::cameraRotateUp.IsActive()) cam->RotateUp(frameTime);
+		if (KeyBindings::cameraRotateDown.IsActive()) cam->RotateDown(frameTime);
+		if (KeyBindings::cameraRotateLeft.IsActive()) cam->RotateLeft(frameTime);
+		if (KeyBindings::cameraRotateRight.IsActive()) cam->RotateRight(frameTime);
+		if (KeyBindings::viewZoomOut.IsActive()) cam->ZoomEvent(ZOOM_SPEED*frameTime);		// Zoom out
+		if (KeyBindings::viewZoomIn.IsActive()) cam->ZoomEvent(-ZOOM_SPEED*frameTime);
+		if (KeyBindings::cameraRollLeft.IsActive()) cam->RollLeft(frameTime);
+		if (KeyBindings::cameraRollRight.IsActive()) cam->RollRight(frameTime);
+		if (KeyBindings::resetCamera.IsActive()) cam->Reset();
+		cam->ZoomEventUpdate(frameTime);
+	}
+
+	// note if we have to target the object in the crosshairs
+	targetObject = KeyBindings::targetObject.IsActive();
 
 	if (m_showCameraNameTimeout) {
 		if (SDL_GetTicks() - m_showCameraNameTimeout > 20000) {

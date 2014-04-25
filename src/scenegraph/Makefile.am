@@ -35,8 +35,7 @@ noinst_HEADERS = \
 	Parser.h \
 	Pattern.h \
 	StaticGeometry.h \
-	Thruster.h \
-	Lua.h
+	Thruster.h
 
 libscenegraph_a_SOURCES = \
 	Animation.cpp \
@@ -61,12 +60,6 @@ libscenegraph_a_SOURCES = \
 	Parser.cpp \
 	Pattern.cpp \
 	StaticGeometry.cpp \
-	Thruster.cpp \
-	Lua.cpp \
-	LuaModel.cpp \
-	LuaModelSkin.cpp
+	Thruster.cpp
 
 AM_CPPFLAGS += -isystem @top_srcdir@/contrib
-if !HAVE_LUA
-AM_CPPFLAGS += -isystem @top_srcdir@/contrib/lua
-endif

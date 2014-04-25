@@ -6,7 +6,6 @@
 
 #include "libs.h"
 #include "EquipType.h"
-#include "Polit.h"
 #include "Serializer.h"
 #include <vector>
 #include <string>
@@ -17,8 +16,6 @@
 #include "gameconsts.h"
 #include <SDL_stdinc.h>
 
-class CustomSystemBody;
-class CustomSystem;
 class SystemBody;
 
 // doubles - all masses in Kg, all lengths in meters
@@ -118,7 +115,6 @@ public:
 	const char *GetIcon() const;
 	BodyType GetType() const { return m_type; }
 	BodySuperType GetSuperType() const;
-	bool IsCustomBody() const { return m_isCustomBody; }
 	fixed GetRadiusAsFixed() const { return m_radius; }
 	double GetRadius() const { // polar radius
 		if (GetSuperType() <= SUPERTYPE_STAR)
@@ -247,7 +243,6 @@ private:
 	fixed m_inclination; // in radians, for surface bodies = latitude
 	int m_averageTemp;
 	BodyType m_type;
-	bool m_isCustomBody;
 
 	/* composition */
 	fixed m_metallicity; // (crust) 0.0 = light (Al, SiO2, etc), 1.0 = heavy (Fe, heavy metals)
@@ -276,8 +271,6 @@ public:
 	friend class SystemBody;
 	friend class StarSystemCache;
 
-	void ExportToLua(const char *filename);
-
 	const std::string &GetName() const { return m_name; }
 	SystemPath GetPathOf(const SystemBody *sbody) const;
 	SystemBody *GetBodyByPath(const SystemPath &path) const;
@@ -287,7 +280,6 @@ public:
 	const char *GetShortDescription() const { return m_shortDesc.c_str(); }
 	const char *GetLongDescription() const { return m_longDesc.c_str(); }
 	int GetNumStars() const { return m_numStars; }
-	const SysPolit &GetSysPolit() const { return m_polit; }
 
 	static const Uint8 starColors[][3];
 	static const Uint8 starRealColors[][3];
@@ -339,20 +331,13 @@ private:
 	void MakeStarOfType(SystemBody *sbody, SystemBody::BodyType type, Random &rand);
 	void MakeStarOfTypeLighterThan(SystemBody *sbody, SystemBody::BodyType type, fixed maxMass, Random &rand);
 	void MakeBinaryPair(SystemBody *a, SystemBody *b, fixed minDist, Random &rand);
-	void CustomGetKidsOf(SystemBody *parent, const std::vector<CustomSystemBody*> &children, int *outHumanInfestedness, Random &rand);
-	void GenerateFromCustom(const CustomSystem *, Random &rand);
 	void Populate(bool addSpaceStations);
-	std::string ExportBodyToLua(FILE *f, SystemBody *body);
 	std::string GetStarTypes(SystemBody *body);
 
 	SystemPath m_path;
 	int m_numStars;
 	std::string m_name;
 	std::string m_shortDesc, m_longDesc;
-	SysPolit m_polit;
-
-	bool m_isCustom;
-	bool m_hasCustomBodies;
 
 	Faction* m_faction;
 	bool m_unexplored;

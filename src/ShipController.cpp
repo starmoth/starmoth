@@ -138,7 +138,6 @@ void PlayerShipController::CheckControlsLock()
 	m_controlsLocked = (Pi::game->IsPaused())
 		|| Pi::player->IsDead()
 		|| (m_ship->GetFlightState() != Ship::FLYING)
-		|| Pi::IsConsoleActive()
 		|| (Pi::GetView() != Pi::worldView); //to prevent moving the ship in starmap etc.
 }
 
@@ -279,7 +278,7 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 
 bool PlayerShipController::IsAnyAngularThrusterKeyDown()
 {
-	return !Pi::IsConsoleActive() && (
+	return (
 		KeyBindings::pitchUp.IsActive()   ||
 		KeyBindings::pitchDown.IsActive() ||
 		KeyBindings::yawLeft.IsActive()   ||
@@ -291,7 +290,7 @@ bool PlayerShipController::IsAnyAngularThrusterKeyDown()
 
 bool PlayerShipController::IsAnyLinearThrusterKeyDown()
 {
-	return !Pi::IsConsoleActive() && (
+	return (
 		KeyBindings::thrustForward.IsActive()	||
 		KeyBindings::thrustBackwards.IsActive()	||
 		KeyBindings::thrustUp.IsActive()		||
@@ -347,7 +346,6 @@ void PlayerShipController::FireMissile()
 {
 	if (!Pi::player->GetCombatTarget())
 		return;
-	LuaObject<Ship>::CallMethod(Pi::player, "FireMissileAt", "any", static_cast<Ship*>(Pi::player->GetCombatTarget()));
 }
 
 Body *PlayerShipController::GetCombatTarget() const

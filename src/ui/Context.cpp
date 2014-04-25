@@ -4,7 +4,6 @@
 #include "Context.h"
 #include "FileSystem.h"
 #include "text/FontConfig.h"
-#include "Lua.h"
 #include "FileSystem.h"
 #include <typeinfo>
 
@@ -34,7 +33,7 @@ static const float FONT_SCALE[] = {
 	1.8f   // MONO_XLARGE
 };
 
-Context::Context(LuaManager *lua, Graphics::Renderer *renderer, int width, int height) : Container(this),
+Context::Context(Graphics::Renderer *renderer, int width, int height) : Container(this),
 	m_renderer(renderer),
 	m_width(width),
 	m_height(height),
@@ -43,13 +42,8 @@ Context::Context(LuaManager *lua, Graphics::Renderer *renderer, int width, int h
 	m_mousePointer(nullptr),
 	m_mousePointerEnabled(true),
 	m_eventDispatcher(this),
-	m_skin("ui/Skin.ini", renderer, GetScale()),
-	m_lua(lua)
+	m_skin("ui/Skin.ini", renderer, GetScale())
 {
-	lua_State *l = m_lua->GetLuaState();
-	lua_newtable(l);
-	m_templateStore = LuaRef(l, -1);
-
 	SetSize(Point(m_width,m_height));
 	m_visible = true;
 
@@ -163,27 +157,6 @@ void Context::Draw()
 		DrawWidget(m_mousePointer);
 		r->SetScissor(false);
 	}
-}
-
-Widget *Context::CallTemplate(const char *name, const LuaTable &args)
-{
-	lua_State *l = m_lua->GetLuaState();
-
-	m_templateStore.PushCopyToStack();
-	const LuaTable t(l, -1);
-	if (!t.Get<bool,const char *>(name))
-		return 0;
-
-	t.PushValueToStack<const char*>(name);
-	lua_pushvalue(l, args.GetIndex());
-	pi_lua_protected_call(m_lua->GetLuaState(), 1, 1);
-
-	return LuaObject<UI::Widget>::CheckFromLua(-1);
-}
-
-Widget *Context::CallTemplate(const char *name)
-{
-	return CallTemplate(name, LuaTable(m_lua->GetLuaState()));
 }
 
 void Context::DrawWidget(Widget *w)

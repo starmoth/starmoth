@@ -6,10 +6,7 @@
 
 #include "enum_table.h"
 #include "EquipType.h"
-#include "LuaEngine.h"
-#include "LuaFileSystem.h"
 #include "Object.h"
-#include "Polit.h"
 #include "Ship.h"
 #include "ShipType.h"
 #include "galaxy/StarSystem.h"
@@ -126,21 +123,6 @@ const struct EnumItem ENUM_EquipType[] = {
 	{ 0, 0 },
 };
 
-const struct EnumItem ENUM_DetailLevel[] = {
-	{ "VERY_LOW", LuaEngine::DETAIL_VERY_LOW },
-	{ "LOW", LuaEngine::DETAIL_LOW },
-	{ "MEDIUM", LuaEngine::DETAIL_MEDIUM },
-	{ "HIGH", LuaEngine::DETAIL_HIGH },
-	{ "VERY_HIGH", LuaEngine::DETAIL_VERY_HIGH },
-	{ 0, 0 },
-};
-
-const struct EnumItem ENUM_FileSystemRoot[] = {
-	{ "USER", LuaFileSystem::ROOT_USER },
-	{ "DATA", LuaFileSystem::ROOT_DATA },
-	{ 0, 0 },
-};
-
 const struct EnumItem ENUM_PhysicsObjectType[] = {
 	{ "BODY", Object::BODY },
 	{ "MODELBODY", Object::MODELBODY },
@@ -151,43 +133,6 @@ const struct EnumItem ENUM_PhysicsObjectType[] = {
 	{ "STAR", Object::STAR },
 	{ "CARGOBODY", Object::CARGOBODY },
 	{ "MISSILE", Object::MISSILE },
-	{ 0, 0 },
-};
-
-const struct EnumItem ENUM_PolitCrime[] = {
-	{ "TRADING_ILLEGAL_GOODS", Polit::CRIME_TRADING_ILLEGAL_GOODS },
-	{ "WEAPON_DISCHARGE", Polit::CRIME_WEAPON_DISCHARGE },
-	{ "PIRACY", Polit::CRIME_PIRACY },
-	{ "MURDER", Polit::CRIME_MURDER },
-	{ 0, 0 },
-};
-
-const struct EnumItem ENUM_PolitEcon[] = {
-	{ "NONE", Polit::ECON_NONE },
-	{ "VERY_CAPITALIST", Polit::ECON_VERY_CAPITALIST },
-	{ "CAPITALIST", Polit::ECON_CAPITALIST },
-	{ "MIXED", Polit::ECON_MIXED },
-	{ "PLANNED", Polit::ECON_PLANNED },
-	{ 0, 0 },
-};
-
-const struct EnumItem ENUM_PolitGovType[] = {
-	{ "NONE", Polit::GOV_NONE },
-	{ "EARTHCOLONIAL", Polit::GOV_EARTHCOLONIAL },
-	{ "EARTHDEMOC", Polit::GOV_EARTHDEMOC },
-	{ "EMPIRERULE", Polit::GOV_EMPIRERULE },
-	{ "CISLIBDEM", Polit::GOV_CISLIBDEM },
-	{ "CISSOCDEM", Polit::GOV_CISSOCDEM },
-	{ "LIBDEM", Polit::GOV_LIBDEM },
-	{ "CORPORATE", Polit::GOV_CORPORATE },
-	{ "SOCDEM", Polit::GOV_SOCDEM },
-	{ "EARTHMILDICT", Polit::GOV_EARTHMILDICT },
-	{ "MILDICT1", Polit::GOV_MILDICT1 },
-	{ "MILDICT2", Polit::GOV_MILDICT2 },
-	{ "EMPIREMILDICT", Polit::GOV_EMPIREMILDICT },
-	{ "COMMUNIST", Polit::GOV_COMMUNIST },
-	{ "PLUTOCRATIC", Polit::GOV_PLUTOCRATIC },
-	{ "DISORDER", Polit::GOV_DISORDER },
 	{ 0, 0 },
 };
 
@@ -521,12 +466,7 @@ const struct EnumItem ENUM_UIFont[] = {
 const struct EnumTable ENUM_TABLES[] = {
 	{ "EquipSlot", ENUM_EquipSlot },
 	{ "EquipType", ENUM_EquipType },
-	{ "DetailLevel", ENUM_DetailLevel },
-	{ "FileSystemRoot", ENUM_FileSystemRoot },
 	{ "PhysicsObjectType", ENUM_PhysicsObjectType },
-	{ "PolitCrime", ENUM_PolitCrime },
-	{ "PolitEcon", ENUM_PolitEcon },
-	{ "PolitGovType", ENUM_PolitGovType },
 	{ "ShipFlightState", ENUM_ShipFlightState },
 	{ "ShipJumpStatus", ENUM_ShipJumpStatus },
 	{ "ShipAlertStatus", ENUM_ShipAlertStatus },
@@ -565,12 +505,7 @@ const struct EnumTable ENUM_TABLES[] = {
 const struct EnumTable ENUM_TABLES_PUBLIC[] = {
 	{ "EquipSlot", ENUM_EquipSlot },
 	{ "EquipType", ENUM_EquipType },
-	{ "DetailLevel", ENUM_DetailLevel },
-	{ "FileSystemRoot", ENUM_FileSystemRoot },
 	{ "PhysicsObjectType", ENUM_PhysicsObjectType },
-	{ "PolitCrime", ENUM_PolitCrime },
-	{ "PolitEcon", ENUM_PolitEcon },
-	{ "PolitGovType", ENUM_PolitGovType },
 	{ "ShipFlightState", ENUM_ShipFlightState },
 	{ "ShipJumpStatus", ENUM_ShipJumpStatus },
 	{ "ShipAlertStatus", ENUM_ShipAlertStatus },

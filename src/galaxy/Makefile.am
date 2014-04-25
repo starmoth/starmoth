@@ -5,13 +5,9 @@ AM_CPPFLAGS += $(WARN_CPPFLAGS)
 AM_CXXFLAGS += $(STD_CXXFLAGS) $(WARN_CXXFLAGS)
 
 AM_CPPFLAGS += -isystem $(top_srcdir)/contrib -I$(srcdir)/..
-if !HAVE_LUA
-AM_CPPFLAGS += -isystem $(top_srcdir)/contrib/lua
-endif
 
 noinst_LIBRARIES = libgalaxy.a
 noinst_HEADERS = \
-	CustomSystem.h \
 	Galaxy.h \
 	Sector.h \
 	SectorCache.h \
@@ -19,7 +15,6 @@ noinst_HEADERS = \
 	SystemPath.h
 
 libgalaxy_a_SOURCES = \
-	CustomSystem.cpp \
 	Galaxy.cpp \
 	Sector.cpp \
 	SectorCache.cpp \

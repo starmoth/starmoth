@@ -41,12 +41,8 @@
 
 #include "MousePointer.h"
 
-#include "Lua.h"
-#include "LuaTable.h"
-
 #include <stack>
 
-class LuaManager;
 namespace Graphics { class Renderer; }
 
 namespace UI {
@@ -70,7 +66,7 @@ namespace UI {
 
 class Context : public Container {
 public:
-	Context(LuaManager *lua, Graphics::Renderer *renderer, int width, int height);
+	Context(Graphics::Renderer *renderer, int width, int height);
 
 	// general purpose containers
 	UI::HBox *HBox(float spacing = 0.0f) { return new UI::HBox(this, spacing); }
@@ -144,10 +140,6 @@ public:
 
 	void Animate(Animation *animation) { m_animationController.Add(animation); }
 
-	LuaRef GetTemplateStore() const { return m_templateStore; }
-	Widget *CallTemplate(const char *name, const LuaTable &args);
-	Widget *CallTemplate(const char *name);
-
 	Graphics::Renderer *GetRenderer() const { return m_renderer; }
 	const Skin &GetSkin() const { return m_skin; }
 
@@ -178,10 +170,6 @@ private:
 	EventDispatcher m_eventDispatcher;
 	AnimationController m_animationController;
 	Skin m_skin;
-
-	LuaManager *m_lua;
-
-	LuaRef m_templateStore;
 
 	RefCountedPtr<Text::TextureFont> m_font[FONT_MAX];
 

@@ -83,7 +83,7 @@ namespace {
 	}
 }
 
-ModelViewer::ModelViewer(Graphics::Renderer *r, LuaManager *lm)
+ModelViewer::ModelViewer(Graphics::Renderer *r)
 : m_done(false)
 , m_screenshotQueued(false)
 , m_shieldIsHit(false)
@@ -98,7 +98,7 @@ ModelViewer::ModelViewer(Graphics::Renderer *r, LuaManager *lm)
 , m_model(0)
 , m_modelName("")
 {
-	m_ui.Reset(new UI::Context(lm, r, Graphics::GetScreenWidth(), Graphics::GetScreenHeight()));
+	m_ui.Reset(new UI::Context(r, Graphics::GetScreenWidth(), Graphics::GetScreenHeight()));
 
 	m_log = m_ui->MultiLineText("");
 	m_log->SetFont(UI::Widget::FONT_SMALLEST);
@@ -137,7 +137,6 @@ void ModelViewer::Run(const std::string &modelName)
 	FileSystem::userFiles.MakeDirectory(""); // ensure the config directory exists
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 		Error("SDL initialization failed: %s\n", SDL_GetError());
-	Lua::Init();
 
 	ModManager::Init();
 
@@ -158,14 +157,13 @@ void ModelViewer::Run(const std::string &modelName)
 	Shields::Init(renderer);
 
 	//run main loop until quit
-	viewer = new ModelViewer(renderer, Lua::manager);
+	viewer = new ModelViewer(renderer);
 	viewer->SetModel(modelName);
 	viewer->ResetCamera();
 	viewer->MainLoop();
 
 	//uninit components
 	delete viewer;
-	Lua::Uninit();
 	delete renderer;
 	Shields::Uninit();
 	NavLights::Uninit();

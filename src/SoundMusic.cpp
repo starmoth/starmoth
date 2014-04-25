@@ -4,7 +4,6 @@
 #include "SoundMusic.h"
 #include "libs.h" //for clamp
 #include "Pi.h"
-#include "LuaEvent.h"
 #include <map>
 
 namespace Sound {
@@ -96,10 +95,8 @@ void MusicPlayer::Update()
 {
 	PROFILE_SCOPED()
 	if (m_playing) { //expecting report
-		if ((m_eventOnePlaying && !m_eventOne.IsPlaying()) || (!m_eventOnePlaying && !m_eventTwo.IsPlaying())) {
+		if ((m_eventOnePlaying && !m_eventOne.IsPlaying()) || (!m_eventOnePlaying && !m_eventTwo.IsPlaying()))
 			m_playing = false;
-			LuaEvent::Queue("onSongFinished");
-		}
 	}
 }
 

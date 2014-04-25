@@ -15,7 +15,6 @@
 #include "Ship.h"
 #include "Pi.h"
 #include "Game.h"
-#include "LuaEvent.h"
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
@@ -223,8 +222,6 @@ void Projectile::StaticUpdate(const float timeStep)
 			if (hit != m_parent) {
 				hit->OnDamage(m_parent, GetDamage(), c);
 				Pi::game->GetSpace()->KillBody(this);
-				if (hit->IsType(Object::SHIP))
-					LuaEvent::Queue("onShipHit", dynamic_cast<Ship*>(hit), dynamic_cast<Body*>(m_parent));
 			}
 		}
 	}

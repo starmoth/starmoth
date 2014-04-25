@@ -9,8 +9,7 @@
 void UIView::OnSwitchTo()
 {
 	UI::VBox *box = Pi::ui->VBox();
-	if (m_templateName)
-		box->PackEnd(Pi::ui->CallTemplate(m_templateName));
+	// XXX get something onscreen
 	box->PackEnd(new GameUI::Panel(Pi::ui.Get()));
 
 	Pi::ui->DropAllLayers();

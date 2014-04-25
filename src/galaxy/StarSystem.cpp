@@ -4,11 +4,9 @@
 #include "StarSystem.h"
 #include "Sector.h"
 #include "SectorCache.h"
-#include "Factions.h"
 
 #include "Serializer.h"
 #include "Pi.h"
-#include "LuaNameGen.h"
 #include "enum_table.h"
 #include <map>
 #include <string>
@@ -902,157 +900,6 @@ SystemPath StarSystem::GetPathOf(const SystemBody *sbody) const
 	return sbody->GetPath();
 }
 
-void StarSystem::CustomGetKidsOf(SystemBody *parent, const std::vector<CustomSystemBody*> &children, int *outHumanInfestedness, Random &rand)
-{
-	PROFILE_SCOPED()
-	// replaces gravpoint mass by sum of masses of its children
-	// the code goes here to cover also planetary gravpoints (gravpoints that are not rootBody)
-	if (parent->GetType() == SystemBody::TYPE_GRAVPOINT) {
-		fixed mass(0);
-
-		for (std::vector<CustomSystemBody*>::const_iterator i = children.begin(); i != children.end(); ++i) {
-			const CustomSystemBody *csbody = *i;
-
-			if (csbody->type >= SystemBody::TYPE_STAR_MIN && csbody->type <= SystemBody::TYPE_STAR_MAX)
-				mass += csbody->mass;
-			else
-				mass += csbody->mass/SUN_MASS_TO_EARTH_MASS;
-		}
-
-		parent->m_mass = mass;
-	}
-
-	for (std::vector<CustomSystemBody*>::const_iterator i = children.begin(); i != children.end(); ++i) {
-		const CustomSystemBody *csbody = *i;
-
-		SystemBody *kid = NewBody();
-		kid->m_type = csbody->type;
-		kid->m_parent = parent;
-		kid->m_seed = csbody->want_rand_seed ? rand.Int32() : csbody->seed;
-		kid->m_radius = csbody->radius;
-		kid->m_aspectRatio = csbody->aspectRatio;
-		kid->m_averageTemp = csbody->averageTemp;
-		kid->m_name = csbody->name;
-		kid->m_isCustomBody = true;
-
-		kid->m_mass = csbody->mass;
-		if (kid->GetType() == SystemBody::TYPE_PLANET_ASTEROID) kid->m_mass /= 100000;
-
-		kid->m_metallicity    = csbody->metallicity;
-		//multiple of Earth's surface density
-		kid->m_volatileGas    = csbody->volatileGas*fixed(1225,1000);
-		kid->m_volatileLiquid = csbody->volatileLiquid;
-		kid->m_volatileIces   = csbody->volatileIces;
-		kid->m_volcanicity    = csbody->volcanicity;
-		kid->m_atmosOxidizing = csbody->atmosOxidizing;
-		kid->m_life           = csbody->life;
-
-		kid->m_rotationPeriod = csbody->rotationPeriod;
-		kid->m_rotationalPhaseAtStart = csbody->rotationalPhaseAtStart;
-		kid->m_eccentricity = csbody->eccentricity;
-		kid->m_orbitalOffset = csbody->orbitalOffset;
-		kid->m_orbitalPhaseAtStart = csbody->orbitalPhaseAtStart;
-		kid->m_axialTilt = csbody->axialTilt;
-		kid->m_inclination = fixed(csbody->latitude*10000,10000);
-		if(kid->GetType() == SystemBody::TYPE_STARPORT_SURFACE)
-			kid->m_orbitalOffset = fixed(csbody->longitude*10000,10000);
-		kid->m_semiMajorAxis = csbody->semiMajorAxis;
-
-		if (csbody->heightMapFilename.length() > 0) {
-			kid->m_heightMapFilename = csbody->heightMapFilename;
-			kid->m_heightMapFractal = csbody->heightMapFractal;
-		}
-
-		if(parent->GetType() == SystemBody::TYPE_GRAVPOINT) // generalize Kepler's law to multiple stars
-			kid->m_orbit.SetShapeAroundBarycentre(csbody->semiMajorAxis.ToDouble() * AU, parent->GetMass(), kid->GetMass(), csbody->eccentricity.ToDouble());
-		else
-			kid->m_orbit.SetShapeAroundPrimary(csbody->semiMajorAxis.ToDouble() * AU, parent->GetMass(), csbody->eccentricity.ToDouble());
-
-		kid->m_orbit.SetPhase(csbody->orbitalPhaseAtStart.ToDouble());
-
-		if (kid->GetType() == SystemBody::TYPE_STARPORT_SURFACE) {
-			kid->m_orbit.SetPlane(matrix3x3d::RotateY(csbody->longitude) * matrix3x3d::RotateX(-0.5*M_PI + csbody->latitude));
-		} else {
-			if (kid->m_orbit.GetSemiMajorAxis() < 1.2 * parent->GetRadius()) {
-				Error("%s's orbit is too close to its parent", csbody->name.c_str());
-			}
-			double offset = csbody->want_rand_offset ? rand.Double(2*M_PI) : (csbody->orbitalOffset.ToDouble());
-			kid->m_orbit.SetPlane(matrix3x3d::RotateY(offset) * matrix3x3d::RotateX(-0.5*M_PI + csbody->latitude));
-		}
-		if (kid->GetSuperType() == SystemBody::SUPERTYPE_STARPORT) {
-			(*outHumanInfestedness)++;
-            m_spaceStations.push_back(kid);
-		}
-		parent->m_children.push_back(kid);
-
-		// perihelion and aphelion (in AUs)
-		kid->m_orbMin = csbody->semiMajorAxis - csbody->eccentricity*csbody->semiMajorAxis;
-		kid->m_orbMax = 2*csbody->semiMajorAxis - kid->m_orbMin;
-
-		kid->PickAtmosphere();
-
-		// pick or specify rings
-		switch (csbody->ringStatus) {
-			case CustomSystemBody::WANT_NO_RINGS:
-				kid->m_rings.minRadius = fixed(0);
-				kid->m_rings.maxRadius = fixed(0);
-				break;
-			case CustomSystemBody::WANT_RINGS:
-				kid->PickRings(true);
-				break;
-			case CustomSystemBody::WANT_RANDOM_RINGS:
-				kid->PickRings(false);
-				break;
-			case CustomSystemBody::WANT_CUSTOM_RINGS:
-				kid->m_rings.minRadius = csbody->ringInnerRadius;
-				kid->m_rings.maxRadius = csbody->ringOuterRadius;
-				kid->m_rings.baseColor = csbody->ringColor;
-				break;
-		}
-
-		CustomGetKidsOf(kid, csbody->children, outHumanInfestedness, rand);
-	}
-
-}
-
-void StarSystem::GenerateFromCustom(const CustomSystem *customSys, Random &rand)
-{
-	PROFILE_SCOPED()
-	const CustomSystemBody *csbody = customSys->sBody;
-
-	m_rootBody.Reset(NewBody());
-	m_rootBody->m_type = csbody->type;
-	m_rootBody->m_parent = 0;
-	m_rootBody->m_seed = csbody->want_rand_seed ? rand.Int32() : csbody->seed;
-	m_rootBody->m_seed = rand.Int32();
-	m_rootBody->m_radius = csbody->radius;
-	m_rootBody->m_aspectRatio = csbody->aspectRatio;
-	m_rootBody->m_mass = csbody->mass;
-	m_rootBody->m_averageTemp = csbody->averageTemp;
-	m_rootBody->m_name = csbody->name;
-	m_rootBody->m_isCustomBody = true;
-
-	m_rootBody->m_rotationalPhaseAtStart = csbody->rotationalPhaseAtStart;
-	m_rootBody->m_orbitalPhaseAtStart = csbody->orbitalPhaseAtStart;
-
-	int humanInfestedness = 0;
-	CustomGetKidsOf(m_rootBody.Get(), csbody->children, &humanInfestedness, rand);
-	int i = 0;
-	m_stars.resize(m_numStars);
-	for (RefCountedPtr<SystemBody> b : m_bodies) {
-		if (b->GetSuperType() == SystemBody::SUPERTYPE_STAR)
-			m_stars[i++] = b.Get();
-	}
-	assert(i == m_numStars);
-	Populate(false);
-
-	// an example re-export of custom system, can be removed during the merge
-	//char filename[500];
-	//snprintf(filename, 500, "tmp-sys/%s.lua", GetName().c_str());
-	//ExportToLua(filename);
-
-}
-
 void StarSystem::MakeStarOfType(SystemBody *sbody, SystemBody::BodyType type, Random &rand)
 {
 	PROFILE_SCOPED()
@@ -1170,7 +1017,7 @@ void StarSystem::MakeBinaryPair(SystemBody *a, SystemBody *b, fixed minDist, Ran
 
 SystemBody::SystemBody(const SystemPath& path) : m_parent(nullptr), m_path(path), m_seed(0), m_aspectRatio(1,1), m_orbMin(0),
 	m_orbMax(0), m_rotationalPhaseAtStart(0), m_semiMajorAxis(0), m_eccentricity(0), m_orbitalOffset(0), m_axialTilt(0),
-	m_inclination(0), m_averageTemp(0), m_type(TYPE_GRAVPOINT), m_isCustomBody(false), m_heightMapFractal(0), m_atmosDensity(0.0) { }
+	m_inclination(0), m_averageTemp(0), m_type(TYPE_GRAVPOINT), m_heightMapFractal(0), m_atmosDensity(0.0) { }
 
 bool SystemBody::HasAtmosphere() const
 {
@@ -1391,8 +1238,8 @@ SystemBody::AtmosphereParameters SystemBody::CalcAtmosphereParams() const
  *
  * We must be sneaky and avoid floating point in these places.
  */
-StarSystem::StarSystem(const SystemPath &path) : m_path(path), m_numStars(0), m_isCustom(false), m_hasCustomBodies(false),
-	m_faction(nullptr), m_unexplored(false), m_econType(0), m_seed(0)
+StarSystem::StarSystem(const SystemPath &path) : m_path(path), m_numStars(0),
+	m_unexplored(false), m_econType(0), m_seed(0)
 {
 	PROFILE_SCOPED()
 	assert(path.IsSystemPath());
@@ -1403,25 +1250,11 @@ StarSystem::StarSystem(const SystemPath &path) : m_path(path), m_numStars(0), m_
 
 	m_seed    = s->m_systems[m_path.systemIndex].seed;
 	m_name    = s->m_systems[m_path.systemIndex].name;
-	m_faction = Faction::GetNearestFaction(s, m_path.systemIndex);
 
 	Uint32 _init[6] = { m_path.systemIndex, Uint32(m_path.sectorX), Uint32(m_path.sectorY), Uint32(m_path.sectorZ), UNIVERSE_SEED, Uint32(m_seed) };
 	Random rand(_init, 6);
 
 	m_unexplored = !s->m_systems[m_path.systemIndex].explored;
-
-	if (s->m_systems[m_path.systemIndex].customSys) {
-		m_isCustom = true;
-		const CustomSystem *custom = s->m_systems[m_path.systemIndex].customSys;
-		m_numStars = custom->numStars;
-		if (custom->shortDesc.length() > 0) m_shortDesc = custom->shortDesc;
-		if (custom->longDesc.length() > 0) m_longDesc = custom->longDesc;
-		if (!custom->IsRandom()) {
-			m_hasCustomBodies = true;
-			GenerateFromCustom(s->m_systems[m_path.systemIndex].customSys, rand);
-			return;
-		}
-	}
 
 	SystemBody *star[4];
 	SystemBody *centGrav1(0), *centGrav2(0);
@@ -1538,11 +1371,6 @@ try_that_again_guvnah:
 	if (m_numStars == 4) MakePlanetsAround(centGrav2, rand);
 
 	Populate(true);
-
-	// an example export of generated system, can be removed during the merge
-	//char filename[500];
-	//snprintf(filename, 500, "tmp-sys/%s.lua", GetName().c_str());
-	//ExportToLua(filename);
 
 #ifdef DEBUG_DUMP
 	Dump();
@@ -2041,7 +1869,7 @@ void StarSystem::Populate(bool addSpaceStations)
 	/* Various system-wide characteristics */
 	// This is 1 in sector (0,0,0) and approaches 0 farther out
 	// (1,0,0) ~ .688, (1,1,0) ~ .557, (1,1,1) ~ .48
-	m_humanProx = Faction::IsHomeSystem(m_path) ? fixed(2,3): fixed(3,1) / isqrt(9 + 10*(m_path.sectorX*m_path.sectorX + m_path.sectorY*m_path.sectorY + m_path.sectorZ*m_path.sectorZ));
+	m_humanProx = fixed(3,1) / isqrt(9 + 10*(m_path.sectorX*m_path.sectorX + m_path.sectorY*m_path.sectorY + m_path.sectorZ*m_path.sectorZ));
 	m_econType = ECON_INDUSTRY;
 	m_industrial = rand.Fixed();
 	m_agricultural = 0;
@@ -2070,7 +1898,6 @@ void StarSystem::Populate(bool addSpaceStations)
 //		Output("%s: %d%%\n", type.name, m_tradeLevel[t]);
 //	}
 //	Output("System total population %.3f billion\n", m_totalPop.ToFloat());
-	Polit::GetSysPolitStarSystem(this, m_totalPop, m_polit);
 
 	if (addSpaceStations) {
 		m_rootBody->PopulateAddStations(this);
@@ -2189,8 +2016,8 @@ void SystemBody::PopulateStage1(StarSystem *system, fixed &outTotalPop)
 		}
 	}
 
-	if (!system->m_hasCustomBodies && m_population > 0)
-		m_name = Pi::luaNameGen->BodyName(this, namerand);
+	if (m_population > 0)
+		m_name = "Random Body"; // XXX namegen
 
 	// Add a bunch of things people consume
 	for (int i=0; i<NUM_CONSUMABLES; i++) {
@@ -2229,8 +2056,9 @@ static bool check_unique_station_name(const std::string & name, const StarSystem
 static std::string gen_unique_station_name(SystemBody *sp, const StarSystem *system, RefCountedPtr<Random> &namerand) {
 	PROFILE_SCOPED()
 	std::string name;
+	int i = 1;
 	do {
-		name = Pi::luaNameGen->BodyName(sp, namerand);
+		name = "Random Station " + i; // XXX namegen
 	} while (!check_unique_station_name(name, system));
 	return name;
 }
@@ -2334,9 +2162,8 @@ void SystemBody::PopulateAddStations(StarSystem *system)
 
 void SystemBody::Dump(FILE* file, const char* indent) const
 {
-	fprintf(file, "%sSystemBody(%d,%d,%d,%u,%u) : %s/%s %s{\n", indent, m_path.sectorX, m_path.sectorY, m_path.sectorZ, m_path.systemIndex,
-		m_path.bodyIndex, EnumStrings::GetString("BodySuperType", GetSuperType()), EnumStrings::GetString("BodyType", m_type),
-		m_isCustomBody ? "CUSTOM " : "");
+	fprintf(file, "%sSystemBody(%d,%d,%d,%u,%u) : %s/%s {\n", indent, m_path.sectorX, m_path.sectorY, m_path.sectorZ, m_path.systemIndex,
+		m_path.bodyIndex, EnumStrings::GetString("BodySuperType", GetSuperType()), EnumStrings::GetString("BodyType", m_type));
 	fprintf(file, "%s\t\"%s\"\n", indent, m_name.c_str());
 	fprintf(file, "%s\tmass %.6f\n", indent, m_mass.ToDouble());
 	fprintf(file, "%s\torbit a=%.6f, e=%.6f, phase=%.6f\n", indent, m_orbit.GetSemiMajorAxis(), m_orbit.GetEccentricity(),
@@ -2417,106 +2244,6 @@ RefCountedPtr<StarSystem> StarSystem::Unserialize(Serializer::Reader &rd)
 	}
 }
 
-std::string StarSystem::ExportBodyToLua(FILE *f, SystemBody *body) {
-	const int multiplier = 10000;
-	int i;
-
-	std::string code_name = body->GetName();
-	std::transform(code_name.begin(), code_name.end(), code_name.begin(), ::tolower);
-	code_name.erase(remove_if(code_name.begin(), code_name.end(), isspace), code_name.end());
-	for(unsigned int j = 0; j < code_name.length(); j++) {
-		if(code_name[j] == ',')
-			code_name[j] = 'X';
-		if(!((code_name[j] >= 'a' && code_name[j] <= 'z') ||
-				(code_name[j] >= 'A' && code_name[j] <= 'Z') ||
-				(code_name[j] >= '0' && code_name[j] <= '9')))
-			code_name[j] = 'Y';
-	}
-
-	std::string code_list = code_name;
-
-	for(i = 0; ENUM_BodyType[i].name != 0; i++) {
-		if(ENUM_BodyType[i].value == body->GetType())
-			break;
-	}
-
-	if(body->GetType() == SystemBody::TYPE_STARPORT_SURFACE) {
-		fprintf(f,
-			"local %s = CustomSystemBody:new(\"%s\", '%s')\n"
-				"\t:latitude(math.deg2rad(%.1f))\n"
-                "\t:longitude(math.deg2rad(%.1f))\n",
-
-				code_name.c_str(),
-				body->GetName().c_str(), ENUM_BodyType[i].name,
-				body->m_inclination.ToDouble()*180/M_PI,
-				body->m_orbitalOffset.ToDouble()*180/M_PI
-				);
-	} else {
-
-		fprintf(f,
-				"local %s = CustomSystemBody:new(\"%s\", '%s')\n"
-				"\t:radius(f(%d,%d))\n"
-				"\t:mass(f(%d,%d))\n",
-				code_name.c_str(),
-				body->GetName().c_str(), ENUM_BodyType[i].name,
-				int(round(body->GetRadiusAsFixed().ToDouble()*multiplier)), multiplier,
-				int(round(body->GetMassAsFixed().ToDouble()*multiplier)), multiplier
-		);
-
-		if(body->GetType() != SystemBody::TYPE_GRAVPOINT)
-		fprintf(f,
-				"\t:seed(%u)\n"
-				"\t:temp(%d)\n"
-				"\t:semi_major_axis(f(%d,%d))\n"
-				"\t:eccentricity(f(%d,%d))\n"
-				"\t:rotation_period(f(%d,%d))\n"
-				"\t:axial_tilt(fixed.deg2rad(f(%d,%d)))\n"
-				"\t:rotational_phase_at_start(fixed.deg2rad(f(%d,%d)))\n"
-				"\t:orbital_phase_at_start(fixed.deg2rad(f(%d,%d)))\n"
-				"\t:orbital_offset(fixed.deg2rad(f(%d,%d)))\n",
-			body->GetSeed(), body->GetAverageTemp(),
-			int(round(body->GetOrbit().GetSemiMajorAxis()/AU*multiplier)), multiplier,
-			int(round(body->GetOrbit().GetEccentricity()*multiplier)), multiplier,
-			int(round(body->m_rotationPeriod.ToDouble()*multiplier)), multiplier,
-			int(round(body->GetAxialTilt()*multiplier)), multiplier,
-			int(round(body->m_rotationalPhaseAtStart.ToDouble()*multiplier*180/M_PI)), multiplier,
-			int(round(body->m_orbitalPhaseAtStart.ToDouble()*multiplier*180/M_PI)), multiplier,
-			int(round(body->m_orbitalOffset.ToDouble()*multiplier*180/M_PI)), multiplier
-		);
-
-		if(body->GetType() == SystemBody::TYPE_PLANET_TERRESTRIAL)
-			fprintf(f,
-					"\t:metallicity(f(%d,%d))\n"
-					"\t:volcanicity(f(%d,%d))\n"
-					"\t:atmos_density(f(%d,%d))\n"
-					"\t:atmos_oxidizing(f(%d,%d))\n"
-					"\t:ocean_cover(f(%d,%d))\n"
-					"\t:ice_cover(f(%d,%d))\n"
-					"\t:life(f(%d,%d))\n",
-				int(round(body->GetMetallicity().ToDouble()*multiplier)), multiplier,
-				int(round(body->GetVolcanicity().ToDouble()*multiplier)), multiplier,
-				int(round(body->GetVolatileGas().ToDouble()*multiplier)), multiplier,
-				int(round(body->GetAtmosOxidizing().ToDouble()*multiplier)), multiplier,
-				int(round(body->GetVolatileLiquid().ToDouble()*multiplier)), multiplier,
-				int(round(body->GetVolatileIces().ToDouble()*multiplier)), multiplier,
-				int(round(body->GetLife().ToDouble()*multiplier)), multiplier
-			);
-	}
-
-	fprintf(f, "\n");
-
-	if(body->m_children.size() > 0) {
-		code_list = code_list + ", \n\t{\n";
-		for (Uint32 ii = 0; ii < body->m_children.size(); ii++) {
-			code_list = code_list + "\t" + ExportBodyToLua(f, body->m_children[ii]) + ", \n";
-		}
-		code_list = code_list + "\t}";
-	}
-
-	return code_list;
-
-}
-
 std::string StarSystem::GetStarTypes(SystemBody *body) {
 	int i = 0;
 	std::string types = "";
@@ -2537,52 +2264,17 @@ std::string StarSystem::GetStarTypes(SystemBody *body) {
 	return types;
 }
 
-void StarSystem::ExportToLua(const char *filename) {
-	FILE *f = fopen(filename,"w");
-	int j;
-
-	if(f == 0)
-		return;
-
-	fprintf(f,"-- Copyright © 2008-2012 Pioneer Developers. See AUTHORS.txt for details\n");
-	fprintf(f,"-- Licensed under the terms of the GPL v3. See licenses/GPL-3.txt\n\n");
-
-	std::string stars_in_system = GetStarTypes(m_rootBody.Get());
-
-	for(j = 0; ENUM_PolitGovType[j].name != 0; j++) {
-		if(ENUM_PolitGovType[j].value == GetSysPolit().govType)
-			break;
-	}
-
-	fprintf(f,"local system = CustomSystem:new('%s', { %s })\n\t:govtype('%s')\n\t:short_desc('%s')\n\t:long_desc([[%s]])\n\n",
-			GetName().c_str(), stars_in_system.c_str(), ENUM_PolitGovType[j].name, GetShortDescription(), GetLongDescription());
-
-	fprintf(f, "system:bodies(%s)\n\n", ExportBodyToLua(f, m_rootBody.Get()).c_str());
-
-	RefCountedPtr<const Sector> sec = Sector::cache.GetCached(GetPath());
-	SystemPath pa = GetPath();
-
-	fprintf(f, "system:add_to_sector(%d,%d,%d,v(%.4f,%.4f,%.4f))\n",
-			pa.sectorX, pa.sectorY, pa.sectorZ,
-			sec->m_systems[pa.systemIndex].p.x/Sector::SIZE,
-			sec->m_systems[pa.systemIndex].p.y/Sector::SIZE,
-			sec->m_systems[pa.systemIndex].p.z/Sector::SIZE);
-
-	fclose(f);
-}
-
 void StarSystem::Dump(FILE* file, const char* indent, bool suppressSectorData) const
 {
 	// percent price alteration
 	//int m_tradeLevel[Equip::TYPE_MAX];
 
 	if (suppressSectorData) {
-		fprintf(file, "%sStarSystem {%s\n", indent, m_hasCustomBodies ? " CUSTOM-ONLY" : m_isCustom ? " CUSTOM" : "");
+		fprintf(file, "%sStarSystem {\n", indent);
 	} else {
 		fprintf(file, "%sStarSystem(%d,%d,%d,%u) {\n", indent, m_path.sectorX, m_path.sectorY, m_path.sectorZ, m_path.systemIndex);
 		fprintf(file, "%s\t\"%s\"\n", indent, m_name.c_str());
-		fprintf(file, "%s\t%sEXPLORED%s\n", indent, m_unexplored ? "UN" : "", m_hasCustomBodies ? ", CUSTOM-ONLY" : m_isCustom ? ", CUSTOM" : "");
-		fprintf(file, "%s\tfaction %s%s%s\n", indent, m_faction ? "\"" : "NONE", m_faction ? m_faction->name.c_str() : "", m_faction ? "\"" : "");
+		fprintf(file, "%s\t%sEXPLORED\n", indent, m_unexplored ? "UN" : "");
 		fprintf(file, "%s\tseed %u\n", indent, static_cast<Uint32>(m_seed));
 		fprintf(file, "%s\t%d stars%s\n", indent, m_numStars, m_numStars > 0 ? " {" : "");
 		assert(unsigned(m_numStars) == m_stars.size());
@@ -2592,8 +2284,6 @@ void StarSystem::Dump(FILE* file, const char* indent, bool suppressSectorData) c
 	}
 	fprintf(file, "%s\t%zu bodies, %zu spaceports \n", indent, m_bodies.size(), m_spaceStations.size());
 	fprintf(file, "%s\tpopulation %'.0f\n", indent, m_totalPop.ToDouble() * 1e9);
-	fprintf(file, "%s\tgovernment %s/%s, lawlessness %.2f\n", indent, m_polit.GetGovernmentDesc(), m_polit.GetEconomicDesc(),
-		m_polit.lawlessness.ToDouble() * 100.0);
 	fprintf(file, "%s\teconomy type%s%s%s\n", indent, m_econType == 0 ? " NONE" : m_econType & ECON_AGRICULTURE ? " AGRICULTURE" : "",
 		m_econType & ECON_INDUSTRY ? " INDUSTRY" : "", m_econType & ECON_MINING ? " MINING" : "");
 	fprintf(file, "%s\thumanProx %.2f\n", indent, m_humanProx.ToDouble() * 100.0);

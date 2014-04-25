@@ -7,8 +7,6 @@
 #include "libs.h"
 #include "Point.h"
 
-struct lua_State;
-
 namespace UI {
 
 class Widget;
@@ -38,7 +36,6 @@ public:
 	};
 	const Type type;
 
-	virtual void ToLuaTable(lua_State *l) const = 0;
 protected:
 	Event(Type _type) : type(_type) {}
 };
@@ -78,16 +75,12 @@ public:
 	const Action action;
 	const KeySym keysym;
 	const bool repeat;
-
-	void ToLuaTable(lua_State *l) const;
 };
 
 class TextInputEvent : public Event {
 public:
 	TextInputEvent(Uint32 _unicode) : Event(Event::TEXT_INPUT), unicode(_unicode) {}
 	const Uint32 unicode;
-
-	void ToLuaTable(lua_State *l) const;
 };
 
 class MouseEvent : public Event {
@@ -112,16 +105,12 @@ public:
 	MouseButtonEvent(Action _action, ButtonType _button, const Point &_pos) : MouseEvent(Event::MOUSE_BUTTON, _pos), action(_action), button(_button) {}
 	const Action action;
 	const ButtonType button;
-
-	void ToLuaTable(lua_State *l) const;
 };
 
 class MouseMotionEvent : public MouseEvent {
 public:
 	MouseMotionEvent(const Point &_pos, const Point &_rel) : MouseEvent(Event::MOUSE_MOTION, _pos), rel(_rel) {}
 	const Point rel;
-
-	void ToLuaTable(lua_State *l) const;
 };
 
 class MouseWheelEvent : public MouseEvent {
@@ -132,8 +121,6 @@ public:
 	};
 	MouseWheelEvent(WheelDirection _direction, const Point &_pos) : MouseEvent(Event::MOUSE_WHEEL, _pos), direction(_direction) {}
 	WheelDirection direction;
-
-	void ToLuaTable(lua_State *l) const;
 };
 
 class JoystickEvent : public Event {
@@ -151,8 +138,6 @@ public:
 
 	JoystickAxisMotionEvent(SDL_JoystickID _joystick, float _value, int _axis):
 		JoystickEvent(Event::JOYSTICK_AXIS_MOTION, _joystick), value(_value), axis(_axis) {}
-
-	void ToLuaTable(lua_State *l) const;
 };
 
 class JoystickHatMotionEvent : public JoystickEvent {
@@ -174,8 +159,6 @@ public:
 
 	JoystickHatMotionEvent(SDL_JoystickID _joystick, JoystickHatDirection _direction, int _hat):
 		JoystickEvent(Event::JOYSTICK_HAT_MOTION, _joystick), direction(_direction), hat(_hat) {}
-
-	void ToLuaTable(lua_State *l) const;
 };
 
 class JoystickButtonEvent : public JoystickEvent {
@@ -190,8 +173,6 @@ public:
 
 	JoystickButtonEvent(SDL_JoystickID _joystick, Action _action, int _button):
 		JoystickEvent(Event::JOYSTICK_BUTTON, _joystick), action(_action), button(_button) {}
-
-	void ToLuaTable(lua_State *l) const;
 };
 
 }

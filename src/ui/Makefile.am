@@ -5,9 +5,6 @@ AM_CPPFLAGS += $(WARN_CPPFLAGS)
 AM_CXXFLAGS += $(STD_CXXFLAGS) $(WARN_CXXFLAGS)
 
 AM_CPPFLAGS += -isystem $(top_srcdir)/contrib -I$(srcdir)/..
-if !HAVE_LUA
-AM_CPPFLAGS += -isystem $(top_srcdir)/contrib/lua
-endif
 
 noinst_LIBRARIES = libui.a
 noinst_HEADERS = \
@@ -33,8 +30,6 @@ noinst_HEADERS = \
 	Label.h \
 	Layer.h \
 	List.h \
-	Lua.h \
-	LuaSignal.h \
 	Margin.h \
 	MousePointer.h \
 	MultiLineText.h \
@@ -57,7 +52,6 @@ libui_a_SOURCES = \
 	Background.cpp \
 	Box.cpp \
 	Button.cpp \
-	CellSpec.cpp \
 	CheckBox.cpp \
 	ColorBackground.cpp \
 	Container.cpp \
@@ -85,34 +79,4 @@ libui_a_SOURCES = \
 	Table.cpp \
 	TextEntry.cpp \
 	TextLayout.cpp \
-	Widget.cpp \
-	Lua.cpp \
-	LuaAnimation.cpp \
-	LuaAlign.cpp \
-	LuaBackground.cpp \
-	LuaBox.cpp \
-	LuaButton.cpp \
-	LuaCheckBox.cpp \
-	LuaColorBackground.cpp \
-	LuaContainer.cpp \
-	LuaContext.cpp \
-	LuaDropDown.cpp \
-	LuaGradient.cpp \
-	LuaExpand.cpp \
-	LuaGauge.cpp \
-	LuaGrid.cpp \
-	LuaIcon.cpp \
-	LuaImage.cpp \
-	LuaLabel.cpp \
-	LuaLayer.cpp \
-	LuaList.cpp \
-	LuaMargin.cpp \
-	LuaMultiLineText.cpp \
-	LuaNumberLabel.cpp \
-	LuaScroller.cpp \
-	LuaSingle.cpp \
-	LuaSlider.cpp \
-	LuaSmallButton.cpp \
-	LuaTable.cpp \
-	LuaTextEntry.cpp \
-	LuaWidget.cpp
+	Widget.cpp

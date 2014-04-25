@@ -2,7 +2,6 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Game.h"
-#include "Factions.h"
 #include "Space.h"
 #include "Player.h"
 #include "Body.h"
@@ -19,8 +18,6 @@
 #include "SystemView.h"
 #include "SystemInfoView.h"
 #include "UIView.h"
-#include "LuaEvent.h"
-#include "LuaRef.h"
 #include "ObjectViewerView.h"
 #include "FileSystem.h"
 #include "graphics/Renderer.h"
@@ -50,8 +47,6 @@ Game::Game(const SystemPath &path, double time) :
 	m_player->SetFrame(station->GetFrame());
 	m_player->SetDockedWith(station, 0);
 
-	Polit::Init();
-
 	CreateViews();
 }
 
@@ -77,8 +72,6 @@ Game::Game(const SystemPath &path, const vector3d &pos, double time) :
 
 	m_player->SetPosition(pos);
 	m_player->SetVelocity(vector3d(0,0,0));
-
-	Polit::Init();
 
 	CreateViews();
 }
@@ -130,10 +123,6 @@ Game::Game(Serializer::Reader &rd) :
 
 	Serializer::Reader section;
 
-	// Preparing the Lua stuff
-	LuaRef::InitLoad();
-	Pi::luaSerializer->InitTableRefs();
-
 	// game state
 	section = rd.RdSection("Game");
 	m_time = section.Double();
@@ -157,21 +146,9 @@ Game::Game(Serializer::Reader &rd) :
 	for (Uint32 i = 0; i < nclouds; i++)
 		m_hyperspaceClouds.push_back(static_cast<HyperspaceCloud*>(Body::Unserialize(section, 0)));
 
-	// system political stuff
-	section = rd.RdSection("Polit");
-	Polit::Unserialize(section);
-
-
 	// views
 	LoadViews(rd);
 
-
-	// lua
-	section = rd.RdSection("LuaModules");
-	Pi::luaSerializer->Unserialize(section);
-
-	Pi::luaSerializer->UninitTableRefs();
-	LuaRef::UninitLoad();
 	// signature check
 	for (Uint32 i = 0; i < strlen(s_saveEnd)+1; i++)
 		if (rd.Byte() != s_saveEnd[i]) throw SavedGameCorruptException();
@@ -179,8 +156,6 @@ Game::Game(Serializer::Reader &rd) :
 
 void Game::Serialize(Serializer::Writer &wr)
 {
-	// preparing the lua serializer
-	Pi::luaSerializer->InitTableRefs();
 	// leading signature
 	for (Uint32 i = 0; i < strlen(s_saveStart)+1; i++)
 		wr.Byte(s_saveStart[i]);
@@ -219,13 +194,6 @@ void Game::Serialize(Serializer::Writer &wr)
 
 	wr.WrSection("HyperspaceClouds", section.GetData());
 
-
-	// system political data (crime etc)
-	section = Serializer::Writer();
-	Polit::Serialize(section);
-	wr.WrSection("Polit", section.GetData());
-
-
 	// views. must be saved in init order
 	section = Serializer::Writer();
 	Pi::cpan->Save(section);
@@ -239,18 +207,9 @@ void Game::Serialize(Serializer::Writer &wr)
 	Pi::worldView->Save(section);
 	wr.WrSection("WorldView", section.GetData());
 
-
-	// lua
-	section = Serializer::Writer();
-	Pi::luaSerializer->Serialize(section);
-	wr.WrSection("LuaModules", section.GetData());
-
-
 	// trailing signature
 	for (Uint32 i = 0; i < strlen(s_saveEnd)+1; i++)
 		wr.Byte(s_saveEnd[i]);
-
-	Pi::luaSerializer->UninitTableRefs();
 }
 
 void Game::TimeStep(float step)
@@ -556,8 +515,6 @@ void Game::SwitchToNormalSpace()
 			}
 
 			m_space->AddBody(ship);
-
-			LuaEvent::Queue("onEnterSystem", ship);
 		}
 	}
 	m_hyperspaceClouds.clear();
