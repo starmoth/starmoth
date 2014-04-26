@@ -9,6 +9,7 @@
  */
 #include "libs.h"
 #include "Uniform.h"
+#include "Attribute.h"
 
 namespace Graphics {
 
@@ -25,8 +26,18 @@ namespace Graphics {
 			virtual void Use();
 			virtual void Unuse();
 
-			// Some generic uniforms.
-			// to be added: matrices etc.
+			// Attributes
+			Attribute a_vertex;
+			Attribute a_normal;
+			Attribute a_color;
+
+			// Uniforms.
+			Uniform uProjectionMatrix;
+			Uniform uViewMatrix;
+			Uniform uViewMatrixInverse;
+			Uniform uViewProjectionMatrix;
+			Uniform uNormalMatrix;
+
 			Uniform invLogZfarPlus1;
 			Uniform diffuse;
 			Uniform emission;

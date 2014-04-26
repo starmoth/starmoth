@@ -125,6 +125,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\src\graphics\Drawables.cpp" />
     <ClCompile Include="..\..\..\src\graphics\Frustum.cpp" />
+    <ClCompile Include="..\..\..\src\graphics\gl\Attribute.cpp" />
     <ClCompile Include="..\..\..\src\graphics\gl\FresnelColourMaterial.cpp" />
     <ClCompile Include="..\..\..\src\graphics\gl\GasGiantMaterial.cpp" />
     <ClCompile Include="..\..\..\src\graphics\gl\GeoSphereMaterial.cpp" />
@@ -159,6 +160,7 @@
     <ClInclude Include="..\..\..\src\graphics\Drawables.h" />
     <ClInclude Include="..\..\..\src\graphics\Frustum.h" />
     <ClInclude Include="..\..\..\src\graphics\GLDebug.h" />
+    <ClInclude Include="..\..\..\src\graphics\gl\Attribute.h" />
     <ClInclude Include="..\..\..\src\graphics\gl\FresnelColourMaterial.h" />
     <ClInclude Include="..\..\..\src\graphics\gl\GasGiantMaterial.h" />
     <ClInclude Include="..\..\..\src\graphics\gl\GeoSphereMaterial.h" />

@@ -197,7 +197,17 @@ void Program::LoadShaders(const std::string &name, const std::string &defines)
 
 void Program::InitUniforms()
 {
+	Attribute a_vertex;
+	Attribute a_normal;
+	Attribute a_color;
+
 	//Init generic uniforms, like matrices
+	uProjectionMatrix.Init("uProjectionMatrix", m_program);
+	uViewMatrix.Init("uViewMatrix", m_program);
+	uViewMatrixInverse.Init("uViewMatrixInverse", m_program);
+	uViewProjectionMatrix.Init("uViewProjectionMatrix", m_program);
+	uNormalMatrix.Init("uNormalMatrix", m_program);
+
 	invLogZfarPlus1.Init("invLogZfarPlus1", m_program);
 	diffuse.Init("material.diffuse", m_program);
 	emission.Init("material.emission", m_program);
