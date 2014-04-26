@@ -46,7 +46,7 @@ MultiProgram::MultiProgram(const MaterialDescriptor &desc, int lights)
 	m_defines = ss.str();
 
 	LoadShaders(m_name, m_defines);
-	InitUniforms();
+	InitShaderLocations();
 }
 
 LitMultiMaterial::LitMultiMaterial()

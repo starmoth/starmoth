@@ -22,12 +22,12 @@ ShieldProgram::ShieldProgram(const MaterialDescriptor &desc)
 	m_defines = ss.str();
 
 	LoadShaders(m_name, m_defines);
-	InitUniforms();
+	InitShaderLocations();
 }
 
-void ShieldProgram::InitUniforms()
+void ShieldProgram::InitShaderLocations()
 {
-	Program::InitUniforms();
+	Program::InitShaderLocations();
 
 	shieldStrength.Init("shieldStrength", m_program);
 	shieldCooldown.Init("shieldCooldown", m_program);

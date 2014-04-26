@@ -146,7 +146,7 @@ Program::Program(const std::string &name, const std::string &defines)
 , m_program(0)
 {
 	LoadShaders(name, defines);
-	InitUniforms();
+	InitShaderLocations();
 }
 
 Program::~Program()
@@ -159,7 +159,7 @@ void Program::Reload()
 	Unuse();
 	glDeleteProgram(m_program);
 	LoadShaders(m_name, m_defines);
-	InitUniforms();
+	InitShaderLocations();
 }
 
 void Program::Use()
@@ -195,11 +195,11 @@ void Program::LoadShaders(const std::string &name, const std::string &defines)
 	//shaders may now be deleted by Shader destructor
 }
 
-void Program::InitUniforms()
+void Program::InitShaderLocations()
 {
-	Attribute a_vertex;
-	Attribute a_normal;
-	Attribute a_color;
+	aVertex.Init("a_vertex", m_program);
+	aNormal.Init("a_normal", m_program);
+	aColor.Init("a_color", m_program);
 
 	//Init generic uniforms, like matrices
 	uProjectionMatrix.Init("uProjectionMatrix", m_program);

@@ -17,12 +17,12 @@ GeoSphereProgram::GeoSphereProgram(const std::string &filename, const std::strin
 	m_name = filename;
 	m_defines = defines;
 	LoadShaders(filename, defines);
-	InitUniforms();
+	InitShaderLocations();
 }
 
-void GeoSphereProgram::InitUniforms()
+void GeoSphereProgram::InitShaderLocations()
 {
-	Program::InitUniforms();
+	Program::InitShaderLocations();
 	atmosColor.Init("atmosColor", m_program);
 	geosphereAtmosFogDensity.Init("geosphereAtmosFogDensity", m_program);
 	geosphereAtmosInvScaleHeight.Init("geosphereAtmosInvScaleHeight", m_program);

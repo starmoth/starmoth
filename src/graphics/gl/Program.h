@@ -27,9 +27,9 @@ namespace Graphics {
 			virtual void Unuse();
 
 			// Attributes
-			Attribute a_vertex;
-			Attribute a_normal;
-			Attribute a_color;
+			Attribute aVertex;
+			Attribute aNormal;
+			Attribute aColor;
 
 			// Uniforms.
 			Uniform uProjectionMatrix;
@@ -60,7 +60,7 @@ namespace Graphics {
 			static GLuint s_curProgram;
 
 			void LoadShaders(const std::string&, const std::string &defines);
-			virtual void InitUniforms();
+			virtual void InitShaderLocations();
 			std::string m_name;
 			std::string m_defines;
 			GLuint m_program;

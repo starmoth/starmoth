@@ -35,7 +35,7 @@ namespace Graphics {
 			Uniform sdivlrad;
 
 		protected:
-			virtual void InitUniforms();
+			virtual void InitShaderLocations();
 		};
 
 		class GasGiantSurfaceMaterial : public Material {

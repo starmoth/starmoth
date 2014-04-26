@@ -21,7 +21,7 @@ FresnelColourProgram::FresnelColourProgram(const MaterialDescriptor &desc, int l
 	m_defines = ss.str();
 
 	LoadShaders(m_name, m_defines);
-	InitUniforms();
+	InitShaderLocations();
 }
 
 Program *FresnelColourMaterial::CreateProgram(const MaterialDescriptor &desc)

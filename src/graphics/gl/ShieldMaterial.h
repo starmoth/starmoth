@@ -25,7 +25,7 @@ namespace Graphics {
 			Uniform radii[MAX_SHIELD_HITS];
 			Uniform numHits;
 		protected:
-			virtual void InitUniforms();
+			virtual void InitShaderLocations();
 		};
 
 		class ShieldMaterial : public Material { //unlit

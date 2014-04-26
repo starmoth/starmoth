@@ -18,12 +18,12 @@ GasGiantProgram::GasGiantProgram(const std::string &filename, const std::string 
 	m_name = filename;
 	m_defines = defines;
 	LoadShaders(filename, defines);
-	InitUniforms();
+	InitShaderLocations();
 }
 
-void GasGiantProgram::InitUniforms()
+void GasGiantProgram::InitShaderLocations()
 {
-	Program::InitUniforms();
+	Program::InitShaderLocations();
 	atmosColor.Init("atmosColor", m_program);
 	geosphereAtmosFogDensity.Init("geosphereAtmosFogDensity", m_program);
 	geosphereAtmosInvScaleHeight.Init("geosphereAtmosInvScaleHeight", m_program);
