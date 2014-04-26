@@ -16,7 +16,6 @@
 #include "galaxy/StarSystem.h"
 #include "DynamicBody.h"
 #include "EquipType.h"
-#include "Factions.h"
 #include "FileSystem.h"
 #include "fixed.h"
 #include "Frame.h"

@@ -51,66 +51,6 @@
     <ClCompile Include="..\..\src\KeyBindings.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\LuaBody.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaCargoBody.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaConstants.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaEngine.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaFormat.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaGame.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaManager.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaNameGen.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaObject.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaPlanet.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaPlayer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaRand.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaSerializer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaShip.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaSpace.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaSpaceStation.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaStar.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaStarSystem.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaTimer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaUtils.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -133,9 +73,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Player.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Polit.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Projectile.cpp">
@@ -198,12 +135,6 @@
     <ClCompile Include="..\..\src\SoundMusic.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\LuaMusic.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaSystemPath.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\FormController.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -211,12 +142,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\StringF.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaConsole.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaLang.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\TerrainBody.cpp">
@@ -261,21 +186,6 @@
     <ClCompile Include="..\..\src\ModManager.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\LuaFixed.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaMatrix.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaVector.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaSystemBody.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaComms.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\win32\FileSystemWin32.cpp">
       <Filter>src\win32</Filter>
     </ClCompile>
@@ -294,34 +204,13 @@
     <ClCompile Include="..\..\src\win32\WinMath.cpp">
       <Filter>src\win32</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\LuaEvent.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaFileSystem.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Lua.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaRef.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Factions.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\DeathView.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaDev.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Intro.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Tombstone.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaFaction.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\PngWriter.cpp">
@@ -345,22 +234,10 @@
     <ClCompile Include="..\..\src\EnumStrings.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\LuaMissile.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaEquipDef.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaShipDef.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\NavLights.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Orbit.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaPropertiedObject.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\GeoPatchID.cpp">
@@ -400,9 +277,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\ShipCockpit.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LuaModelBody.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\HudTrail.cpp">
@@ -482,45 +356,6 @@
     <ClInclude Include="..\..\src\libs.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\LuaEquipDef.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaConstants.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaEngine.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaFormat.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaGame.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaManager.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaNameGen.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaObject.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaSerializer.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaShipDef.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaSpace.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaTimer.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaUtils.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\matrix4x4.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -549,9 +384,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Player.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Polit.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Projectile.h">
@@ -623,19 +455,10 @@
     <ClInclude Include="..\..\src\SoundMusic.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\LuaMusic.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\FormController.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\LuaConsole.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\StringF.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaLang.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\TerrainBody.h">
@@ -686,18 +509,6 @@
     <ClInclude Include="..\..\src\ModManager.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\LuaVector.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaFixed.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaMatrix.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaComms.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\win32\pch.h">
       <Filter>src\win32</Filter>
     </ClInclude>
@@ -710,34 +521,10 @@
     <ClInclude Include="..\..\src\win32\WinMath.h">
       <Filter>src\win32</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\LuaEvent.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaFileSystem.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Lua.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\AnimationCurves.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\LuaRef.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaTable.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaPushPull.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Factions.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\DeathView.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaDev.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Intro.h">
@@ -770,13 +557,7 @@
     <ClInclude Include="..\..\src\EnumStrings.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\LuaMissile.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Random.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\LuaWrappable.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\NavLights.h">
