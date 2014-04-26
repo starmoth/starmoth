@@ -10,6 +10,12 @@
 
 // including sigc++ directly so we don't get circular dependencies
 #include <sigc++/sigc++.h>
+#ifndef PI_SIGC_LAMBDA_SUPPORT_ENABLED
+namespace sigc {
+	SIGC_FUNCTORS_DEDUCE_RESULT_TYPE_WITH_DECLTYPE
+}
+#define PI_SIGC_LAMBDA_SUPPORT_ENABLED 1
+#endif
 
 class DeleteEmitter {
 public:
