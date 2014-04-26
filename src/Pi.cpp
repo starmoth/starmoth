@@ -797,8 +797,10 @@ void Pi::Start()
 {
 	Pi::intro = new Intro(Pi::renderer, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
 
+	auto b = ui->Button()->SetInnerWidget(ui->Label("Start"));
 	ui->DropAllLayers();
-    // XXX menu
+	ui->GetTopLayer()->SetInnerWidget(b);
+	b->onClick.connect([]{ Pi::game = new Game(SystemPath(0,0,0,0,1)); return false; });
 
 	Pi::ui->SetMousePointer("icons/cursors/mouse_cursor_2.png", UI::Point(15, 8));
 
