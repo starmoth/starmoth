@@ -11,11 +11,9 @@
 
 #include "Aabb.h"
 #include "Body.h"
-#include "CargoBody.h"
 #include "galaxy/Sector.h"
 #include "galaxy/StarSystem.h"
 #include "DynamicBody.h"
-#include "EquipType.h"
 #include "FileSystem.h"
 #include "fixed.h"
 #include "Frame.h"

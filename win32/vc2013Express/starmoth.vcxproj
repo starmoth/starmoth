@@ -173,7 +173,6 @@
     <ClCompile Include="..\..\src\Body.cpp" />
     <ClCompile Include="..\..\src\Camera.cpp" />
     <ClCompile Include="..\..\src\CameraController.cpp" />
-    <ClCompile Include="..\..\src\CargoBody.cpp" />
     <ClCompile Include="..\..\src\CityOnPlanet.cpp" />
     <ClCompile Include="..\..\src\Color.cpp" />
     <ClCompile Include="..\..\src\CRC32.cpp" />
@@ -181,7 +180,6 @@
     <ClCompile Include="..\..\src\DynamicBody.cpp" />
     <ClCompile Include="..\..\src\EnumStrings.cpp" />
     <ClCompile Include="..\..\src\enum_table.cpp" />
-    <ClCompile Include="..\..\src\EquipType.cpp" />
     <ClCompile Include="..\..\src\FaceGenManager.cpp" />
     <ClCompile Include="..\..\src\FileSourceZip.cpp" />
     <ClCompile Include="..\..\src\FileSystem.cpp" />
@@ -231,7 +229,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\..\src\Projectile.cpp" />
     <ClCompile Include="..\..\src\PropertyMap.cpp" />
     <ClCompile Include="..\..\src\SDLWrappers.cpp" />
     <ClCompile Include="..\..\src\SectorView.cpp" />
@@ -245,7 +242,6 @@
     <ClCompile Include="..\..\src\ShipCockpit.cpp" />
     <ClCompile Include="..\..\src\ShipController.cpp" />
     <ClCompile Include="..\..\src\ShipCpanel.cpp" />
-    <ClCompile Include="..\..\src\ShipCpanelMultiFuncDisplays.cpp" />
     <ClCompile Include="..\..\src\ShipType.cpp" />
     <ClCompile Include="..\..\src\Sound.cpp" />
     <ClCompile Include="..\..\src\SoundMusic.cpp" />
@@ -285,7 +281,6 @@
     <ClInclude Include="..\..\src\ByteRange.h" />
     <ClInclude Include="..\..\src\Camera.h" />
     <ClInclude Include="..\..\src\CameraController.h" />
-    <ClInclude Include="..\..\src\CargoBody.h" />
     <ClInclude Include="..\..\src\CityOnPlanet.h" />
     <ClInclude Include="..\..\src\Color.h" />
     <ClInclude Include="..\..\src\CRC32.h" />
@@ -294,8 +289,6 @@
     <ClInclude Include="..\..\src\DynamicBody.h" />
     <ClInclude Include="..\..\src\EnumStrings.h" />
     <ClInclude Include="..\..\src\enum_table.h" />
-    <ClInclude Include="..\..\src\EquipSet.h" />
-    <ClInclude Include="..\..\src\EquipType.h" />
     <ClInclude Include="..\..\src\FaceGenManager.h" />
     <ClInclude Include="..\..\src\FileSourceZip.h" />
     <ClInclude Include="..\..\src\FileSystem.h" />
@@ -339,7 +332,6 @@
     <ClInclude Include="..\..\src\Planet.h" />
     <ClInclude Include="..\..\src\Player.h" />
     <ClInclude Include="..\..\src\PngWriter.h" />
-    <ClInclude Include="..\..\src\Projectile.h" />
     <ClInclude Include="..\..\src\PropertiedObject.h" />
     <ClInclude Include="..\..\src\PropertyMap.h" />
     <ClInclude Include="..\..\src\Quaternion.h" />
@@ -356,7 +348,6 @@
     <ClInclude Include="..\..\src\ShipCockpit.h" />
     <ClInclude Include="..\..\src\ShipController.h" />
     <ClInclude Include="..\..\src\ShipCpanel.h" />
-    <ClInclude Include="..\..\src\ShipCpanelMultiFuncDisplays.h" />
     <ClInclude Include="..\..\src\ShipType.h" />
     <ClInclude Include="..\..\src\SmartPtr.h" />
     <ClInclude Include="..\..\src\Sound.h" />

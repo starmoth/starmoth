@@ -18,16 +18,10 @@
     <ClCompile Include="..\..\src\Body.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\CargoBody.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\CityOnPlanet.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\DynamicBody.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\EquipType.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Frame.cpp">
@@ -75,9 +69,6 @@
     <ClCompile Include="..\..\src\Player.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Projectile.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\SectorView.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -97,9 +88,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\ShipCpanel.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\ShipCpanelMultiFuncDisplays.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\ShipType.cpp">
@@ -255,9 +243,6 @@
     <ClCompile Include="..\..\src\GeoPatchJobs.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\LuaPropertiedObject.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\PropertyMap.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -308,9 +293,6 @@
     <ClInclude Include="..\..\src\buildopts.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\CargoBody.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\CityOnPlanet.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -321,9 +303,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\DynamicBody.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\EquipType.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\fixed.h">
@@ -386,9 +365,6 @@
     <ClInclude Include="..\..\src\Player.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Projectile.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Quaternion.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -411,9 +387,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ShipCpanel.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\ShipCpanelMultiFuncDisplays.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ShipType.h">
@@ -600,9 +573,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Shields.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\EquipSet.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\SpeedLines.h">
