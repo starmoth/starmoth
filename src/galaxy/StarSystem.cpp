@@ -1857,6 +1857,7 @@ static std::string gen_unique_station_name(SystemBody *sp, const StarSystem *sys
 	int i = 1;
 	do {
 		name = "Random Station " + i; // XXX namegen
+		i++;
 	} while (!check_unique_station_name(name, system));
 	return name;
 }
