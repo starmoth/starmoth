@@ -10,8 +10,10 @@ namespace Graphics { namespace PiGL {
 class GLBufferBase {
 public:
 	GLuint GetBuffer() const { return m_buffer; }
+	GLuint GetVAO() const { return m_vao; }
 
 protected:
+	GLuint m_vao;
 	GLuint m_buffer;
 };
 

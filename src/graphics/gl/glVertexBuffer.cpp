@@ -60,6 +60,9 @@ VertexBuffer::VertexBuffer(const VertexBufferDesc &desc)
 
 	SetVertexCount(m_desc.numVertices);
 
+	glGenVertexArrays(1, &m_vao);
+	glBindVertexArray(m_vao);
+
 	glGenBuffers(1, &m_buffer);
 
 	//Allocate initial data store
