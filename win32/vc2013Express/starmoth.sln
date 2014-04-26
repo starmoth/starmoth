@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Express 2013 for Windows Desktop
 VisualStudioVersion = 12.0.30110.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pioneer", "pioneer.vcxproj", "{65A1BBFB-7A42-497C-BF65-A0A06664A204}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "starmoth", "starmoth.vcxproj", "{65A1BBFB-7A42-497C-BF65-A0A06664A204}"
 	ProjectSection(ProjectDependencies) = postProject
 		{FFDC1809-F67B-4933-B4E0-5298EA5DDB7E} = {FFDC1809-F67B-4933-B4E0-5298EA5DDB7E}
 		{82973C2C-FC40-4320-84AE-A47E36868C02} = {82973C2C-FC40-4320-84AE-A47E36868C02}

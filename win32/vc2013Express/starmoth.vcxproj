@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{65A1BBFB-7A42-497C-BF65-A0A06664A204}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>pioneer</RootNamespace>
+    <RootNamespace>starmoth</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
