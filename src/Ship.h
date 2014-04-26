@@ -7,7 +7,6 @@
 #include "libs.h"
 #include "Camera.h"
 #include "DynamicBody.h"
-#include "EquipSet.h"
 #include "galaxy/SystemPath.h"
 #include "HudTrail.h"
 #include "NavLights.h"
@@ -24,7 +23,6 @@ class SpaceStation;
 class HyperspaceCloud;
 class AICommand;
 class ShipController;
-class CargoBody;
 class Missile;
 namespace Graphics { class Renderer; }
 
@@ -35,22 +33,10 @@ struct HeatGradientParameters_t {
 };
 
 struct shipstats_t {
-	int used_capacity;
-	int used_cargo;
-	int free_capacity;
-	int total_mass; // cargo, equipment + hull
+	int total_mass; // hull
 	float hull_mass_left; // effectively hitpoints
 	float hyperspace_range;
 	float hyperspace_range_max;
-	float shield_mass;
-	float shield_mass_left;
-	float fuel_tank_mass_left;
-};
-
-class SerializableEquipSet: public EquipSet {
-public:
-	void Save(Serializer::Writer &wr);
-	void Load(Serializer::Reader &rd);
 };
 
 class Ship: public DynamicBody {
@@ -78,7 +64,6 @@ public:
 	virtual void Render(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform);
 
 	void SetThrusterState(int axis, double level) {
-		if (m_thrusterFuel <= 0.f) level = 0.0;
 		m_thrusters[axis] = Clamp(level, -1.0, 1.0);
 	}
 	void SetThrusterState(const vector3d &levels);
@@ -94,13 +79,9 @@ public:
 	double GetAccelUp() const { return m_type->linThrust[ShipType::THRUSTER_UP] / GetMass(); }
 	double GetAccelMin() const;
 
-	void UpdateEquipStats();
-	void UpdateFuelStats();
-	void UpdateStats();
 	const shipstats_t &GetStats() const { return m_stats; }
 
 	void Explode();
-	void SetGunState(int idx, int state);
 	void UpdateMass();
 	virtual bool SetWheelState(bool down); // returns success of state change, NOT state itself
 	void Blastoff();
@@ -129,7 +110,6 @@ public:
 	void SetFlightState(FlightState s);
 	float GetWheelState() const { return m_wheelState; }
 	int GetWheelTransition() const { return m_wheelTransition; }
-	bool SpawnCargo(CargoBody * c_body) const;
 
 	virtual bool IsInSpace() const { return (m_flightState != HYPERSPACE); }
 
@@ -144,17 +124,15 @@ public:
 		HYPERJUMP_INITIATED,
 		HYPERJUMP_DRIVE_ACTIVE,
 		HYPERJUMP_OUT_OF_RANGE,
-		HYPERJUMP_INSUFFICIENT_FUEL,
 		HYPERJUMP_SAFETY_LOCKOUT
 	};
 
-	HyperjumpStatus GetHyperspaceDetails(const SystemPath &src, const SystemPath &dest, int &outFuelRequired, double &outDurationSecs);
-	HyperjumpStatus GetHyperspaceDetails(const SystemPath &dest, int &outFuelRequired, double &outDurationSecs);
-	HyperjumpStatus CheckHyperspaceTo(const SystemPath &dest, int &outFuelRequired, double &outDurationSecs);
+	HyperjumpStatus GetHyperspaceDetails(const SystemPath &src, const SystemPath &dest, double &outDurationSecs);
+	HyperjumpStatus GetHyperspaceDetails(const SystemPath &dest, double &outDurationSecs);
+	HyperjumpStatus CheckHyperspaceTo(const SystemPath &dest, double &outDurationSecs);
 	HyperjumpStatus CheckHyperspaceTo(const SystemPath &dest) {
-		int unusedFuel;
 		double unusedDuration;
-		return CheckHyperspaceTo(dest, unusedFuel, unusedDuration);
+		return CheckHyperspaceTo(dest, unusedDuration);
 	}
 	bool CanHyperspaceTo(const SystemPath &dest, HyperjumpStatus &status) {
 		status = CheckHyperspaceTo(dest);
@@ -170,18 +148,9 @@ public:
 	bool IsHyperspaceActive() const { return (m_hyperspace.countdown > 0.0); }
 	virtual void ResetHyperspaceCountdown();
 
-	Equip::Type GetHyperdriveFuelType() const;
 	// 0 to 1.0 is alive, > 1.0 = death
 	double GetHullTemperature() const;
-	void UseECM();
 	virtual Missile * SpawnMissile(ShipType::Id missile_type, int power=-1);
-
-	enum AlertState { // <enum scope='Ship' name=ShipAlertStatus prefix=ALERT_ public>
-		ALERT_NONE,
-		ALERT_SHIP_NEARBY,
-		ALERT_SHIP_FIRING,
-	};
-	AlertState GetAlertState() { return m_alertState; }
 
 	bool AIMatchVel(const vector3d &vel);
 	bool AIChangeVelBy(const vector3d &diffvel);		// acts in obj space
@@ -189,7 +158,6 @@ public:
 	void AIMatchAngVelObjSpace(const vector3d &angvel);
 	double AIFaceUpdir(const vector3d &updir, double av=0);
 	double AIFaceDirection(const vector3d &dir, double av=0);
-	vector3d AIGetLeadDir(const Body *target, const vector3d& targaccel, int gunindex=0);
 	double AITravelTime(const vector3d &reldir, double targdist, const vector3d &relvel, double endspeed, double maxdecel);
 
 	// old stuff, deprecated
@@ -210,7 +178,6 @@ public:
 	AIError AIMessage(AIError msg=AIERROR_NONE) { AIError tmp = m_aiMessage; m_aiMessage = msg; return tmp; }
 
 	void AIKamikaze(Body *target);
-	void AIKill(Ship *target);
 	//void AIJourney(SystemBodyPath &dest);
 	void AIDock(SpaceStation *target);
 	void AIFlyTo(Body *target);
@@ -218,8 +185,6 @@ public:
 	void AIHoldPosition();
 
 	void AIBodyDeleted(const Body* const body) {};		// todo: signals
-
-	SerializableEquipSet m_equipment;			// shouldn't be public?...
 
 	virtual void PostLoadFixup(Space *space);
 
@@ -231,26 +196,8 @@ public:
 
 	void SetLabel(const std::string &label);
 
-	float GetPercentShields() const;
 	float GetPercentHull() const;
 	void SetPercentHull(float);
-	float GetGunTemperature(int idx) const { return m_gun[idx].temperature; }
-
-	enum FuelState { // <enum scope='Ship' name=ShipFuelStatus prefix=FUEL_ public>
-		FUEL_OK,
-		FUEL_WARNING,
-		FUEL_EMPTY,
-	};
-	FuelState GetFuelState() { return m_thrusterFuel > 0.05f ? FUEL_OK : m_thrusterFuel > 0.0f ? FUEL_WARNING : FUEL_EMPTY; }
-
-	// fuel left, 0.0-1.0
-	double GetFuel() const { return m_thrusterFuel;	}
-	void SetFuel(const double f);
-	double GetFuelReserve() const { return m_reserveFuel; }
-	void SetFuelReserve(const double f) { m_reserveFuel = Clamp(f, 0.0, 1.0); }
-
-	// available delta-V given the ship's current fuel state
-	double GetSpeedReachedWithFuel() const;
 
 	void EnterSystem();
 
@@ -280,45 +227,26 @@ protected:
 
 	bool AITimeStep(float timeStep); // Called by controller. Returns true if complete
 
-	virtual void SetAlertState(AlertState as);
-
 	virtual void OnEnterHyperspace();
 	virtual void OnEnterSystem();
 
 	SpaceStation *m_dockedWith;
 	int m_dockedWithPort;
 
-	struct Gun {
-		vector3f pos;
-		vector3f dir;
-		Uint32 state;
-		float recharge;
-		float temperature;
-	};
-	Gun m_gun[ShipType::GUNMOUNT_MAX];
-
-	float m_ecmRecharge;
-
 	ShipController *m_controller;
 
 private:
-	float GetECMRechargeTime();
 	void DoThrusterSounds() const;
 	void FireWeapon(int num);
 	void Init();
 	bool IsFiringLasers();
 	void TestLanded();
-	void UpdateAlertState();
-	void UpdateFuel(float timeStep, const vector3d &thrust);
     void SetShipId(const ShipType::Id &shipId);
 	void EnterHyperspace();
-	void InitGun(const char *tag, int num);
 	void InitMaterials();
 
 	bool m_invulnerable;
 
-	static const float DEFAULT_SHIELD_COOLDOWN_TIME;
-	float m_shieldCooldown;
 	shipstats_t m_stats;
 	const ShipType *m_type;
 	SceneGraph::ModelSkin m_skin;
@@ -332,15 +260,11 @@ private:
 	vector3d m_thrusters;
 	vector3d m_angThrusters;
 
-	AlertState m_alertState;
-	double m_lastFiringAlert;
-
 	struct HyperspacingOut {
 		SystemPath dest;
 		// > 0 means active
 		float countdown;
 		bool now;
-		bool ignoreFuel; // XXX: To remove once the fuel handling is out of the core
 		double duration;
 	} m_hyperspace;
 	HyperspaceCloud *m_hyperspaceCloud;
@@ -348,9 +272,6 @@ private:
 	AICommand *m_curAICmd;
 	AIError m_aiMessage;
 	bool m_decelerating;
-
-	double m_thrusterFuel; 	// remaining fuel 0.0-1.0
-	double m_reserveFuel;	// 0-1, fuel not to touch for the current AI program
 
 	double m_landingMinOffset;	// offset from the centre of the ship used during docking
 

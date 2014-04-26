@@ -1239,11 +1239,10 @@ SystemBody::AtmosphereParameters SystemBody::CalcAtmosphereParams() const
  * We must be sneaky and avoid floating point in these places.
  */
 StarSystem::StarSystem(const SystemPath &path) : m_path(path), m_numStars(0),
-	m_unexplored(false), m_econType(0), m_seed(0)
+	m_unexplored(false), m_seed(0)
 {
 	PROFILE_SCOPED()
 	assert(path.IsSystemPath());
-	memset(m_tradeLevel, 0, sizeof(m_tradeLevel));
 
 	RefCountedPtr<const Sector> s = Sector::cache.GetCached(m_path);
 	assert(m_path.systemIndex >= 0 && m_path.systemIndex < s->m_systems.size());
@@ -1810,236 +1809,35 @@ void SystemBody::PickPlanetType(Random &rand)
 	PickRings();
 }
 
-void StarSystem::MakeShortDescription(Random &rand)
-{
-	PROFILE_SCOPED()
-	m_econType = 0;
-	if ((m_industrial > m_metallicity) && (m_industrial > m_agricultural)) {
-		m_econType = ECON_INDUSTRY;
-	} else if (m_metallicity > m_agricultural) {
-		m_econType = ECON_MINING;
-	} else {
-		m_econType = ECON_AGRICULTURE;
-	}
-
-	if (m_unexplored) {
-		m_shortDesc = Lang::UNEXPLORED_SYSTEM_NO_DATA;
-	}
-
-	/* Total population is in billions */
-	else if(m_totalPop == 0) {
-		m_shortDesc = Lang::SMALL_SCALE_PROSPECTING_NO_SETTLEMENTS;
-	} else if (m_totalPop < fixed(1,10)) {
-		switch (m_econType) {
-			case ECON_INDUSTRY: m_shortDesc = Lang::SMALL_INDUSTRIAL_OUTPOST; break;
-			case ECON_MINING: m_shortDesc = Lang::SOME_ESTABLISHED_MINING; break;
-			case ECON_AGRICULTURE: m_shortDesc = Lang::YOUNG_FARMING_COLONY; break;
-		}
-	} else if (m_totalPop < fixed(1,2)) {
-		switch (m_econType) {
-			case ECON_INDUSTRY: m_shortDesc = Lang::INDUSTRIAL_COLONY; break;
-			case ECON_MINING: m_shortDesc = Lang::MINING_COLONY; break;
-			case ECON_AGRICULTURE: m_shortDesc = Lang::OUTDOOR_AGRICULTURAL_WORLD; break;
-		}
-	} else if (m_totalPop < fixed(5,1)) {
-		switch (m_econType) {
-			case ECON_INDUSTRY: m_shortDesc = Lang::HEAVY_INDUSTRY; break;
-			case ECON_MINING: m_shortDesc = Lang::EXTENSIVE_MINING; break;
-			case ECON_AGRICULTURE: m_shortDesc = Lang::THRIVING_OUTDOOR_WORLD; break;
-		}
-	} else {
-		switch (m_econType) {
-			case ECON_INDUSTRY: m_shortDesc = Lang::INDUSTRIAL_HUB_SYSTEM; break;
-			case ECON_MINING: m_shortDesc = Lang::VAST_STRIP_MINE; break;
-			case ECON_AGRICULTURE: m_shortDesc = Lang::HIGH_POPULATION_OUTDOOR_WORLD; break;
-		}
-	}
-}
-
-/* percent */
-#define MAX_COMMODITY_BASE_PRICE_ADJUSTMENT 25
-
 void StarSystem::Populate(bool addSpaceStations)
 {
 	PROFILE_SCOPED()
-	Uint32 _init[5] = { m_path.systemIndex, Uint32(m_path.sectorX), Uint32(m_path.sectorY), Uint32(m_path.sectorZ), UNIVERSE_SEED };
-	Random rand;
-	rand.seed(_init, 5);
 
-	/* Various system-wide characteristics */
-	// This is 1 in sector (0,0,0) and approaches 0 farther out
-	// (1,0,0) ~ .688, (1,1,0) ~ .557, (1,1,1) ~ .48
-	m_humanProx = fixed(3,1) / isqrt(9 + 10*(m_path.sectorX*m_path.sectorX + m_path.sectorY*m_path.sectorY + m_path.sectorZ*m_path.sectorZ));
-	m_econType = ECON_INDUSTRY;
-	m_industrial = rand.Fixed();
-	m_agricultural = 0;
-
-	/* system attributes */
-	m_totalPop = fixed(0);
-	m_rootBody->PopulateStage1(this, m_totalPop);
-
-//	Output("Trading rates:\n");
-	// So now we have balances of trade of various commodities.
-	// Lets use black magic to turn these into percentage base price
-	// alterations
-	int maximum = 0;
-	for (int i=Equip::FIRST_COMMODITY; i<=Equip::LAST_COMMODITY; i++) {
-		maximum = std::max(abs(m_tradeLevel[i]), maximum);
-	}
-	if (maximum) for (int i=Equip::FIRST_COMMODITY; i<=Equip::LAST_COMMODITY; i++) {
-		m_tradeLevel[i] = (m_tradeLevel[i] * MAX_COMMODITY_BASE_PRICE_ADJUSTMENT) / maximum;
-		m_tradeLevel[i] += rand.Int32(-5, 5);
-	}
-
-// Unused?
-//	for (int i=(int)Equip::FIRST_COMMODITY; i<=(int)Equip::LAST_COMMODITY; i++) {
-//		Equip::Type t = (Equip::Type)i;
-//		const EquipType &type = Equip::types[t];
-//		Output("%s: %d%%\n", type.name, m_tradeLevel[t]);
-//	}
-//	Output("System total population %.3f billion\n", m_totalPop.ToFloat());
+	m_rootBody->PopulateStage1(this);
 
 	if (addSpaceStations) {
 		m_rootBody->PopulateAddStations(this);
 	}
-
-	if (!m_shortDesc.size())
-		MakeShortDescription(rand);
 }
 
-/*
- * Set natural resources, tech level, industry strengths and population levels
- */
-void SystemBody::PopulateStage1(StarSystem *system, fixed &outTotalPop)
+void SystemBody::PopulateStage1(StarSystem *system)
 {
 	PROFILE_SCOPED()
 	for (unsigned int i=0; i<m_children.size(); i++) {
-		m_children[i]->PopulateStage1(system, outTotalPop);
+		m_children[i]->PopulateStage1(system);
 	}
 
 	// unexplored systems have no population (that we know about)
 	if (system->m_unexplored) {
-		m_population = outTotalPop = fixed(0);
 		return;
 	}
 
 	// grav-points have no population themselves
 	if (m_type == SystemBody::TYPE_GRAVPOINT) {
-		m_population = fixed(0);
 		return;
 	}
 
-	Uint32 _init[6] = { system->m_path.systemIndex, Uint32(system->m_path.sectorX),
-			Uint32(system->m_path.sectorY), Uint32(system->m_path.sectorZ), UNIVERSE_SEED, Uint32(this->m_seed) };
-
-	Random rand;
-	rand.seed(_init, 6);
-
-	RefCountedPtr<Random> namerand(new Random);
-	namerand->seed(_init, 6);
-
-	m_population = fixed(0);
-
-	/* Bad type of planet for settlement */
-	if ((m_averageTemp > CELSIUS+100) || (m_averageTemp < 100) ||
-	    (m_type != SystemBody::TYPE_PLANET_TERRESTRIAL && m_type != SystemBody::TYPE_PLANET_ASTEROID)) {
-
-        // orbital starports should carry a small amount of population
-        if (m_type == SystemBody::TYPE_STARPORT_ORBITAL) {
-			m_population = fixed(1,100000);
-			outTotalPop += m_population;
-        }
-
-		return;
-	}
-
-	m_agricultural = fixed(0);
-
-	if (m_life > fixed(9,10)) {
-		m_agricultural = Clamp(fixed(1,1) - fixed(CELSIUS+25-m_averageTemp, 40), fixed(0), fixed(1,1));
-		system->m_agricultural += 2*m_agricultural;
-	} else if (m_life > fixed(1,2)) {
-		m_agricultural = Clamp(fixed(1,1) - fixed(CELSIUS+30-m_averageTemp, 50), fixed(0), fixed(1,1));
-		system->m_agricultural += 1*m_agricultural;
-	} else {
-		// don't bother populating crap planets
-		if (m_metallicity < fixed(5,10) &&
-			m_metallicity < (fixed(1,1) - system->m_humanProx)) return;
-	}
-
-	const int NUM_CONSUMABLES = 10;
-	const Equip::Type consumables[NUM_CONSUMABLES] = {
-		Equip::AIR_PROCESSORS,
-		Equip::GRAIN,
-		Equip::FRUIT_AND_VEG,
-		Equip::ANIMAL_MEAT,
-		Equip::LIQUOR,
-		Equip::CONSUMER_GOODS,
-		Equip::MEDICINES,
-		Equip::HAND_WEAPONS,
-		Equip::NARCOTICS,
-		Equip::LIQUID_OXYGEN
-	};
-
-	/* Commodities we produce (mining and agriculture) */
-	for (int i=Equip::FIRST_COMMODITY; i<Equip::LAST_COMMODITY; i++) {
-		Equip::Type t = Equip::Type(i);
-		const EquipType &itype = Equip::types[t];
-
-		fixed affinity = fixed(1,1);
-		if (itype.econType & ECON_AGRICULTURE) {
-			affinity *= 2*m_agricultural;
-		}
-		if (itype.econType & ECON_INDUSTRY) affinity *= system->m_industrial;
-		// make industry after we see if agriculture and mining are viable
-		if (itype.econType & ECON_MINING) {
-			affinity *= m_metallicity;
-		}
-		affinity *= rand.Fixed();
-		// producing consumables is wise
-		for (int j=0; j<NUM_CONSUMABLES; j++) {
-			if (i == consumables[j]) {
-				affinity *= 2;
-				break;
-			}
-		}
-		assert(affinity >= 0);
-		/* workforce... */
-		m_population += affinity * system->m_humanProx;
-
-		int howmuch = (affinity * 256).ToInt32();
-
-		system->m_tradeLevel[t] += -2*howmuch;
-		for (int j=0; j<EQUIP_INPUTS; j++) {
-			if (!itype.inputs[j]) continue;
-			system->m_tradeLevel[itype.inputs[j]] += howmuch;
-		}
-	}
-
-	if (m_population > 0)
-		m_name = "Random Body"; // XXX namegen
-
-	// Add a bunch of things people consume
-	for (int i=0; i<NUM_CONSUMABLES; i++) {
-		Equip::Type t = consumables[i];
-		if (m_life > fixed(1,2)) {
-			// life planets can make this jizz probably
-			if ((t == Equip::AIR_PROCESSORS) ||
-			    (t == Equip::LIQUID_OXYGEN) ||
-			    (t == Equip::GRAIN) ||
-			    (t == Equip::FRUIT_AND_VEG) ||
-			    (t == Equip::ANIMAL_MEAT)) {
-				continue;
-			}
-		}
-		system->m_tradeLevel[t] += rand.Int32(32,128);
-	}
-	// well, outdoor worlds should have way more people
-	m_population = fixed(1,10)*m_population + m_population*m_agricultural;
-
-//	Output("%s: pop %.3f billion\n", name.c_str(), m_population.ToFloat());
-
-	outTotalPop += m_population;
+    m_name = "Random Body"; // XXX namegen
 }
 
 static bool check_unique_station_name(const std::string & name, const StarSystem * system) {
@@ -2079,17 +1877,12 @@ void SystemBody::PopulateAddStations(StarSystem *system)
 	RefCountedPtr<Random> namerand(new Random);
 	namerand->seed(_init, 6);
 
-	if (m_population < fixed(1,1000)) return;
-
-	fixed pop = m_population + rand.Fixed();
-
 	fixed orbMaxS = fixed(1,4)*this->CalcHillRadius();
 	fixed orbMinS = 4 * this->m_radius * AU_EARTH_RADIUS;
 	if (m_children.size()) orbMaxS = std::min(orbMaxS, fixed(1,2) * m_children[0]->m_orbMin);
 
 	// starports - orbital
-	pop -= rand.Fixed();
-	if ((orbMinS < orbMaxS) && (pop >= 0)) {
+	if ((orbMinS < orbMaxS)) {
 
 		SystemBody *sp = system->NewBody();
 		sp->m_type = SystemBody::TYPE_STARPORT_ORBITAL;
@@ -2113,34 +1906,10 @@ void SystemBody::PopulateAddStations(StarSystem *system)
 		sp->m_orbMax = sp->m_semiMajorAxis;
 
 		sp->m_name = gen_unique_station_name(sp, system, namerand);
-
-		pop -= rand.Fixed();
-		if (pop > 0) {
-			SystemBody *sp2 = system->NewBody();
-			sp2->m_type = sp->m_type;
-			sp2->m_seed = sp->m_seed;
-			sp2->m_parent = sp->m_parent;
-			sp2->m_rotationPeriod = sp->m_rotationPeriod;
-			sp2->m_averageTemp = sp->m_averageTemp;
-			sp2->m_mass = sp->m_mass;
-			sp2->m_semiMajorAxis = sp->m_semiMajorAxis;
-			sp2->m_eccentricity = sp->m_eccentricity;
-			sp2->m_axialTilt = sp->m_axialTilt;
-
-			sp2->m_orbit = sp->m_orbit;
-			sp2->m_orbit.SetPlane(matrix3x3d::RotateZ(M_PI));
-
-			sp2->m_inclination = sp->m_inclination;
-			sp2->m_orbMin = sp->m_orbMin;
-			sp2->m_orbMax = sp->m_orbMax;
-
-			sp2->m_name = gen_unique_station_name(sp, system, namerand);
-			m_children.insert(m_children.begin(), sp2);
-			system->m_spaceStations.push_back(sp2);
-		}
 	}
+
 	// starports - surface
-	pop = m_population + rand.Fixed();
+	fixed pop = rand.Fixed();
 	int max = 6;
 	while (max-- > 0) {
 		pop -= rand.Fixed();
@@ -2186,8 +1955,6 @@ void SystemBody::Dump(FILE* file, const char* indent) const
 			m_atmosOxidizing.ToDouble() * 100.0, m_atmosColor.r, m_atmosColor.g, m_atmosColor.b, m_atmosColor.a, m_atmosDensity);
 		fprintf(file, "%s\trings minRadius=%.2f, maxRadius=%.2f, color=(%hhu,%hhu,%hhu,%hhu)\n", indent, m_rings.minRadius.ToDouble() * 100.0,
 			m_rings.maxRadius.ToDouble() * 100.0, m_rings.baseColor.r, m_rings.baseColor.g, m_rings.baseColor.b, m_rings.baseColor.a);
-		fprintf(file, "%s\thuman activity %.2f, population %'.0f, agricultural %.2f\n", indent, m_humanActivity.ToDouble() * 100.0,
-			m_population.ToDouble() * 1e9, m_agricultural.ToDouble() * 100.0);
 		if (!m_heightMapFilename.empty()) {
 			fprintf(file, "%s\theightmap \"%s\", fractal %u\n", indent, m_heightMapFilename.c_str(), m_heightMapFractal);
 		}
@@ -2266,9 +2033,6 @@ std::string StarSystem::GetStarTypes(SystemBody *body) {
 
 void StarSystem::Dump(FILE* file, const char* indent, bool suppressSectorData) const
 {
-	// percent price alteration
-	//int m_tradeLevel[Equip::TYPE_MAX];
-
 	if (suppressSectorData) {
 		fprintf(file, "%sStarSystem {\n", indent);
 	} else {
@@ -2283,12 +2047,7 @@ void StarSystem::Dump(FILE* file, const char* indent, bool suppressSectorData) c
 		if (m_numStars > 0) fprintf(file, "%s\t}\n", indent);
 	}
 	fprintf(file, "%s\t%zu bodies, %zu spaceports \n", indent, m_bodies.size(), m_spaceStations.size());
-	fprintf(file, "%s\tpopulation %'.0f\n", indent, m_totalPop.ToDouble() * 1e9);
-	fprintf(file, "%s\teconomy type%s%s%s\n", indent, m_econType == 0 ? " NONE" : m_econType & ECON_AGRICULTURE ? " AGRICULTURE" : "",
-		m_econType & ECON_INDUSTRY ? " INDUSTRY" : "", m_econType & ECON_MINING ? " MINING" : "");
-	fprintf(file, "%s\thumanProx %.2f\n", indent, m_humanProx.ToDouble() * 100.0);
-	fprintf(file, "%s\tmetallicity %.2f, industrial %.2f, agricultural %.2f\n", indent, m_metallicity.ToDouble() * 100.0,
-		m_industrial.ToDouble() * 100.0, m_agricultural.ToDouble() * 100.0);
+	fprintf(file, "%s\tmetallicity %.2f\n", indent, m_metallicity.ToDouble() * 100.0);
 	if (m_rootBody) {
 		char buf[32];
 		snprintf(buf, sizeof(buf), "%s\t", indent);

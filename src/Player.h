@@ -23,15 +23,12 @@ public:
 	virtual bool OnDamage(Object *attacker, float kgDamage, const CollisionContact& contactData);
 	virtual bool SetWheelState(bool down); // returns success of state change, NOT state itself
 	virtual Missile * SpawnMissile(ShipType::Id missile_type, int power=-1);
-	virtual void SetAlertState(Ship::AlertState as);
 	virtual void NotifyRemoved(const Body* const removedBody);
 
 	PlayerShipController *GetPlayerController() const;
 	//XXX temporary things to avoid causing too many changes right now
-	Body *GetCombatTarget() const;
 	Body *GetNavTarget() const;
 	Body *GetSetSpeedTarget() const;
-	void SetCombatTarget(Body* const target, bool setSpeedTo = false);
 	void SetNavTarget(Body* const target, bool setSpeedTo = false);
 
 	virtual Ship::HyperjumpStatus InitiateHyperjumpTo(const SystemPath &dest, int warmup_time, double duration);

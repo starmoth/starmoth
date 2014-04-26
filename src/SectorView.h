@@ -62,7 +62,6 @@ private:
 		Gui::Label *sector;
 		DistanceIndicator distance;
 		Gui::Label *starType;
-		Gui::Label *shortDesc;
 	};
 
 	void DrawNearSectors(const matrix4x4f& modelview);

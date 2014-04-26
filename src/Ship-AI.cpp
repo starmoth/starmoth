@@ -67,8 +67,6 @@ bool Ship::AITimeStep(float timeStep)
 
 		// just in case the AI left it on
 		ClearThrusterState();
-		for (int i=0; i<ShipType::GUNMOUNT_MAX; i++)
-			SetGunState(i,0);
 		return true;
 	}
 
@@ -101,14 +99,6 @@ void Ship::AIKamikaze(Body *target)
 	m_curAICmd = new AICmdKamikaze(this, target);
 }
 
-void Ship::AIKill(Ship *target)
-{
-	AIClearInstructions();
-	SetFuelReserve((GetFuel() < 0.5) ? GetFuel() / 2 : 0.25);
-
-	m_curAICmd = new AICmdKill(this, target);
-}
-
 /*
 void Ship::AIJourney(SystemBodyPath &dest)
 {
@@ -120,7 +110,6 @@ void Ship::AIJourney(SystemBodyPath &dest)
 void Ship::AIFlyTo(Body *target)
 {
 	AIClearInstructions();
-	SetFuelReserve((GetFuel() < 0.5) ? GetFuel() / 2 : 0.25);
 
 	if (target->IsType(Object::SHIP)) {		// test code
 		vector3d posoff(-1000.0, 0.0, 1000.0);
@@ -132,7 +121,6 @@ void Ship::AIFlyTo(Body *target)
 void Ship::AIDock(SpaceStation *target)
 {
 	AIClearInstructions();
-	SetFuelReserve((GetFuel() < 0.5) ? GetFuel() / 2 : 0.25);
 
 	m_curAICmd = new AICmdDock(this, target);
 }
@@ -140,7 +128,6 @@ void Ship::AIDock(SpaceStation *target)
 void Ship::AIOrbit(Body *target, double alt)
 {
 	AIClearInstructions();
-	SetFuelReserve((GetFuel() < 0.5) ? GetFuel() / 2 : 0.25);
 
 	m_curAICmd = new AICmdFlyAround(this, target, alt);
 }
@@ -307,38 +294,6 @@ double Ship::AIFaceDirection(const vector3d &dir, double av)
 	return ang;
 }
 
-
-// returns direction in ship's frame from this ship to target lead position
-vector3d Ship::AIGetLeadDir(const Body *target, const vector3d& targaccel, int gunindex)
-{
-	assert(target);
-	if (m_equipment.Get(Equip::SLOT_LASER) == Equip::NONE)
-		return target->GetPositionRelTo(this).Normalized();
-
-	const vector3d targpos = target->GetPositionRelTo(this);
-	const vector3d targvel = target->GetVelocityRelTo(this);
-	// todo: should adjust targpos for gunmount offset
-
-	const int laser = Equip::types[m_equipment.Get(Equip::SLOT_LASER, gunindex)].tableIndex;
-	const double projspeed = Equip::lasers[laser].speed;
-
-	vector3d leadpos;
-	// avoid a divide-by-zero floating point exception (very nearly zero is ok)
-	if( !is_zero_exact(projspeed) ) {
-		// first attempt
-		double projtime = targpos.Length() / projspeed;
-		leadpos = targpos + targvel*projtime + 0.5*targaccel*projtime*projtime;
-
-		// second pass
-		projtime = leadpos.Length() / projspeed;
-		leadpos = targpos + targvel*projtime + 0.5*targaccel*projtime*projtime;
-	} else {
-		// default
-		leadpos = targpos;
-	}
-
-	return leadpos.Normalized();
-}
 
 // underestimates if endspeed isn't reachable
 /*

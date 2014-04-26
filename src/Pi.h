@@ -9,7 +9,6 @@
 #include "Random.h"
 #include "gameconsts.h"
 #include "GameConfig.h"
-#include "CargoBody.h"
 #include "Space.h"
 #include "JobQueue.h"
 #include <map>
@@ -46,11 +45,6 @@ struct DetailLevel {
 	int textures;
 	int fracmult;
 	int cities;
-};
-
-enum MsgLevel {
-	MSG_NORMAL,
-	MSG_IMPORTANT
 };
 
 class Frame;
@@ -99,7 +93,6 @@ public:
 	static float CalcHyperspaceRange(int hyperclass, float total_mass_in_tonnes, int fuel);
 	static float CalcHyperspaceDuration(int hyperclass, int total_mass_in_tonnes, float dist);
 	static float CalcHyperspaceFuelOut(int hyperclass, float dist, float hyperspace_range_max);
-	static void Message(const std::string &message, const std::string &from = "", enum MsgLevel level = MSG_NORMAL);
 	static std::string GetSaveDir();
 	static SceneGraph::Model *FindModel(const std::string&, bool allowPlaceholder = true);
 
@@ -117,7 +110,6 @@ public:
 	static sigc::signal<void, bool> onMouseWheel;
 	static sigc::signal<void> onPlayerChangeTarget; // navigation or combat
 	static sigc::signal<void> onPlayerChangeFlightControlState;
-	static sigc::signal<void> onPlayerChangeEquipment;
 
 	static RefCountedPtr<UI::Context> ui;
 

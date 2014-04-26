@@ -98,47 +98,10 @@ Missile * Player::SpawnMissile(ShipType::Id missile_type, int power)
 	return m;
 }
 
-//XXX do in lua, or use the alert concept for all ships
-void Player::SetAlertState(Ship::AlertState as)
-{
-	Ship::AlertState prev = GetAlertState();
-
-	switch (as) {
-		case ALERT_NONE:
-			if (prev != ALERT_NONE)
-				Pi::cpan->MsgLog()->Message("", Lang::ALERT_CANCELLED);
-			break;
-
-		case ALERT_SHIP_NEARBY:
-			if (prev == ALERT_NONE)
-				Pi::cpan->MsgLog()->ImportantMessage("", Lang::SHIP_DETECTED_NEARBY);
-			else
-				Pi::cpan->MsgLog()->ImportantMessage("", Lang::DOWNGRADING_ALERT_STATUS);
-			Sound::PlaySfx("OK");
-			break;
-
-		case ALERT_SHIP_FIRING:
-			Pi::cpan->MsgLog()->ImportantMessage("", Lang::LASER_FIRE_DETECTED);
-			Sound::PlaySfx("warning", 0.2f, 0.2f, 0);
-			break;
-	}
-
-	Pi::cpan->SetAlertState(as);
-
-	Ship::SetAlertState(as);
-}
-
 void Player::NotifyRemoved(const Body* const removedBody)
 {
 	if (GetNavTarget() == removedBody)
 		SetNavTarget(0);
-
-	else if (GetCombatTarget() == removedBody) {
-		SetCombatTarget(0);
-
-		if (!GetNavTarget() && removedBody->IsType(Object::SHIP))
-			SetNavTarget(static_cast<const Ship*>(removedBody)->GetHyperspaceCloud());
-	}
 
 	Ship::NotifyRemoved(removedBody);
 }
@@ -148,7 +111,6 @@ void Player::OnEnterHyperspace()
 {
 	s_soundHyperdrive.Play("Hyperdrive_Jump");
 	SetNavTarget(0);
-	SetCombatTarget(0);
 
 	Pi::worldView->HideTargetActions(); // hide the comms menu
 	m_controller->SetFlightControlState(CONTROL_MANUAL); //could set CONTROL_HYPERDRIVE
@@ -169,11 +131,6 @@ PlayerShipController *Player::GetPlayerController() const
 	return static_cast<PlayerShipController*>(GetController());
 }
 
-Body *Player::GetCombatTarget() const
-{
-	return static_cast<PlayerShipController*>(m_controller)->GetCombatTarget();
-}
-
 Body *Player::GetNavTarget() const
 {
 	return static_cast<PlayerShipController*>(m_controller)->GetNavTarget();
@@ -182,12 +139,6 @@ Body *Player::GetNavTarget() const
 Body *Player::GetSetSpeedTarget() const
 {
 	return static_cast<PlayerShipController*>(m_controller)->GetSetSpeedTarget();
-}
-
-void Player::SetCombatTarget(Body* const target, bool setSpeedTo)
-{
-	static_cast<PlayerShipController*>(m_controller)->SetCombatTarget(target, setSpeedTo);
-	Pi::onPlayerChangeTarget.emit();
 }
 
 void Player::SetNavTarget(Body* const target, bool setSpeedTo)

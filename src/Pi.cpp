@@ -4,7 +4,6 @@
 #include "Pi.h"
 #include "libs.h"
 #include "AmbientSounds.h"
-#include "CargoBody.h"
 #include "CityOnPlanet.h"
 #include "DeathView.h"
 #include "FaceGenManager.h"
@@ -24,7 +23,6 @@
 #include "OS.h"
 #include "Planet.h"
 #include "Player.h"
-#include "Projectile.h"
 #include "SDLWrappers.h"
 #include "SectorView.h"
 #include "Serializer.h"
@@ -63,7 +61,6 @@ sigc::signal<void, int, int, int> Pi::onMouseButtonDown;
 sigc::signal<void, bool> Pi::onMouseWheel;
 sigc::signal<void> Pi::onPlayerChangeTarget;
 sigc::signal<void> Pi::onPlayerChangeFlightControlState;
-sigc::signal<void> Pi::onPlayerChangeEquipment;
 int Pi::keyModState;
 std::map<SDL_Keycode,bool> Pi::keyState; // XXX SDL2 SDLK_LAST
 char Pi::mouseButton[6];
@@ -533,7 +530,6 @@ void Pi::Init(const std::map<std::string,std::string> &options, bool no_gui)
 
 void Pi::Quit()
 {
-	Projectile::FreeModel();
 	delete Pi::intro;
 	NavLights::Uninit();
 	Shields::Uninit();
@@ -654,57 +650,6 @@ void Pi::HandleEvents()
 							break;
 #endif
 
-						case SDLK_F12:
-						{
-							if(Pi::game) {
-								vector3d dir = -Pi::player->GetOrient().VectorZ();
-								/* add test object */
-								if (KeyState(SDLK_RSHIFT)) {
-									Missile *missile =
-										new Missile(ShipType::MISSILE_GUIDED, Pi::player);
-									missile->SetOrient(Pi::player->GetOrient());
-									missile->SetFrame(Pi::player->GetFrame());
-									missile->SetPosition(Pi::player->GetPosition()+50.0*dir);
-									missile->SetVelocity(Pi::player->GetVelocity());
-									game->GetSpace()->AddBody(missile);
-									missile->AIKamikaze(Pi::player->GetCombatTarget());
-								} else if (KeyState(SDLK_LSHIFT)) {
-									SpaceStation *s = static_cast<SpaceStation*>(Pi::player->GetNavTarget());
-									if (s) {
-										Ship *ship = new Ship(ShipType::POLICE);
-										int port = s->GetFreeDockingPort(ship);
-										if (port != -1) {
-											Output("Putting ship into station\n");
-											// Make police ship intent on killing the player
-											ship->AIKill(Pi::player);
-											ship->SetFrame(Pi::player->GetFrame());
-											ship->SetDockedWith(s, port);
-											game->GetSpace()->AddBody(ship);
-										} else {
-											delete ship;
-											Output("No docking ports free dude\n");
-										}
-									} else {
-											Output("Select a space station...\n");
-									}
-								} else {
-									Ship *ship = new Ship(ShipType::POLICE);
-									if( KeyState(SDLK_LCTRL) )
-										ship->AIFlyTo(Pi::player);	// a less lethal option
-									else
-										ship->AIKill(Pi::player);	// a really lethal option!
-									ship->m_equipment.Set(Equip::SLOT_LASER, 0, Equip::PULSECANNON_DUAL_1MW);
-									ship->m_equipment.Add(Equip::LASER_COOLING_BOOSTER);
-									ship->m_equipment.Add(Equip::ATMOSPHERIC_SHIELDING);
-									ship->SetFrame(Pi::player->GetFrame());
-									ship->SetPosition(Pi::player->GetPosition()+100.0*dir);
-									ship->SetVelocity(Pi::player->GetVelocity());
-									ship->UpdateStats();
-									game->GetSpace()->AddBody(ship);
-								}
-							}
-							break;
-						}
 #endif /* DEVKEYS */
 #if WITH_OBJECTVIEWER
 						case SDLK_F10:
@@ -721,21 +666,10 @@ void Pi::HandleEvents()
 						case SDLK_F9: // Quicksave
 						{
 							if(Pi::game) {
-								if (Pi::game->IsHyperspace())
-									Pi::cpan->MsgLog()->Message("", Lang::CANT_SAVE_IN_HYPERSPACE);
-
-								else {
+								if (!Pi::game->IsHyperspace()) {
 									const std::string name = "_quicksave";
 									const std::string path = FileSystem::JoinPath(GetSaveDir(), name);
-									try {
-										Game::SaveGame(name, Pi::game);
-										Pi::cpan->MsgLog()->Message("", Lang::GAME_SAVED_TO + path);
-									} catch (CouldNotOpenFileException) {
-										Pi::cpan->MsgLog()->Message("", stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", path)));
-									}
-									catch (CouldNotWriteToFileException) {
-										Pi::cpan->MsgLog()->Message("", Lang::GAME_SAVE_CANNOT_WRITE);
-									}
+									Game::SaveGame(name, Pi::game);
 								}
 							}
 							break;
@@ -850,20 +784,12 @@ static void OnPlayerDockOrUndock()
 	Pi::game->SetTimeAccel(Game::TIMEACCEL_1X);
 }
 
-static void OnPlayerChangeEquipment(Equip::Type e)
-{
-	Pi::onPlayerChangeEquipment.emit();
-}
-
 void Pi::StartGame()
 {
 	Pi::player->onDock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
 	Pi::player->onUndock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
-	Pi::player->m_equipment.onChange.connect(sigc::ptr_fun(&OnPlayerChangeEquipment));
 	cpan->ShowAll();
 	DrawGUI = true;
-	cpan->SetAlertState(Ship::ALERT_NONE);
-	OnPlayerChangeEquipment(Equip::NONE);
 	SetView(worldView);
 }
 
@@ -1197,15 +1123,6 @@ float Pi::CalcHyperspaceFuelOut(int hyperclass, float dist, float hyperspace_ran
 	if (outFuelRequired < 1) outFuelRequired = 1;
 
 	return outFuelRequired;
-}
-
-void Pi::Message(const std::string &message, const std::string &from, enum MsgLevel level)
-{
-	if (level == MSG_IMPORTANT) {
-		Pi::cpan->MsgLog()->ImportantMessage(from, message);
-	} else {
-		Pi::cpan->MsgLog()->Message(from, message);
-	}
 }
 
 void Pi::InitJoysticks() {

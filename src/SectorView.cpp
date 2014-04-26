@@ -207,9 +207,7 @@ void SectorView::InitObject()
 	systemBox->PackEnd(hbox);
 	systemBox->PackEnd(m_currentSystemLabels.distance.label);
 	m_currentSystemLabels.starType = (new Gui::Label(""))->Color(255, 0, 255);
-	m_currentSystemLabels.shortDesc = (new Gui::Label(""))->Color(255, 0, 255);
 	systemBox->PackEnd(m_currentSystemLabels.starType);
-	systemBox->PackEnd(m_currentSystemLabels.shortDesc);
 	locationsBox->PackEnd(systemBox);
 	// 1.2 targeted system
 	systemBox = new Gui::VBox();
@@ -236,9 +234,7 @@ void SectorView::InitObject()
 	systemBox->PackEnd(hbox);
 	systemBox->PackEnd(m_targetSystemLabels.distance.label);
 	m_targetSystemLabels.starType = (new Gui::Label(""))->Color(255, 0, 255);
-	m_targetSystemLabels.shortDesc = (new Gui::Label(""))->Color(255, 0, 255);
 	systemBox->PackEnd(m_targetSystemLabels.starType);
-	systemBox->PackEnd(m_targetSystemLabels.shortDesc);
 	m_secondDistance.label = (new Gui::Label(""))->Color(0, 128, 255);
 	m_secondDistance.line = &m_secondLine;
 	m_secondDistance.okayColor = ::Color(51, 153, 128);
@@ -269,9 +265,7 @@ void SectorView::InitObject()
 	systemBox->PackEnd(hbox);
 	systemBox->PackEnd(m_selectedSystemLabels.distance.label);
 	m_selectedSystemLabels.starType = (new Gui::Label(""))->Color(255, 0, 255);
-	m_selectedSystemLabels.shortDesc = (new Gui::Label(""))->Color(255, 0, 255);
 	systemBox->PackEnd(m_selectedSystemLabels.starType);
-	systemBox->PackEnd(m_selectedSystemLabels.shortDesc);
 	locationsBox->PackEnd(systemBox);
 	m_infoBox->PackEnd(locationsBox);
 
@@ -655,28 +649,19 @@ void SectorView::UpdateDistanceLabelAndLine(DistanceIndicator &distance, const S
 
 		const float dist = Sector::DistanceBetween(sec, dest.systemIndex, srcSec, src.systemIndex);
 
-		int fuelRequired;
 		double dur;
-		enum Ship::HyperjumpStatus jumpStatus = Pi::player->GetHyperspaceDetails(src, dest, fuelRequired, dur);
+		enum Ship::HyperjumpStatus jumpStatus = Pi::player->GetHyperspaceDetails(src, dest, dur);
 		const double DaysNeeded = dur*(1.0 / (24*60*60));
 		const double HoursNeeded = (DaysNeeded - floor(DaysNeeded))*24;
 
 		switch (jumpStatus) {
 			case Ship::HYPERJUMP_OK:
-				snprintf(format, sizeof(format), "[ %s | %s | %s, %s ]", Lang::NUMBER_LY, Lang::NUMBER_TONNES, Lang::NUMBER_DAYS, Lang::NUMBER_HOURS);
+				snprintf(format, sizeof(format), "[ %s | %s, %s ]", Lang::NUMBER_LY, Lang::NUMBER_DAYS, Lang::NUMBER_HOURS);
 				distance.label->SetText(stringf(format,
-					formatarg("distance", dist), formatarg("mass", fuelRequired), formatarg("days", floor(DaysNeeded)), formatarg("hours", HoursNeeded)));
+					formatarg("distance", dist), formatarg("days", floor(DaysNeeded)), formatarg("hours", HoursNeeded)));
 				distance.label->Color(distance.okayColor);
 				if (distance.line)
 					distance.line->SetColor(distance.okayColor);
-				break;
-			case Ship::HYPERJUMP_INSUFFICIENT_FUEL:
-				snprintf(format, sizeof(format), "[ %s | %s ]", Lang::NUMBER_LY, Lang::NUMBER_TONNES);
-				distance.label->SetText(stringf(format,
-					formatarg("distance", dist), formatarg("mass", fuelRequired)));
-				distance.label->Color(distance.unsuffFuelColor);
-				if (distance.line)
-					distance.line->SetColor(distance.unsuffFuelColor);
 				break;
 			case Ship::HYPERJUMP_OUT_OF_RANGE:
 				snprintf(format, sizeof(format), "[ %s ]", Lang::NUMBER_LY);
@@ -720,7 +705,6 @@ void SectorView::UpdateSystemLabels(SystemLabels &labels, const SystemPath &path
 		formatarg("x", int(path.sectorX)),
 		formatarg("y", int(path.sectorY)),
 		formatarg("z", int(path.sectorZ))));
-	labels.shortDesc->SetText(sys->GetShortDescription());
 
 	if (m_detailBoxVisible == DETAILBOX_INFO) m_infoBox->ShowAll();
 }
@@ -809,24 +793,16 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 		float dist = Sector::DistanceBetween(ps, sysIdx, playerSec, m_current.systemIndex);
 		bool inRange = dist <= m_playerHyperspaceRange;
 
-		// don't worry about looking for inhabited systems if they're
-		// unexplored (same calculation as in StarSystem.cpp) or we've
-		// already retrieved their population.
-		if ((*i).population < 0 && isqrt(1 + sx*sx + sy*sy + sz*sz) <= 90) {
+		// only do this once we've pretty much stopped moving.
+		vector3f diff = vector3f(
+				fabs(m_posMovingTo.x - m_pos.x),
+				fabs(m_posMovingTo.y - m_pos.y),
+				fabs(m_posMovingTo.z - m_pos.z));
 
-			// only do this once we've pretty much stopped moving.
-			vector3f diff = vector3f(
-					fabs(m_posMovingTo.x - m_pos.x),
-					fabs(m_posMovingTo.y - m_pos.y),
-					fabs(m_posMovingTo.z - m_pos.z));
-
-			// Ideally, since this takes so f'ing long, it wants to be done as a threaded job but haven't written that yet.
-			if( (diff.x < 0.001f && diff.y < 0.001f && diff.z < 0.001f) ) {
-				SystemPath current = SystemPath(sx, sy, sz, sysIdx);
-				RefCountedPtr<StarSystem> pSS = StarSystemCache::GetCached(current);
-				(*i).population = pSS->GetTotalPop();
-			}
-
+		// Ideally, since this takes so f'ing long, it wants to be done as a threaded job but haven't written that yet.
+		if( (diff.x < 0.001f && diff.y < 0.001f && diff.z < 0.001f) ) {
+			SystemPath current = SystemPath(sx, sy, sz, sysIdx);
+			RefCountedPtr<StarSystem> pSS = StarSystemCache::GetCached(current);
 		}
 
 		matrix4x4f systrans = trans * matrix4x4f::Translation((*i).p.x, (*i).p.y, (*i).p.z);

@@ -21,9 +21,7 @@ public:
 		TERRAINBODY,    // <enum skip>
 		PLANET,
 		STAR,
-		CARGOBODY,
 		CITYONPLANET,   // <enum skip>
-		PROJECTILE,     // <enum skip>
 		MISSILE,
 		HYPERSPACECLOUD // <enum skip>
 	};

@@ -21,7 +21,6 @@ void ShipController::StaticUpdate(float timeStep)
 
 PlayerShipController::PlayerShipController() :
 	ShipController(),
-	m_combatTarget(0),
 	m_navTarget(0),
 	m_setSpeedTarget(0),
 	m_controlsLocked(false),
@@ -42,10 +41,6 @@ PlayerShipController::PlayerShipController() :
 
 	m_connRotationDampingToggleKey = KeyBindings::toggleRotationDamping.onPress.connect(
 			sigc::mem_fun(this, &PlayerShipController::ToggleRotationDamping));
-
-	m_fireMissileKey = KeyBindings::fireMissile.onPress.connect(
-			sigc::mem_fun(this, &PlayerShipController::FireMissile));
-
 }
 
 PlayerShipController::~PlayerShipController()
@@ -60,7 +55,6 @@ void PlayerShipController::Save(Serializer::Writer &wr, Space *space)
 	wr.Double(m_setSpeed);
 	wr.Float(m_lowThrustPower);
 	wr.Bool(m_rotationDamping);
-	wr.Int32(space->GetIndexForBody(m_combatTarget));
 	wr.Int32(space->GetIndexForBody(m_navTarget));
 	wr.Int32(space->GetIndexForBody(m_setSpeedTarget));
 }
@@ -72,14 +66,12 @@ void PlayerShipController::Load(Serializer::Reader &rd)
 	m_lowThrustPower = rd.Float();
 	m_rotationDamping = rd.Bool();
 	//figure out actual bodies in PostLoadFixup - after Space body index has been built
-	m_combatTargetIndex = rd.Int32();
 	m_navTargetIndex = rd.Int32();
 	m_setSpeedTargetIndex = rd.Int32();
 }
 
 void PlayerShipController::PostLoadFixup(Space *space)
 {
-	m_combatTarget = space->GetBodyByIndex(m_combatTargetIndex);
 	m_navTarget = space->GetBodyByIndex(m_navTargetIndex);
 	m_setSpeedTarget = space->GetBodyByIndex(m_setSpeedTargetIndex);
 }
@@ -160,8 +152,6 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 	// if flying
 	{
 		m_ship->ClearThrusterState();
-		m_ship->SetGunState(0,0);
-		m_ship->SetGunState(1,0);
 
 		vector3d wantAngVel(0.0);
 		double angThrustSoftness = 10.0;
@@ -231,11 +221,6 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 		if (KeyBindings::thrustDown.IsActive()) m_ship->SetThrusterState(1, -linearThrustPower);
 		if (KeyBindings::thrustLeft.IsActive()) m_ship->SetThrusterState(0, -linearThrustPower);
 		if (KeyBindings::thrustRight.IsActive()) m_ship->SetThrusterState(0, linearThrustPower);
-
-		if (KeyBindings::fireLaser.IsActive() || (Pi::MouseButtonState(SDL_BUTTON_LEFT) && Pi::MouseButtonState(SDL_BUTTON_RIGHT))) {
-				//XXX worldview? madness, ask from ship instead
-				m_ship->SetGunState(Pi::worldView->GetActiveWeapon(), 1);
-		}
 
 		if (KeyBindings::yawLeft.IsActive()) wantAngVel.y += 1.0;
 		if (KeyBindings::yawRight.IsActive()) wantAngVel.y += -1.0;
@@ -342,17 +327,6 @@ void PlayerShipController::ToggleRotationDamping()
 	SetRotationDamping(!GetRotationDamping());
 }
 
-void PlayerShipController::FireMissile()
-{
-	if (!Pi::player->GetCombatTarget())
-		return;
-}
-
-Body *PlayerShipController::GetCombatTarget() const
-{
-	return m_combatTarget;
-}
-
 Body *PlayerShipController::GetNavTarget() const
 {
 	return m_navTarget;
@@ -361,15 +335,6 @@ Body *PlayerShipController::GetNavTarget() const
 Body *PlayerShipController::GetSetSpeedTarget() const
 {
 	return m_setSpeedTarget;
-}
-
-void PlayerShipController::SetCombatTarget(Body* const target, bool setSpeedTo)
-{
-	if (setSpeedTo)
-		m_setSpeedTarget = target;
-	else if (m_setSpeedTarget == m_combatTarget)
-		m_setSpeedTarget = 0;
-	m_combatTarget = target;
 }
 
 void PlayerShipController::SetNavTarget(Body* const target, bool setSpeedTo)

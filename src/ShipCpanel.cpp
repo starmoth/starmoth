@@ -7,7 +7,6 @@
 #include "Player.h"
 #include "WorldView.h"
 #include "SpaceStation.h"
-#include "ShipCpanelMultiFuncDisplays.h"
 #include "SectorView.h"
 #include "SystemView.h"
 #include "SystemInfoView.h"
@@ -21,15 +20,11 @@ static const Color s_hudTextColor(0,255,0,204);
 
 ShipCpanel::ShipCpanel(Graphics::Renderer *r): Gui::Fixed(float(Gui::Screen::GetWidth()), 80)
 {
-	m_scanner = new ScannerWidget(r);
-
 	InitObject();
 }
 
 ShipCpanel::ShipCpanel(Serializer::Reader &rd, Graphics::Renderer *r): Gui::Fixed(float(Gui::Screen::GetWidth()), 80)
 {
-	m_scanner = new ScannerWidget(r, rd);
-
 	InitObject();
 
 	m_camButton->SetActiveState(rd.Int32());
@@ -44,24 +39,6 @@ void ShipCpanel::InitObject()
 	Add(img, 0, 0);
 
 	m_currentMapView = MAP_SECTOR;
-	m_useEquipWidget = new UseEquipWidget();
-	m_msglog = new MsgLogWidget();
-
-	m_userSelectedMfuncWidget = MFUNC_SCANNER;
-
-	m_scanner->onGrabFocus.connect(sigc::bind(sigc::mem_fun(this, &ShipCpanel::OnMultiFuncGrabFocus), MFUNC_SCANNER));
-	m_useEquipWidget->onGrabFocus.connect(sigc::bind(sigc::mem_fun(this, &ShipCpanel::OnMultiFuncGrabFocus), MFUNC_EQUIPMENT));
-	m_msglog->onGrabFocus.connect(sigc::bind(sigc::mem_fun(this, &ShipCpanel::OnMultiFuncGrabFocus), MFUNC_MSGLOG));
-
-	m_scanner->onUngrabFocus.connect(sigc::bind(sigc::mem_fun(this, &ShipCpanel::OnMultiFuncUngrabFocus), MFUNC_SCANNER));
-	m_useEquipWidget->onUngrabFocus.connect(sigc::bind(sigc::mem_fun(this, &ShipCpanel::OnMultiFuncUngrabFocus), MFUNC_EQUIPMENT));
-	m_msglog->onUngrabFocus.connect(sigc::bind(sigc::mem_fun(this, &ShipCpanel::OnMultiFuncUngrabFocus), MFUNC_MSGLOG));
-
-	// where the scanner is
-	m_mfsel = new MultiFuncSelectorWidget();
-	m_mfsel->onSelect.connect(sigc::mem_fun(this, &ShipCpanel::OnUserChangeMultiFunctionDisplay));
-	Add(m_mfsel, 656, 18);
-	ChangeMultiFunctionDisplay(MFUNC_SCANNER);
 
 //	Gui::RadioGroup *g = new Gui::RadioGroup();
 	Gui::ImageRadioButton *b = new Gui::ImageRadioButton(0, "icons/timeaccel0.png", "icons/timeaccel0_on.png");
@@ -191,22 +168,6 @@ void ShipCpanel::InitObject()
 	m_connOnRotationDampingChanged = Pi::player->GetPlayerController()->onRotationDampingChanged.connect(
 			sigc::mem_fun(this, &ShipCpanel::OnRotationDampingChanged));
 
-	img = new Gui::Image("icons/alert_green.png");
-	img->SetToolTip(Lang::NO_ALERT);
-	img->SetRenderDimensions(20, 13);
-	Add(img, 780, 37);
-	m_alertLights[0] = img;
-	img = new Gui::Image("icons/alert_yellow.png");
-	img->SetToolTip(Lang::SHIP_NEARBY);
-	img->SetRenderDimensions(20, 13);
-	Add(img, 780, 37);
-	m_alertLights[1] = img;
-	img = new Gui::Image("icons/alert_red.png");
-	img->SetToolTip(Lang::LASER_FIRE_DETECTED);
-	img->SetRenderDimensions(20, 13);
-	Add(img, 780, 37);
-	m_alertLights[2] = img;
-
 	m_overlay[OVERLAY_TOP_LEFT]     = (new Gui::Label(""))->Color(s_hudTextColor);
 	m_overlay[OVERLAY_TOP_RIGHT]    = (new Gui::Label(""))->Color(s_hudTextColor);
 	m_overlay[OVERLAY_BOTTOM_LEFT]  = (new Gui::Label(""))->Color(s_hudTextColor);
@@ -221,48 +182,7 @@ ShipCpanel::~ShipCpanel()
 {
 	delete m_leftButtonGroup;
 	delete m_rightButtonGroup;
-	Remove(m_scanner);
-	Remove(m_useEquipWidget);
-	Remove(m_msglog);
-	Remove(m_mfsel);
-	delete m_scanner;
-	delete m_useEquipWidget;
-	delete m_msglog;
-	delete m_mfsel;
 	m_connOnRotationDampingChanged.disconnect();
-}
-
-void ShipCpanel::OnUserChangeMultiFunctionDisplay(multifuncfunc_t f)
-{
-	m_userSelectedMfuncWidget = f;
-	ChangeMultiFunctionDisplay(f);
-}
-
-void ShipCpanel::ChangeMultiFunctionDisplay(multifuncfunc_t f)
-{
-	Gui::Widget *selected = 0;
-	if (f == MFUNC_SCANNER) selected = m_scanner;
-	if (f == MFUNC_EQUIPMENT) selected = m_useEquipWidget;
-	if (f == MFUNC_MSGLOG) selected = m_msglog;
-
-	Remove(m_scanner);
-	Remove(m_useEquipWidget);
-	Remove(m_msglog);
-	if (selected) {
-		m_mfsel->SetSelected(f);
-		Add(selected, 200, 18);
-		selected->ShowAll();
-	}
-}
-
-void ShipCpanel::OnMultiFuncGrabFocus(multifuncfunc_t f)
-{
-	ChangeMultiFunctionDisplay(f);
-}
-
-void ShipCpanel::OnMultiFuncUngrabFocus(multifuncfunc_t f)
-{
-	ChangeMultiFunctionDisplay(m_userSelectedMfuncWidget);
 }
 
 void ShipCpanel::Update()
@@ -278,10 +198,6 @@ void ShipCpanel::Update()
 	if (timeAccel != requested) {
 		m_timeAccelButtons[Clamp(requested,0,5)]->SetSelected((SDL_GetTicks() & 0x200) != 0);
 	}
-
-	m_scanner->Update();
-	m_useEquipWidget->Update();
-	m_msglog->Update();
 }
 
 void ShipCpanel::Draw()
@@ -379,36 +295,8 @@ void ShipCpanel::OnRotationDampingChanged()
 	m_rotationDampingButton->SetActiveState(Pi::player->GetPlayerController()->GetRotationDamping());
 }
 
-void ShipCpanel::SetAlertState(Ship::AlertState as)
-{
-	switch (as) {
-		case Ship::ALERT_NONE:
-			m_alertLights[0]->Show();
-			m_alertLights[1]->Hide();
-			m_alertLights[2]->Hide();
-			break;
-		case Ship::ALERT_SHIP_NEARBY:
-			m_alertLights[0]->Hide();
-			m_alertLights[1]->Show();
-			m_alertLights[2]->Hide();
-			break;
-		case Ship::ALERT_SHIP_FIRING:
-			m_alertLights[0]->Hide();
-			m_alertLights[1]->Hide();
-			m_alertLights[2]->Show();
-			break;
-	}
-}
-
-void ShipCpanel::TimeStepUpdate(float step)
-{
-	PROFILE_SCOPED()
-	m_scanner->TimeStepUpdate(step);
-}
-
 void ShipCpanel::Save(Serializer::Writer &wr)
 {
-	m_scanner->Save(wr);
 	wr.Int32(m_camButton->GetState());
 }
 

@@ -13,7 +13,7 @@
 class AICommand {
 public:
 	// This enum is solely to make the serialization work
-	enum CmdName { CMD_NONE, CMD_DOCK, CMD_FLYTO, CMD_FLYAROUND, CMD_KILL, CMD_KAMIKAZE, CMD_HOLDPOSITION, CMD_FORMATION };
+	enum CmdName { CMD_NONE, CMD_DOCK, CMD_FLYTO, CMD_FLYAROUND, CMD_KAMIKAZE, CMD_HOLDPOSITION, CMD_FORMATION };
 
 	AICommand(Ship *ship, CmdName name) {
 	   	m_ship = ship; m_cmdName = name;
@@ -205,43 +205,6 @@ private:
 	double m_alt, m_vel;
 	int m_targmode;			// 0 targpos termination, 1 infinite, 2+ orbital termination
 	vector3d m_targpos;		// target position in ship space
-};
-
-class AICmdKill : public AICommand {
-public:
-	virtual bool TimeStepUpdate();
-	AICmdKill(Ship *ship, Ship *target) : AICommand (ship, CMD_KILL) {
-		m_target = target;
-		m_leadTime = m_evadeTime = m_closeTime = 0.0;
-		m_lastVel = m_target->GetVelocity();
-	}
-
-	// don't actually need to save all this crap
-	virtual void Save(Serializer::Writer &wr) {
-        Space *space = Pi::game->GetSpace();
-		AICommand::Save(wr);
-		wr.Int32(space->GetIndexForBody(m_target));
-	}
-	AICmdKill(Serializer::Reader &rd) : AICommand(rd, CMD_KILL) {
-		m_targetIndex = rd.Int32();
-	}
-	virtual void PostLoadFixup(Space *space) {
-		AICommand::PostLoadFixup(space);
-		m_target = static_cast<Ship *>(space->GetBodyByIndex(m_targetIndex));
-		m_leadTime = m_evadeTime = m_closeTime = 0.0;
-		m_lastVel = m_target->GetVelocity();
-	}
-
-	virtual void OnDeleted(const Body *body) {
-		if (static_cast<Body *>(m_target) == body) m_target = 0;
-		AICommand::OnDeleted(body);
-	}
-
-private:
-	Ship *m_target;
-	double m_leadTime, m_evadeTime, m_closeTime;
-	vector3d m_leadOffset, m_leadDrift, m_lastVel;
-	int m_targetIndex;	// used during deserialisation
 };
 
 class AICmdKamikaze : public AICommand {

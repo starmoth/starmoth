@@ -54,28 +54,6 @@ Sensors::Sensors(Ship *owner)
 	m_owner = owner;
 }
 
-bool Sensors::ChooseTarget(TargetingCriteria crit)
-{
-	bool found = false;
-
-	m_radarContacts.sort(ContactDistanceSort);
-
-	for (auto it = m_radarContacts.begin(); it != m_radarContacts.end(); ++it) {
-		//match object type
-		//match iff
-		if (it->body->IsType(Object::SHIP)) {
-			//if (it->iff != IFF_HOSTILE) continue;
-			//should move the target to ship after all (from PlayerShipController)
-			//targeting inputs stay in PSC
-			static_cast<Player*>(m_owner)->SetCombatTarget(it->body);
-			found = true;
-			break;
-		}
-	}
-
-	return found;
-}
-
 Sensors::IFF Sensors::CheckIFF(Body* other)
 {
 	//complicated relationship check goes here

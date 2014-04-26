@@ -6,7 +6,6 @@
 
 #include "libs.h"
 #include "vector3.h"
-#include "EquipType.h"
 #include <vector>
 #include <map>
 
@@ -54,8 +53,6 @@ struct ShipType {
 		double sep;
 		DualLaserOrientation orient;
 	} gunMount[GUNMOUNT_MAX];
-	int equipSlotCapacity[Equip::SLOT_MAX];
-	int capacity; // tonnes
 	int hullMass;
 	float effectiveExhaustVelocity; // velocity at which the propellant escapes the engines
 	int fuelTankMass; //full fuel tank mass, on top of hullMass

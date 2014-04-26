@@ -221,8 +221,6 @@ void Game::TimeStep(float step)
 
 	m_space->TimeStep(step);
 
-	// XXX ui updates, not sure if they belong here
-	Pi::cpan->TimeStepUpdate(step);
 	Sfx::TimeStepAll(step, m_space->GetRootFrame());
 
 	if (m_state == STATE_HYPERSPACE) {
@@ -269,13 +267,7 @@ bool Game::UpdateTimeAccel()
 	// normal flight
 	else if (m_player->GetFlightState() == Ship::FLYING) {
 
-		// special timeaccel lock rules while in alert
-		if (m_player->GetAlertState() == Ship::ALERT_SHIP_NEARBY)
-			newTimeAccel = std::min(newTimeAccel, Game::TIMEACCEL_10X);
-		else if (m_player->GetAlertState() == Ship::ALERT_SHIP_FIRING)
-			newTimeAccel = std::min(newTimeAccel, Game::TIMEACCEL_1X);
-
-		else if (!m_forceTimeAccel) {
+		if (!m_forceTimeAccel) {
 			// check we aren't too near to objects for timeaccel //
 			for (const Body* b : m_space->GetBodies()) {
 				if (b == m_player.get()) continue;

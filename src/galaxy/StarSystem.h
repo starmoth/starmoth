@@ -5,7 +5,6 @@
 #define _STARSYSTEM_H
 
 #include "libs.h"
-#include "EquipType.h"
 #include "Serializer.h"
 #include <vector>
 #include <string>
@@ -20,12 +19,6 @@ class SystemBody;
 
 // doubles - all masses in Kg, all lengths in meters
 // fixed - any mad scheme
-
-enum EconType { // <enum name=EconType prefix=ECON_ public>
-	ECON_MINING = 1<<0,
-	ECON_AGRICULTURE = 1<<1,
-	ECON_INDUSTRY = 1<<2,
-};
 
 class StarSystem;
 class Faction;
@@ -167,15 +160,13 @@ public:
 	fixed GetAtmosOxidizing() const { return m_atmosOxidizing; }
 	fixed GetLife() const { return m_life; }
 
-	double GetPopulation() const { return m_population.ToDouble(); }
-
 	fixed CalcHillRadius() const;
 	static int CalcSurfaceTemp(const SystemBody *primary, fixed distToPrimary, fixed albedo, fixed greenhouse);
 	double CalcSurfaceGravity() const;
 
 	double GetMaxChildOrbitalDistance() const;
 	void PositionSettlementOnPlanet();
-	void PopulateStage1(StarSystem *system, fixed &outTotalPop);
+	void PopulateStage1(StarSystem *system);
 	void PopulateAddStations(StarSystem *system);
 
 	bool HasRings() const { return bool(m_rings.maxRadius.v); }
@@ -255,10 +246,6 @@ private:
 
 	RingStyle m_rings;
 
-	/* economy type stuff */
-	fixed m_population;
-	fixed m_agricultural;
-
 	std::string m_heightMapFilename;
 	unsigned int m_heightMapFractal;
 
@@ -277,7 +264,6 @@ public:
 	static void Serialize(Serializer::Writer &wr, StarSystem *);
 	static RefCountedPtr<StarSystem> Unserialize(Serializer::Reader &rd);
 	const SystemPath &GetPath() const { return m_path; }
-	const char *GetShortDescription() const { return m_shortDesc.c_str(); }
 	const char *GetLongDescription() const { return m_longDesc.c_str(); }
 	int GetNumStars() const { return m_numStars; }
 
@@ -299,20 +285,10 @@ public:
 	IterationProxy<std::vector<RefCountedPtr<SystemBody> > > GetBodies() { return MakeIterationProxy(m_bodies); }
 	const IterationProxy<const std::vector<RefCountedPtr<SystemBody> > > GetBodies() const { return MakeIterationProxy(m_bodies); }
 
-	int GetCommodityBasePriceModPercent(int t) {
-		return m_tradeLevel[t];
-	}
-
 	Faction* GetFaction() const  { return m_faction; }
 	bool GetUnexplored() const { return m_unexplored; }
 	fixed GetMetallicity() const { return m_metallicity; }
-	fixed GetIndustrial() const { return m_industrial; }
-	int GetEconType() const { return m_econType; }
 	int GetSeed() const { return m_seed; }
-	const int* GetTradeLevel() const { return m_tradeLevel; }
-	fixed GetAgricultural() const { return m_agricultural; }
-	fixed GetHumanProx() const { return m_humanProx; }
-	fixed GetTotalPop() const { return m_totalPop; }
 
 	void Dump(FILE* file, const char* indent = "", bool suppressSectorData = false) const;
 
@@ -325,7 +301,6 @@ private:
 		m_bodies.push_back(RefCountedPtr<SystemBody>(body));
 		return body;
 	}
-	void MakeShortDescription(Random &rand);
 	void MakePlanetsAround(SystemBody *primary, Random &rand);
 	void MakeRandomStar(SystemBody *sbody, Random &rand);
 	void MakeStarOfType(SystemBody *sbody, SystemBody::BodyType type, Random &rand);
@@ -337,21 +312,12 @@ private:
 	SystemPath m_path;
 	int m_numStars;
 	std::string m_name;
-	std::string m_shortDesc, m_longDesc;
+	std::string m_longDesc;
 
 	Faction* m_faction;
 	bool m_unexplored;
 	fixed m_metallicity;
-	fixed m_industrial;
-	int m_econType;
 	int m_seed;
-
-	// percent price alteration
-	int m_tradeLevel[Equip::TYPE_MAX];
-
-	fixed m_agricultural;
-	fixed m_humanProx;
-	fixed m_totalPop;
 
 	RefCountedPtr<SystemBody> m_rootBody;
 	// index into this will be the SystemBody ID used by SystemPath

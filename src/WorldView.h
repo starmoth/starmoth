@@ -11,7 +11,6 @@
 #include "Serializer.h"
 #include "SpeedLines.h"
 #include "Background.h"
-#include "EquipType.h"
 #include "Camera.h"
 #include "CameraController.h"
 
@@ -45,7 +44,6 @@ public:
 	void ToggleTargetActions();
 	void ShowTargetActions();
 	void HideTargetActions();
-	int GetActiveWeapon() const;
 	void OnClickBlastoff();
 
 	sigc::signal<void> onChangeCamType;
@@ -88,7 +86,6 @@ private:
 	void OnToggleLabels();
 
 	void DrawCrosshair(float px, float py, float sz, const Color &c);
-	void DrawCombatTargetIndicator(const Indicator &target, const Indicator &lead, const Color &c);
 	void DrawTargetSquare(const Indicator &marker, const Color &c);
 	void DrawVelocityIndicator(const Indicator &marker, const Color &c);
 	void DrawImageIndicator(const Indicator &marker, Gui::TexturedQuad *quad, const Color &c);
@@ -141,9 +138,8 @@ private:
 #endif
 
 	Gui::Label *m_hudVelocity, *m_hudTargetDist, *m_hudAltitude, *m_hudPressure, *m_hudHyperspaceInfo, *m_hudTargetInfo;
-	Gui::MeterBar *m_hudHullTemp, *m_hudWeaponTemp, *m_hudHullIntegrity, *m_hudShieldIntegrity;
-	Gui::MeterBar *m_hudTargetHullIntegrity, *m_hudTargetShieldIntegrity;
-	Gui::MeterBar *m_hudFuelGauge;
+	Gui::MeterBar *m_hudHullTemp, *m_hudHullIntegrity;
+	Gui::MeterBar *m_hudTargetHullIntegrity;
 
 	sigc::connection m_onHyperspaceTargetChangedCon;
 	sigc::connection m_onPlayerChangeTargetCon;
@@ -163,8 +159,6 @@ private:
 	Indicator m_velIndicator;
 	Indicator m_navVelIndicator;
 	Indicator m_navTargetIndicator;
-	Indicator m_combatTargetIndicator;
-	Indicator m_targetLeadIndicator;
 	Indicator m_mouseDirIndicator;
 
 	std::unique_ptr<Gui::TexturedQuad> m_indicatorMousedir;

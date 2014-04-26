@@ -6,7 +6,6 @@
 
 #include "libs.h"
 #include "gui/Gui.h"
-#include "ShipCpanelMultiFuncDisplays.h"
 #include "Ship.h"
 #include "Serializer.h"
 #include "Game.h"
@@ -23,10 +22,6 @@ public:
 	virtual ~ShipCpanel();
 	virtual void Draw();
 	void Update();
-	MsgLogWidget *MsgLog() { return m_msglog; }
-	void SetAlertState(Ship::AlertState as);
-
-	void TimeStepUpdate(float step);
 
 	void Save(Serializer::Writer &wr);
 
@@ -54,28 +49,18 @@ private:
 	void OnClickComms(Gui::MultiStateImageButton *b);
 	void OnClickRotationDamping(Gui::MultiStateImageButton *b);
 
-	void OnUserChangeMultiFunctionDisplay(multifuncfunc_t f);
-	void ChangeMultiFunctionDisplay(multifuncfunc_t selected);
-	void OnMultiFuncGrabFocus(multifuncfunc_t);
-	void OnMultiFuncUngrabFocus(multifuncfunc_t);
 	void HideMapviewButtons();
 
 	enum MapView m_currentMapView;
-	multifuncfunc_t m_userSelectedMfuncWidget;
 	Gui::Label *m_clock;
 
 	sigc::connection m_connOnRotationDampingChanged;
 
-	MultiFuncSelectorWidget *m_mfsel;
-	ScannerWidget *m_scanner;
-	MsgLogWidget *m_msglog;
-	UseEquipWidget *m_useEquipWidget;
 	Gui::MultiStateImageButton *m_camButton;
 	Gui::RadioGroup *m_leftButtonGroup, *m_rightButtonGroup;
 	Gui::ImageRadioButton *m_timeAccelButtons[6];
 	Gui::Widget *m_mapViewButtons[4];
 	Gui::MultiStateImageButton *m_rotationDampingButton;
-	Gui::Image *m_alertLights[3];
 
 	Gui::Label *m_overlay[4];
 };

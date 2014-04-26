@@ -6,11 +6,9 @@
 #include "Frame.h"
 #include "Star.h"
 #include "Planet.h"
-#include "CargoBody.h"
 #include "SpaceStation.h"
 #include "Ship.h"
 #include "Player.h"
-#include "Projectile.h"
 #include "Missile.h"
 #include "HyperspaceCloud.h"
 #include "Pi.h"
@@ -71,8 +69,6 @@ void Body::Serialize(Serializer::Writer &_wr, Space *space)
 		case Object::SHIP:
 		case Object::PLAYER:
 		case Object::MISSILE:
-		case Object::CARGOBODY:
-		case Object::PROJECTILE:
 		case Object::HYPERSPACECLOUD:
 			Save(wr, space);
 			break;
@@ -101,10 +97,6 @@ Body *Body::Unserialize(Serializer::Reader &_rd, Space *space)
 			b = new Player(); break;
 		case Object::MISSILE:
 			b = new Missile(); break;
-		case Object::PROJECTILE:
-			b = new Projectile(); break;
-		case Object::CARGOBODY:
-			b = new CargoBody(); break;
 		case Object::HYPERSPACECLOUD:
 			b = new HyperspaceCloud(); break;
 		default:

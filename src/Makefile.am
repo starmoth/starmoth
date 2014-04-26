@@ -24,7 +24,6 @@ noinst_HEADERS = \
 	ByteRange.h \
 	Camera.h \
 	CameraController.h \
-	CargoBody.h \
 	CityOnPlanet.h \
 	Color.h \
 	Cutscene.h \
@@ -34,8 +33,6 @@ noinst_HEADERS = \
 	DynamicBody.h \
 	Easing.h \
 	EnumStrings.h \
-	EquipSet.h \
-	EquipType.h \
 	FaceGenManager.h \
 	FileSystem.h \
 	FontCache.h \
@@ -72,7 +69,6 @@ noinst_HEADERS = \
 	Planet.h \
 	Player.h \
 	PngWriter.h \
-	Projectile.h \
 	PropertiedObject.h \
 	PropertyMap.h \
 	Quaternion.h \
@@ -91,7 +87,6 @@ noinst_HEADERS = \
 	ShipCockpit.h \
 	ShipController.h \
 	ShipCpanel.h \
-	ShipCpanelMultiFuncDisplays.h \
 	ShipType.h \
 	Sound.h \
 	SoundMusic.h \
@@ -127,14 +122,12 @@ pioneer_SOURCES	= \
 	Body.cpp \
 	Camera.cpp \
 	CameraController.cpp \
-	CargoBody.cpp \
 	Color.cpp \
 	CityOnPlanet.cpp \
 	CRC32.cpp \
 	DeathView.cpp \
 	DynamicBody.cpp \
 	EnumStrings.cpp \
-	EquipType.cpp \
 	FaceGenManager.cpp \
 	FileSourceZip.cpp \
 	FileSystem.cpp \
@@ -170,7 +163,6 @@ pioneer_SOURCES	= \
 	Planet.cpp \
 	Player.cpp \
 	PngWriter.cpp \
-	Projectile.cpp \
 	PropertyMap.cpp \
 	SDLWrappers.cpp \
 	SectorView.cpp \
@@ -185,7 +177,6 @@ pioneer_SOURCES	= \
 	ShipCockpit.cpp \
 	ShipController.cpp \
 	ShipCpanel.cpp \
-	ShipCpanelMultiFuncDisplays.cpp \
 	ShipType.cpp \
 	Sound.cpp \
 	SoundMusic.cpp \

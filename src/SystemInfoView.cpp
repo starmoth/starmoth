@@ -138,68 +138,6 @@ void SystemInfoView::OnBodyViewed(SystemBody *b)
 	m_infoBox->ResizeRequest();
 }
 
-void SystemInfoView::UpdateEconomyTab()
-{
-	/* Economy info page */
-	StarSystem *s = m_system.Get();
-	std::string data;
-
-/*	if (s->m_econType) {
-		data = "Economy: ";
-
-		std::vector<std::string> v;
-		if (s->m_econType & ECON_AGRICULTURE) v.push_back("Agricultural");
-		if (s->m_econType & ECON_MINING) v.push_back("Mining");
-		if (s->m_econType & ECON_INDUSTRY) v.push_back("Industrial");
-		data += string_join(v, ", ");
-		data += "\n";
-	}
-	m_econInfo->SetText(data);
-*/
-	/* imports and exports */
-	std::vector<std::string> crud;
-	data = std::string("#ff0")+std::string(Lang::MAJOR_IMPORTS)+std::string("\n");
-	for (int i=1; i<Equip::TYPE_MAX; i++) {
-		if (s->GetCommodityBasePriceModPercent(i) > 10)
-			crud.push_back(std::string("#fff")+Equip::types[i].name);
-	}
-	if (crud.size()) data += string_join(crud, "\n")+"\n";
-	else data += std::string("#777")+std::string(Lang::NONE)+std::string("\n");
-	m_econMajImport->SetText(data);
-
-	crud.clear();
-	data = std::string("#ff0")+std::string(Lang::MINOR_IMPORTS)+std::string("\n");
-	for (int i=1; i<Equip::TYPE_MAX; i++) {
-		if ((s->GetCommodityBasePriceModPercent(i) > 2) && (s->GetCommodityBasePriceModPercent(i) <= 10))
-			crud.push_back(std::string("#777")+Equip::types[i].name);
-	}
-	if (crud.size()) data += string_join(crud, "\n")+"\n";
-	else data += std::string("#777")+std::string(Lang::NONE)+std::string("\n");
-	m_econMinImport->SetText(data);
-
-	crud.clear();
-	data = std::string("#ff0")+std::string(Lang::MAJOR_EXPORTS)+std::string("\n");
-	for (int i=1; i<Equip::TYPE_MAX; i++) {
-		if (s->GetCommodityBasePriceModPercent(i) < -10)
-			crud.push_back(std::string("#fff")+Equip::types[i].name);
-	}
-	if (crud.size()) data += string_join(crud, "\n")+"\n";
-	else data += std::string("#777")+std::string(Lang::NONE)+std::string("\n");
-	m_econMajExport->SetText(data);
-
-	crud.clear();
-	data = std::string("#ff0")+std::string(Lang::MINOR_EXPORTS)+std::string("\n");
-	for (int i=1; i<Equip::TYPE_MAX; i++) {
-		if ((s->GetCommodityBasePriceModPercent(i) < -2) && (s->GetCommodityBasePriceModPercent(i) >= -10))
-			crud.push_back(std::string("#777")+Equip::types[i].name);
-	}
-	if (crud.size()) data += string_join(crud, "\n")+"\n";
-	else data += std::string("#777")+std::string(Lang::NONE)+std::string("\n");
-	m_econMinExport->SetText(data);
-
-	m_econInfoTab->ResizeRequest();
-}
-
 void SystemInfoView::PutBodies(SystemBody *body, Gui::Fixed *container, int dir, float pos[2], int &majorBodies, int &starports, int &onSurface, float &prevSize)
 {
 	float size[2];
@@ -283,12 +221,10 @@ void SystemInfoView::SystemChanged(const SystemPath &path)
 		return;
 	}
 
-	m_econInfoTab = new Gui::Fixed(float(Gui::Screen::GetWidth()), float(Gui::Screen::GetHeight()-100));
 	Gui::Fixed *demographicsTab = new Gui::Fixed();
 
 	m_tabs = new Gui::Tabbed();
 	m_tabs->AddPage(new Gui::Label(Lang::PLANETARY_INFO), m_sbodyInfoTab);
-	m_tabs->AddPage(new Gui::Label(Lang::ECONOMIC_INFO), m_econInfoTab);
 	m_tabs->AddPage(new Gui::Label(Lang::DEMOGRAPHICS), demographicsTab);
 	Add(m_tabs, 0, 0);
 
@@ -298,8 +234,6 @@ void SystemInfoView::SystemChanged(const SystemPath &path)
 	{
 		float pos[2] = { 0, 0 };
 		float psize = -1;
-		majorBodies = starports = onSurface = 0;
-		PutBodies(m_system->GetRootBody().Get(), m_econInfoTab, 1, pos, majorBodies, starports, onSurface, psize);
 
 		majorBodies = starports = onSurface = 0;
 		pos[0] = pos[1] = 0;
@@ -343,41 +277,6 @@ void SystemInfoView::SystemChanged(const SystemPath &path)
 	}
 
 	{
-		// economy tab
-		Gui::HBox *scrollBox2 = new Gui::HBox();
-		scrollBox2->SetSpacing(5);
-		m_econInfoTab->Add(scrollBox2, 35, 300);
-		Gui::VScrollBar *scroll2 = new Gui::VScrollBar();
-		Gui::VScrollPortal *portal2 = new Gui::VScrollPortal(730);
-		scroll2->SetAdjustment(&portal2->vscrollAdjust);
-		scrollBox2->PackStart(scroll2);
-		scrollBox2->PackStart(portal2);
-
-		m_econInfo = new Gui::Label("");
-		m_econInfoTab->Add(m_econInfo, 35, 250);
-
-		Gui::Fixed *f = new Gui::Fixed();
-		m_econMajImport = new Gui::Label("");
-		m_econMinImport = new Gui::Label("");
-		m_econMajExport = new Gui::Label("");
-		m_econMinExport = new Gui::Label("");
-		m_econIllegal = new Gui::Label("");
-		m_econMajImport->Color(255,255,0);
-		m_econMinImport->Color(255,255,0);
-		m_econMajExport->Color(255,255,0);
-		m_econMinExport->Color(255,255,0);
-		m_econIllegal->Color(255,255,0);
-		f->Add(m_econMajImport, 0, 0);
-		f->Add(m_econMinImport, 150, 0);
-		f->Add(m_econMajExport, 300, 0);
-		f->Add(m_econMinExport, 450, 0);
-		f->Add(m_econIllegal, 600, 0);
-		portal2->Add(f);
-
-		UpdateEconomyTab();
-	}
-
-	{
 		Gui::Fixed *col1 = new Gui::Fixed();
 		demographicsTab->Add(col1, 200, 300);
 		Gui::Fixed *col2 = new Gui::Fixed();
@@ -386,16 +285,6 @@ void SystemInfoView::SystemChanged(const SystemPath &path)
 		const float YSEP = Gui::Screen::GetFontHeight() * 1.2f;
 
 		col1->Add((new Gui::Label(Lang::SYSTEM_TYPE))->Color(255,255,0), 0, 0);
-		col2->Add(new Gui::Label(m_system->GetShortDescription()), 0, 0);
-
-		col1->Add((new Gui::Label(Lang::POPULATION))->Color(255,255,0), 0, 5*YSEP);
-		std::string popmsg;
-		fixed pop = m_system->GetTotalPop();
-		if (pop >= fixed(1,1)) { popmsg = stringf(Lang::OVER_N_BILLION, formatarg("population", pop.ToInt32())); }
-		else if (pop >= fixed(1,1000)) { popmsg = stringf(Lang::OVER_N_MILLION, formatarg("population", (pop*1000).ToInt32())); }
-		else if (pop != fixed(0)) { popmsg = Lang::A_FEW_THOUSAND; }
-		else { popmsg = Lang::NO_REGISTERED_INHABITANTS; }
-		col2->Add(new Gui::Label(popmsg), 0, 5*YSEP);
 
 		col1->Add((new Gui::Label(Lang::SECTOR_COORDINATES))->Color(255,255,0), 0, 6*YSEP);
 		col2->Add(new Gui::Label(stringf("%0{d}, %1{d}, %2{d}", path.sectorX, path.sectorY, path.sectorZ)), 0, 6*YSEP);

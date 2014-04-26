@@ -68,14 +68,11 @@ public:
 	bool GetRotationDamping() const { return m_rotationDamping; }
 	void SetRotationDamping(bool enabled);
 	void ToggleRotationDamping();
-	void FireMissile();
 
 	//targeting
 	//XXX AI should utilize one or more of these
-	Body *GetCombatTarget() const;
 	Body *GetNavTarget() const;
 	Body *GetSetSpeedTarget() const;
-	void SetCombatTarget(Body* const target, bool setSpeedTo = false);
 	void SetNavTarget(Body* const target, bool setSpeedTo = false);
 
 	sigc::signal<void> onRotationDampingChanged;
@@ -85,7 +82,6 @@ private:
 	bool IsAnyLinearThrusterKeyDown();
 	//do a variety of checks to see if input is allowed
 	void CheckControlsLock();
-	Body* m_combatTarget;
 	Body* m_navTarget;
 	Body* m_setSpeedTarget;
 	bool m_controlsLocked;
@@ -99,7 +95,6 @@ private:
 	float m_fovY; //for mouse acceleration adjustment
 	float m_joystickDeadzone;
 	float m_lowThrustPower;
-	int m_combatTargetIndex; //for PostLoadFixUp
 	int m_navTargetIndex;
 	int m_setSpeedTargetIndex;
 	vector3d m_mouseDir;
