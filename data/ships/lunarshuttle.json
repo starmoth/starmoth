@@ -1,0 +1,13 @@
+{
+   "angular_thrust" : 8600000,
+   "down_thrust" : 600000,
+   "effective_exhaust_velocity" : 8840000,
+   "forward_thrust" : 2500000,
+   "hull_mass" : 30,
+   "left_thrust" : 600000,
+   "model" : "lunarshuttle",
+   "name" : "Lunar Shuttle",
+   "reverse_thrust" : 1100000,
+   "right_thrust" : 600000,
+   "up_thrust" : 1100000
+}

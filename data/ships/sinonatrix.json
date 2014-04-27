@@ -1,0 +1,13 @@
+{
+   "angular_thrust" : 25000000,
+   "down_thrust" : 1000000,
+   "effective_exhaust_velocity" : 19500000,
+   "forward_thrust" : 5500000,
+   "hull_mass" : 20,
+   "left_thrust" : 1000000,
+   "model" : "sinonatrix",
+   "name" : "Sinonatrix",
+   "reverse_thrust" : 1200000,
+   "right_thrust" : 1000000,
+   "up_thrust" : 1500000
+}

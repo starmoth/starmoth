@@ -1,0 +1,13 @@
+{
+   "angular_thrust" : 4000000,
+   "down_thrust" : 500000,
+   "effective_exhaust_velocity" : 28600000,
+   "forward_thrust" : 4000000,
+   "hull_mass" : 18,
+   "left_thrust" : 500000,
+   "model" : "amphiesma",
+   "name" : "Amphiesma",
+   "reverse_thrust" : 1000000,
+   "right_thrust" : 500000,
+   "up_thrust" : 1000000
+}

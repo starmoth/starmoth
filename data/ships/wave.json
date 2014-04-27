@@ -1,0 +1,13 @@
+{
+   "angular_thrust" : 7000000,
+   "down_thrust" : 800000,
+   "effective_exhaust_velocity" : 16900000,
+   "forward_thrust" : 6800000,
+   "hull_mass" : 13,
+   "left_thrust" : 800000,
+   "model" : "wave",
+   "name" : "Wave",
+   "reverse_thrust" : 1400000,
+   "right_thrust" : 800000,
+   "up_thrust" : 800000
+}

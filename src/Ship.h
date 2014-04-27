@@ -43,7 +43,7 @@ class Ship: public DynamicBody {
 	friend class PlayerShipController;
 public:
 	OBJDEF(Ship, DynamicBody, SHIP);
-	Ship(ShipType::Id shipId);
+	Ship(const std::string &shipId);
 	Ship() {} //default constructor used before Load
 	virtual ~Ship();
 
@@ -187,7 +187,7 @@ public:
 	virtual void PostLoadFixup(Space *space);
 
 	const ShipType *GetShipType() const { return m_type; }
-	void SetShipType(const ShipType::Id &shipId);
+	void SetShipType(const std::string &shipId);
 
 	const SceneGraph::ModelSkin &GetSkin() const { return m_skin; }
 	void SetSkin(const SceneGraph::ModelSkin &skin);
@@ -239,7 +239,7 @@ private:
 	void Init();
 	bool IsFiringLasers();
 	void TestLanded();
-    void SetShipId(const ShipType::Id &shipId);
+    void SetShipId(const std::string &shipId);
 	void EnterHyperspace();
 	void InitMaterials();
 

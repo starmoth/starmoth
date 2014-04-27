@@ -1,0 +1,13 @@
+{
+   "angular_thrust" : 2000000,
+   "down_thrust" : 600000,
+   "effective_exhaust_velocity" : 23140000,
+   "forward_thrust" : 5000000,
+   "hull_mass" : 27,
+   "left_thrust" : 600000,
+   "model" : "molamola",
+   "name" : "Mola Mola",
+   "reverse_thrust" : 2200000,
+   "right_thrust" : 600000,
+   "up_thrust" : 1900000
+}

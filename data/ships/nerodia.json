@@ -1,0 +1,13 @@
+{
+   "angular_thrust" : 80000000,
+   "down_thrust" : 40000000,
+   "effective_exhaust_velocity" : 20000000,
+   "forward_thrust" : 125000000,
+   "hull_mass" : 380,
+   "left_thrust" : 40000000,
+   "model" : "nerodia",
+   "name" : "Nerodia",
+   "reverse_thrust" : 70000000,
+   "right_thrust" : 40000000,
+   "up_thrust" : 50000000
+}

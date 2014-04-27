@@ -1,0 +1,13 @@
+{
+   "angular_thrust" : 170000000,
+   "down_thrust" : 50000000,
+   "effective_exhaust_velocity" : 17940000,
+   "forward_thrust" : 160000000,
+   "hull_mass" : 700,
+   "left_thrust" : 50000000,
+   "model" : "malabar",
+   "name" : "Malabar",
+   "reverse_thrust" : 80000000,
+   "right_thrust" : 50000000,
+   "up_thrust" : 70000000
+}

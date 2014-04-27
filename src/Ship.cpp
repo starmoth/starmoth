@@ -153,7 +153,7 @@ void Ship::PostLoadFixup(Space *space)
 	m_controller->PostLoadFixup(space);
 }
 
-Ship::Ship(ShipType::Id shipId): DynamicBody(),
+Ship::Ship(const std::string &shipId): DynamicBody(),
 	m_controller(0),
 	m_landingGearAnimation(nullptr)
 {
@@ -175,10 +175,9 @@ Ship::Ship(ShipType::Id shipId): DynamicBody(),
 	m_aiMessage = AIERROR_NONE;
 	m_decelerating = false;
 
-	SetModel(m_type->modelName.c_str());
+	SetModel(m_type->model.c_str());
 	SetLabel("UNLABELED_SHIP");
 	m_skin.SetRandomColors(Pi::rng);
-	m_skin.SetDecal(m_type->manufacturer);
 	m_skin.Apply(GetModel());
 	GetModel()->SetPattern(Pi::rng.Int32(0, GetModel()->GetNumPatterns()));
 
@@ -617,13 +616,6 @@ void Ship::StaticUpdate(const float timeStep)
 			SetFlightState(JUMPING);
 		}
 	}
-
-	//Add smoke trails for missiles on thruster state
-	if (m_type->tag == ShipType::TAG_MISSILE && m_thrusters.z < 0.0 && 0.1*Pi::rng.Double() < timeStep) {
-		const vector3d pos = GetOrient() * vector3d(0, 0 , 5);
-		const float speed = std::min(10.0*GetVelocity().Length()*abs(m_thrusters.z),100.0);
-		Sfx::AddThrustSmoke(this, Sfx::TYPE_SMOKE, speed, pos);
-	}
 }
 
 void Ship::NotifyRemoved(const Body* const removedBody)
@@ -720,17 +712,16 @@ void Ship::OnEnterSystem() {
 	m_hyperspaceCloud = 0;
 }
 
-void Ship::SetShipId(const ShipType::Id &shipId)
+void Ship::SetShipId(const std::string &shipId)
 {
-	m_type = &ShipType::types[shipId];
+	m_type = &(ShipType::types.find(shipId)->second);
 	Properties().Set("shipId", shipId);
 }
 
-void Ship::SetShipType(const ShipType::Id &shipId)
+void Ship::SetShipType(const std::string &shipId)
 {
 	SetShipId(shipId);
-	SetModel(m_type->modelName.c_str());
-	m_skin.SetDecal(m_type->manufacturer);
+	SetModel(m_type->model.c_str());
 	m_skin.Apply(GetModel());
 	Init();
 	onFlavourChanged.emit();
