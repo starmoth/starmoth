@@ -22,7 +22,6 @@ public:
 	};
 
 	ShipType(const std::string &id, const std::string &path);
-	ShipType(const std::string &_id, const std::string &_name, const std::string &_model, const std::string &_cockpitModel, const float _linThrust[THRUSTER_MAX], const float _angThrust, const float _hullMass, const float _effectiveExhaustVelocity);
 
 	std::string id;
 	std::string name;
@@ -32,9 +31,6 @@ public:
 	float angThrust;
 	float hullMass;
 	float effectiveExhaustVelocity; // velocity at which the propellant escapes the engines
-
-	// percentage (ie, 0--100) of tank used per second at full thrust
-	float GetFuelUseRate() const;
 
 	static std::map<const std::string, const ShipType> types;
 
