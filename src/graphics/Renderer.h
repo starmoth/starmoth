@@ -36,6 +36,7 @@ enum class MatrixMode {
 	PROJECTION
 };
 
+extern void CheckRenderErrors();
 
 // Renderer base, functions return false if
 // failed/unsupported

@@ -33,12 +33,16 @@ struct VertexAttribDesc {
 	//byte offset of the attribute, if zero this
 	//is automatically filled for created buffers
 	Uint32 offset;
+	//location in the shader program this maps too
+	Sint32 location;
 };
 
 struct VertexBufferDesc {
 	VertexBufferDesc();
 	//byte offset of an existing attribute
 	Uint32 GetOffset(VertexAttrib) const;
+	//shader location for an attribute
+	Sint32 GetLocation(const VertexAttrib attr) const;
 
 	//used internally for calculating offsets
 	static Uint32 CalculateOffset(const VertexBufferDesc&, VertexAttrib);

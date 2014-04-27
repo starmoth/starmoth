@@ -120,7 +120,6 @@ protected:
 	std::vector<GLenum> m_clientStates;
 	float m_minZNear;
 	float m_maxZFar;
-	bool m_useCompressedTextures;
 
 	matrix4x4f& GetCurrentTransform() { return m_currentTransform; }
 	matrix4x4f m_currentTransform;

@@ -59,17 +59,23 @@ Renderer* Init(Settings vs)
 	width = window->GetWidth();
 	height = window->GetHeight();
 
-	glewInit();
+	CheckRenderErrors();
 
-	//if (!glewIsSupported("GL_ARB_vertex_buffer_object"))
-	//	Error("OpenGL extension ARB_vertex_buffer_object not supported. Pioneer can not run on your graphics card.");
-
-	Renderer *renderer = 0;
+	glewExperimental=1;
+	GLenum err=glewInit();
+	if(err!=GLEW_OK)
+	{
+		//Problem: glewInit failed, something is seriously wrong.
+		Error("glewInit failed, aborting.\n");
+	}
+	CheckRenderErrors();
 
 	if (!glewIsSupported("GL_VERSION_3_2") )
 		Error("OpenGL Version 3.2 is not supported. Pioneer cannot run on your graphics card.");
+	CheckRenderErrors();
 	
-	renderer = new RendererGL2(window, vs);
+	Renderer *renderer = new RendererGL2(window, vs);
+	CheckRenderErrors();
 
 	Output("Initialized %s\n", renderer->GetName());
 

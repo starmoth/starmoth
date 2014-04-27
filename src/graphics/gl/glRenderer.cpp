@@ -56,19 +56,17 @@ static std::string glerr_to_string(GLenum err)
 	}
 }
 #pragma optimize( "", off )
-static void CheckGLError()
+void CheckRenderErrors()
 {
 	GLenum err = glGetError();
 	if( err ) {
 		std::stringstream ss;
 		ss << "OpenGL error(s) during frame:\n";
 		while (err != GL_NO_ERROR) {
-			const char * errmsg = (const char *)gluErrorString(err);
 			ss << glerr_to_string(err) << '\n';
-			ss << std::string(errmsg) << '\n';
 			err = glGetError();
 		}
-		Error("%s", ss.str().c_str());
+		Warning("%s", ss.str().c_str());
 	}
 }
 
@@ -86,16 +84,12 @@ RendererGL2::RendererGL2(WindowSDL *window, const Graphics::Settings &vs)
 //http://www.gamedev.net/blog/73/entry-2006307-tip-of-the-day-logarithmic-zbuffer-artifacts-fix/
 , m_minZNear(0.0001f)
 , m_maxZFar(10000000.0f)
-, m_useCompressedTextures(false)
 , m_invLogZfarPlus1(0.f)
 , m_activeRenderTarget(0)
 , m_activeRenderState(nullptr)
 , m_matrixMode(MatrixMode::MODELVIEW)
 {
 	m_viewportStack.push(Viewport());
-
-	const bool useDXTnTextures = vs.useTextureCompression && glewIsSupported("GL_EXT_texture_compression_s3tc");
-	m_useCompressedTextures = useDXTnTextures;
 
 	//XXX bunch of fixed function states here!
 	glCullFace(GL_BACK);
@@ -107,8 +101,8 @@ RendererGL2::RendererGL2(WindowSDL *window, const Graphics::Settings &vs)
 	glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 
-	glMatrixMode(GL_MODELVIEW);
-	CheckGLError();
+	SetMatrixMode(MatrixMode::MODELVIEW);
+	CheckRenderErrors();
 
 	m_modelViewStack.push(matrix4x4f::Identity());
 	m_projectionStack.push(matrix4x4f::Identity());
@@ -126,7 +120,7 @@ RendererGL2::RendererGL2(WindowSDL *window, const Graphics::Settings &vs)
 	vtxColorProg = new PiGL::MultiProgram(desc);
 	m_programs.push_back(std::make_pair(desc, vtxColorProg));
 
-	CheckGLError();
+	CheckRenderErrors();
 }
 
 RendererGL2::~RendererGL2()
@@ -148,13 +142,13 @@ bool RendererGL2::BeginFrame()
 	PROFILE_SCOPED()
 	glClearColor(0,0,0,0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	CheckGLError();
+	CheckRenderErrors();
 	return true;
 }
 
 bool RendererGL2::EndFrame()
 {
-	CheckGLError();
+	CheckRenderErrors();
 	return true;
 }
 
@@ -186,7 +180,7 @@ bool RendererGL2::SetRenderState(RenderState *rs)
 {
 	if (m_activeRenderState != rs) {
 		static_cast<PiGL::RenderState*>(rs)->Apply();
-		CheckGLError();
+		CheckRenderErrors();
 		m_activeRenderState = rs;
 	}
 	return true;
@@ -200,7 +194,7 @@ bool RendererGL2::SetRenderTarget(RenderTarget *rt)
 	else if (m_activeRenderTarget)
 		m_activeRenderTarget->Unbind();
 
-	CheckGLError();
+	CheckRenderErrors();
 
 	m_activeRenderTarget = static_cast<PiGL::RenderTarget*>(rt);
 
@@ -212,7 +206,7 @@ bool RendererGL2::ClearScreen()
 	m_activeRenderState = nullptr;
 	glDepthMask(GL_TRUE);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	CheckGLError();
+	CheckRenderErrors();
 
 	return true;
 }
@@ -222,7 +216,7 @@ bool RendererGL2::ClearDepthBuffer()
 	m_activeRenderState = nullptr;
 	glDepthMask(GL_TRUE);
 	glClear(GL_DEPTH_BUFFER_BIT);
-	CheckGLError();
+	CheckRenderErrors();
 
 	return true;
 }
@@ -230,7 +224,7 @@ bool RendererGL2::ClearDepthBuffer()
 bool RendererGL2::SetClearColor(const Color &c)
 {
 	glClearColor(c.r, c.g, c.b, c.a);
-	CheckGLError();
+	CheckRenderErrors();
 	return true;
 }
 
@@ -243,7 +237,7 @@ bool RendererGL2::SetViewport(int x, int y, int width, int height)
 	currentViewport.w = width;
 	currentViewport.h = height;
 	glViewport(x, y, width, height);
-	CheckGLError();
+	CheckRenderErrors();
 	return true;
 }
 
@@ -262,7 +256,7 @@ bool RendererGL2::SetTransform(const matrix4x4f &m)
 	m_modelViewStack.top() = m;
 	SetMatrixMode(MatrixMode::MODELVIEW);
 	LoadMatrix(&m[0]);
-	CheckGLError();
+	CheckRenderErrors();
 	return true;
 }
 
@@ -300,14 +294,14 @@ bool RendererGL2::SetProjection(const matrix4x4f &m)
 	m_projectionStack.top() = m;
 	SetMatrixMode(MatrixMode::PROJECTION);
 	LoadMatrix(&m[0]);
-	CheckGLError();
+	CheckRenderErrors();
 	return true;
 }
 
 bool RendererGL2::SetWireFrameMode(bool enabled)
 {
 	glPolygonMode(GL_FRONT_AND_BACK, enabled ? GL_LINE : GL_FILL);
-	CheckGLError();
+	CheckRenderErrors();
 	return true;
 }
 
@@ -344,7 +338,7 @@ bool RendererGL2::SetLights(int numlights, const Light *lights)
 
 		assert(m_numDirLights < 5);
 	}
-	CheckGLError();
+	CheckRenderErrors();
 
 	return true;
 }
@@ -363,7 +357,7 @@ bool RendererGL2::SetScissor(bool enabled, const vector2f &pos, const vector2f &
 	} else {
 		glDisable(GL_SCISSOR_TEST);
 	}
-	CheckGLError();
+	CheckRenderErrors();
 	return true;
 }
 
@@ -384,7 +378,7 @@ bool RendererGL2::DrawLines(int count, const vector3f *v, const Color *c, Render
 	glDrawArrays(t, 0, count);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
-	CheckGLError();
+	CheckRenderErrors();
 
 	return true;
 }
@@ -404,7 +398,7 @@ bool RendererGL2::DrawLines(int count, const vector3f *v, const Color &c, Render
 	glVertexPointer(3, GL_FLOAT, sizeof(vector3f), v);
 	glDrawArrays(t, 0, count);
 	glDisableClientState(GL_VERTEX_ARRAY);
-	CheckGLError();
+	CheckRenderErrors();
 
 	return true;
 }
@@ -423,7 +417,7 @@ bool RendererGL2::DrawLines2D(int count, const vector2f *v, const Color &c, Grap
 	glVertexPointer(2, GL_FLOAT, sizeof(vector2f), v);
 	glDrawArrays(t, 0, count);
 	glDisableClientState(GL_VERTEX_ARRAY);
-	CheckGLError();
+	CheckRenderErrors();
 
 	return true;
 }
@@ -446,7 +440,7 @@ bool RendererGL2::DrawPoints(int count, const vector3f *points, const Color *col
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
 	glPointSize(1.f); // XXX wont't be necessary
-	CheckGLError();
+	CheckRenderErrors();
 
 	return true;
 }
@@ -464,7 +458,7 @@ bool RendererGL2::DrawTriangles(const VertexArray *v, RenderState *rs, Material 
 
 	m->Unapply();
 	DisableClientStates();
-	CheckGLError();
+	CheckRenderErrors();
 
 	return true;
 }
@@ -501,7 +495,7 @@ bool RendererGL2::DrawPointSprites(int count, const vector3f *positions, RenderS
 	}
 
 	DrawTriangles(&va, rs, material);
-	CheckGLError();
+	CheckRenderErrors();
 
 	return true;
 }
@@ -515,16 +509,14 @@ bool RendererGL2::DrawBuffer(VertexBuffer* vb, RenderState* state, Material* mat
 
 	glBindBuffer(GL_ARRAY_BUFFER, gvb->GetBuffer());
 
-	gvb->SetAttribPointers();
 	EnableClientStates(gvb);
 
 	glDrawArrays(pt, 0, gvb->GetVertexCount());
 
-	gvb->UnsetAttribPointers();
 	DisableClientStates();
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	CheckGLError();
+	CheckRenderErrors();
 
 	return true;
 }
@@ -540,17 +532,15 @@ bool RendererGL2::DrawBufferIndexed(VertexBuffer *vb, IndexBuffer *ib, RenderSta
 	glBindBuffer(GL_ARRAY_BUFFER, gvb->GetBuffer());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gib->GetBuffer());
 
-	gvb->SetAttribPointers();
 	EnableClientStates(gvb);
 
 	glDrawElements(pt, ib->GetIndexCount(), GL_UNSIGNED_SHORT, 0);
 
-	gvb->UnsetAttribPointers();
 	DisableClientStates();
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	CheckGLError();
+	CheckRenderErrors();
 
 	return true;
 }
@@ -586,7 +576,7 @@ void RendererGL2::EnableClientStates(const VertexArray *v)
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(2, GL_FLOAT, 0, reinterpret_cast<const GLvoid *>(&v->uv0[0]));
 	}
-	CheckGLError();
+	CheckRenderErrors();
 }
 
 void RendererGL2::EnableClientStates(const VertexBuffer *vb)
@@ -617,7 +607,7 @@ void RendererGL2::EnableClientStates(const VertexBuffer *vb)
 		glEnableClientState(it);
 	}
 
-	CheckGLError();
+	CheckRenderErrors();
 }
 
 void RendererGL2::DisableClientStates()
@@ -627,7 +617,7 @@ void RendererGL2::DisableClientStates()
 	for (std::vector<GLenum>::const_iterator i = m_clientStates.begin(); i != m_clientStates.end(); ++i)
 		glDisableClientState(*i);
 	m_clientStates.clear();
-	CheckGLError();
+	CheckRenderErrors();
 }
 
 Material *RendererGL2::CreateMaterial(const MaterialDescriptor &d)
@@ -687,7 +677,7 @@ Material *RendererGL2::CreateMaterial(const MaterialDescriptor &d)
 	p = GetOrCreateProgram(mat); // XXX throws ShaderException on compile/link failure
 
 	mat->SetProgram(p);
-	CheckGLError();
+	CheckRenderErrors();
 	return mat;
 }
 
@@ -720,14 +710,14 @@ PiGL::Program* RendererGL2::GetOrCreateProgram(PiGL::Material *mat)
 		p = mat->CreateProgram(desc);
 		m_programs.push_back(std::make_pair(desc, p));
 	}
-	CheckGLError();
+	CheckRenderErrors();
 
 	return p;
 }
 
 Texture *RendererGL2::CreateTexture(const TextureDescriptor &descriptor)
 {
-	return new TextureGL(descriptor, m_useCompressedTextures);
+	return new TextureGL(descriptor, true);
 }
 
 RenderState *RendererGL2::CreateRenderState(const RenderStateDesc &desc)
@@ -775,7 +765,7 @@ RenderTarget *RendererGL2::CreateRenderTarget(const RenderTargetDesc &desc)
 	}
 	rt->CheckStatus();
 	rt->Unbind();
-	CheckGLError();
+	CheckRenderErrors();
 	return rt;
 }
 
@@ -800,7 +790,7 @@ void RendererGL2::PushState()
 	PushMatrix();
 	m_viewportStack.push( m_viewportStack.top() );
 	glPushAttrib(GL_ALL_ATTRIB_BITS & (~GL_POINT_BIT));
-	CheckGLError();
+	CheckRenderErrors();
 }
 
 void RendererGL2::PopState()
@@ -812,7 +802,7 @@ void RendererGL2::PopState()
 	PopMatrix();
 	SetMatrixMode(MatrixMode::MODELVIEW);
 	PopMatrix();
-	CheckGLError();
+	CheckRenderErrors();
 }
 
 static void dump_opengl_value(std::ostream &out, const char *name, GLenum id, int num_elems)
@@ -935,7 +925,7 @@ void RendererGL2::SetMatrixMode(MatrixMode mm)
 		}
 		m_matrixMode = mm;
 	}
-	CheckGLError();
+	CheckRenderErrors();
 }
 
 void RendererGL2::PushMatrix()
@@ -951,7 +941,7 @@ void RendererGL2::PushMatrix()
 			m_projectionStack.push(m_projectionStack.top());
 			break;
 	}
-	CheckGLError();
+	CheckRenderErrors();
 }
 
 void RendererGL2::PopMatrix()
@@ -968,7 +958,7 @@ void RendererGL2::PopMatrix()
 			assert(m_projectionStack.size());
 			break;
 	}
-	CheckGLError();
+	CheckRenderErrors();
 }
 
 void RendererGL2::LoadIdentity()
@@ -983,7 +973,7 @@ void RendererGL2::LoadIdentity()
 			m_projectionStack.top() = matrix4x4f::Identity();
 			break;
 	}
-	CheckGLError();
+	CheckRenderErrors();
 }
 
 void RendererGL2::LoadMatrix(const matrix4x4f &m)
@@ -998,7 +988,7 @@ void RendererGL2::LoadMatrix(const matrix4x4f &m)
 			m_projectionStack.top() = m;
 			break;
 	}
-	CheckGLError();
+	CheckRenderErrors();
 }
 
 void RendererGL2::Translate( const float x, const float y, const float z )
@@ -1013,7 +1003,7 @@ void RendererGL2::Translate( const float x, const float y, const float z )
 			m_projectionStack.top().Translate(x,y,z);
 			break;
 	}
-	CheckGLError();
+	CheckRenderErrors();
 }
 
 void RendererGL2::Scale( const float x, const float y, const float z )
@@ -1028,7 +1018,7 @@ void RendererGL2::Scale( const float x, const float y, const float z )
 			m_modelViewStack.top().Scale(x,y,z);
 			break;
 	}
-	CheckGLError();
+	CheckRenderErrors();
 }
 
 }

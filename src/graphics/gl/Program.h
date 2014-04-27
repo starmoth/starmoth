@@ -30,6 +30,7 @@ namespace Graphics {
 			Attribute aVertex;
 			Attribute aNormal;
 			Attribute aColor;
+			Attribute aUV0;
 
 			// Uniforms.
 			Uniform uProjectionMatrix;

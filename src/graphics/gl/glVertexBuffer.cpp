@@ -73,6 +73,27 @@ VertexBuffer::VertexBuffer(const VertexBufferDesc &desc)
 	memset(m_data, 0, dataSize);
 	const GLenum usage = (m_desc.usage == BUFFER_USAGE_STATIC) ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
 	glBufferData(GL_ARRAY_BUFFER, dataSize, m_data, usage);
+
+	//Setup the VAO pointers
+	for (Uint8 i = 0; i < MAX_ATTRIBS; i++) {
+		const auto& attr  = m_desc.attrib[i];
+		const auto offset = reinterpret_cast<const GLvoid*>(attr.offset);
+		const auto location = attr.location;
+		assert(-1!=location);
+		switch (attr.semantic) {
+		case ATTRIB_POSITION:
+		case ATTRIB_NORMAL:
+		case ATTRIB_DIFFUSE:
+		case ATTRIB_UV0:
+			glEnableVertexAttribArray(location);	// Enable the attribute at that location
+			glVertexAttribPointer(location, get_num_components(attr.format), get_component_type(attr.format), 0, m_desc.stride, offset);	// Tell OpenGL what the array contains
+			break;
+		case ATTRIB_NONE:
+		default:
+			assert(false);
+		}
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	//Don't keep client data around for static buffers
@@ -123,35 +144,6 @@ void VertexBuffer::Unmap()
 	}
 
 	m_mapMode = BUFFER_MAP_NONE;
-}
-
-void VertexBuffer::SetAttribPointers()
-{
-	for (Uint8 i = 0; i < MAX_ATTRIBS; i++) {
-		const auto& attr  = m_desc.attrib[i];
-		const auto offset = reinterpret_cast<const GLvoid*>(m_desc.attrib[i].offset);
-		switch (attr.semantic) {
-		case ATTRIB_POSITION:
-			glVertexPointer(get_num_components(attr.format), get_component_type(attr.format), m_desc.stride, offset);
-			break;
-		case ATTRIB_NORMAL:
-			glNormalPointer(get_component_type(attr.format), m_desc.stride, offset);
-			break;
-		case ATTRIB_DIFFUSE:
-			glColorPointer(get_num_components(attr.format), get_component_type(attr.format), m_desc.stride, offset);
-			break;
-		case ATTRIB_UV0:
-			glTexCoordPointer(get_num_components(attr.format), get_component_type(attr.format), m_desc.stride, offset);
-			break;
-		case ATTRIB_NONE:
-		default:
-			return;
-		}
-	}
-}
-
-void VertexBuffer::UnsetAttribPointers()
-{
 }
 
 IndexBuffer::IndexBuffer(Uint32 size, BufferUsage hint)

@@ -200,6 +200,7 @@ void Program::InitShaderLocations()
 	aVertex.Init("a_vertex", m_program);
 	aNormal.Init("a_normal", m_program);
 	aColor.Init("a_color", m_program);
+	aUV0.Init("a_uv0", m_program);
 
 	//Init generic uniforms, like matrices
 	uProjectionMatrix.Init("uProjectionMatrix", m_program);

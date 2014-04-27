@@ -23,8 +23,6 @@ public:
 	~VertexBuffer();
 
 	virtual void Unmap() override;
-	void SetAttribPointers();
-	void UnsetAttribPointers();
 
 protected:
 	virtual Uint8 *MapInternal(BufferMapMode) override;
