@@ -7,6 +7,19 @@ uniform mat4 uViewMatrixInverse;
 uniform mat4 uViewProjectionMatrix;
 uniform mat4 uNormalMatrix;
 
+//Light uniform parameters
+struct Light {
+	vec4 ambient;
+	vec4 diffuse;
+	vec4 specular;
+	vec4 position;
+};
+
+uniform Light uLight0;
+uniform Light uLight1;
+uniform Light uLight2;
+uniform Light uLight3;
+
 in vec4 a_vertex;
 in vec3 a_normal;
 in vec4 a_color;
