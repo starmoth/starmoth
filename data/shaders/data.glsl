@@ -10,6 +10,7 @@ uniform mat4 uNormalMatrix;
 in vec4 a_vertex;
 in vec3 a_normal;
 in vec4 a_color;
+in vec4 a_uv0;
 
 in vec2 a_texCoord0;
 in vec2 a_texCoord1;
