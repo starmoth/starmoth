@@ -14,7 +14,6 @@
 #include "BaseSphere.h"
 #include "Intro.h"
 #include "Lang.h"
-#include "Missile.h"
 #include "ModelCache.h"
 #include "ModManager.h"
 #include "NavLights.h"

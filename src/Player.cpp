@@ -89,15 +89,6 @@ bool Player::SetWheelState(bool down)
 	return did;
 }
 
-//XXX all ships should make this sound
-Missile * Player::SpawnMissile(ShipType::Id missile_type, int power)
-{
-	Missile * m = Ship::SpawnMissile(missile_type, power);
-	if (m)
-		Sound::PlaySfx("Missile_launch", 1.0f, 1.0f, 0);
-	return m;
-}
-
 void Player::NotifyRemoved(const Body* const removedBody)
 {
 	if (GetNavTarget() == removedBody)

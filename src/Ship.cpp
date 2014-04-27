@@ -5,7 +5,6 @@
 #include "CityOnPlanet.h"
 #include "Lang.h"
 #include "EnumStrings.h"
-#include "Missile.h"
 #include "Player.h"
 #include "ShipAICmd.h"
 #include "ShipController.h"
@@ -399,21 +398,6 @@ void Ship::ResetHyperspaceCountdown()
 {
 	m_hyperspace.countdown = 0;
 	m_hyperspace.now = false;
-}
-
-Missile * Ship::SpawnMissile(ShipType::Id missile_type, int power) {
-	if (GetFlightState() != FLYING)
-		return 0;
-
-	Missile *missile = new Missile(missile_type, this, power);
-	missile->SetOrient(GetOrient());
-	missile->SetFrame(GetFrame());
-	const vector3d pos = GetOrient() * vector3d(0, GetAabb().min.y - 10, GetAabb().min.z);
-	const vector3d vel = -40.0 * GetOrient().VectorZ();
-	missile->SetPosition(GetPosition()+pos);
-	missile->SetVelocity(GetVelocity()+vel);
-	Pi::game->GetSpace()->AddBody(missile);
-	return missile;
 }
 
 void Ship::SetFlightState(Ship::FlightState newState)

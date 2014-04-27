@@ -29,7 +29,6 @@ const struct EnumItem ENUM_PhysicsObjectType[] = {
 	{ "SPACESTATION", Object::SPACESTATION },
 	{ "PLANET", Object::PLANET },
 	{ "STAR", Object::STAR },
-	{ "MISSILE", Object::MISSILE },
 	{ 0, 0 },
 };
 

@@ -23,7 +23,6 @@ class SpaceStation;
 class HyperspaceCloud;
 class AICommand;
 class ShipController;
-class Missile;
 namespace Graphics { class Renderer; }
 
 struct HeatGradientParameters_t {
@@ -150,7 +149,6 @@ public:
 
 	// 0 to 1.0 is alive, > 1.0 = death
 	double GetHullTemperature() const;
-	virtual Missile * SpawnMissile(ShipType::Id missile_type, int power=-1);
 
 	bool AIMatchVel(const vector3d &vel);
 	bool AIChangeVelBy(const vector3d &diffvel);		// acts in obj space

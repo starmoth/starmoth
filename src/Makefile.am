@@ -54,7 +54,6 @@ noinst_HEADERS = \
 	Lang.h \
 	LangStrings.inc.h \
 	MathUtil.h \
-	Missile.h \
 	ModelBody.h \
 	ModelCache.h \
 	ModManager.h \
@@ -151,7 +150,6 @@ pioneer_SOURCES	= \
 	KeyBindings.cpp \
 	Lang.cpp \
 	MathUtil.cpp \
-	Missile.cpp \
 	ModelBody.cpp \
 	ModelCache.cpp \
 	ModManager.cpp \

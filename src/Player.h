@@ -22,7 +22,6 @@ public:
 	virtual void SetDockedWith(SpaceStation *, int port);
 	virtual bool OnDamage(Object *attacker, float kgDamage, const CollisionContact& contactData);
 	virtual bool SetWheelState(bool down); // returns success of state change, NOT state itself
-	virtual Missile * SpawnMissile(ShipType::Id missile_type, int power=-1);
 	virtual void NotifyRemoved(const Body* const removedBody);
 
 	PlayerShipController *GetPlayerController() const;
