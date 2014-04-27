@@ -9,12 +9,14 @@ static const unsigned int MIN_COMPRESSED_TEXTURE_DIMENSION = 16;
 
 namespace Graphics {
 
+extern void CheckRenderErrors();
+
 inline GLint GLInternalFormat(TextureFormat format) {
 	switch (format) {
 		case TEXTURE_RGB_888: return GL_RGB;
 		case TEXTURE_RGBA_8888: return GL_RGBA;
-		case TEXTURE_LUMINANCE_ALPHA_88: return GL_LUMINANCE_ALPHA;
-		case TEXTURE_INTENSITY_8:  return GL_INTENSITY;
+		case TEXTURE_LUMINANCE_ALPHA_88: return GL_RG;
+		case TEXTURE_INTENSITY_8:  return GL_RED;
 		case TEXTURE_DXT5: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 		case TEXTURE_DXT1:  return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 		case TEXTURE_DEPTH: return GL_DEPTH_COMPONENT;
@@ -28,8 +30,8 @@ inline GLint GLCompressedInternalFormat(TextureFormat format) {
 	switch (format) {
 		case TEXTURE_RGBA_8888: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 		case TEXTURE_RGB_888:  return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-		case TEXTURE_LUMINANCE_ALPHA_88: return GL_LUMINANCE_ALPHA;
-		case TEXTURE_INTENSITY_8:  return GL_INTENSITY;
+		case TEXTURE_LUMINANCE_ALPHA_88: return GL_RG;
+		case TEXTURE_INTENSITY_8:  return GL_RED;
 		case TEXTURE_DXT5: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 		case TEXTURE_DXT1:  return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 		default: assert(0); return 0;
@@ -41,7 +43,7 @@ inline GLint GLImageFormat(TextureFormat format) {
 		case TEXTURE_RGBA_8888: return GL_RGBA;
 		case TEXTURE_RGB_888:  return GL_RGB;
 		case TEXTURE_LUMINANCE_ALPHA_88: return GL_LUMINANCE_ALPHA;
-		case TEXTURE_INTENSITY_8:  return GL_LUMINANCE;
+		case TEXTURE_INTENSITY_8:  return GL_RED;
 		case TEXTURE_DXT5: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 		case TEXTURE_DXT1:  return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 		case TEXTURE_DEPTH: return GL_DEPTH_COMPONENT;
@@ -80,6 +82,7 @@ TextureGL::TextureGL(const TextureDescriptor &descriptor, const bool useCompress
 
 	glGenTextures(1, &m_texture);
 	glBindTexture(m_target, m_texture);
+	CheckRenderErrors();
 
 
 	// useCompressed is the global scope flag whereas descriptor.allowCompression is the local texture mode flag
@@ -93,12 +96,14 @@ TextureGL::TextureGL(const TextureDescriptor &descriptor, const bool useCompress
 					glTexParameteri(m_target, GL_GENERATE_MIPMAP, GL_TRUE);
 				else
 					glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL, 0);
+				CheckRenderErrors();
 
 				glTexImage2D(
 					m_target, 0, compressTexture ? GLCompressedInternalFormat(descriptor.format) : GLInternalFormat(descriptor.format),
 					descriptor.dataSize.x, descriptor.dataSize.y, 0,
 					GLImageFormat(descriptor.format),
 					GLImageType(descriptor.format), 0);
+				CheckRenderErrors();
 			} else {
 				const GLint oglFormatMinSize = GetMinSize(descriptor.format);
 				size_t Width = descriptor.dataSize.x;
@@ -117,6 +122,7 @@ TextureGL::TextureGL(const TextureDescriptor &descriptor, const bool useCompress
 					Height /= 2;
 				}
 				glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL, maxMip);
+				CheckRenderErrors();
 			}
 			break;
 
@@ -126,6 +132,7 @@ TextureGL::TextureGL(const TextureDescriptor &descriptor, const bool useCompress
 					glTexParameteri(m_target, GL_GENERATE_MIPMAP, GL_TRUE);
 				else
 					glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL, 0);
+				CheckRenderErrors();
 
 				glTexImage2D(
 					GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, compressTexture ? GLCompressedInternalFormat(descriptor.format) : GLInternalFormat(descriptor.format),
@@ -157,6 +164,7 @@ TextureGL::TextureGL(const TextureDescriptor &descriptor, const bool useCompress
 					descriptor.dataSize.x, descriptor.dataSize.y, 0,
 					GLImageFormat(descriptor.format),
 					GLImageType(descriptor.format), 0);
+				CheckRenderErrors();
 			} else {
 				const GLint oglFormatMinSize = GetMinSize(descriptor.format);
 				size_t Width = descriptor.dataSize.x;
@@ -180,12 +188,14 @@ TextureGL::TextureGL(const TextureDescriptor &descriptor, const bool useCompress
 					Height /= 2;
 				}
 				glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL, maxMip);
+				CheckRenderErrors();
 			}
 			break;
 
 		default:
 			assert(0);
 	}
+	CheckRenderErrors();
 
 	GLenum magFilter, minFilter, wrapS, wrapT;
 	switch (descriptor.sampleMode) {
@@ -220,6 +230,7 @@ TextureGL::TextureGL(const TextureDescriptor &descriptor, const bool useCompress
 	glTexParameteri(m_target, GL_TEXTURE_WRAP_T, wrapS);
 	glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, magFilter);
 	glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, minFilter);
+	CheckRenderErrors();
 
 }
 

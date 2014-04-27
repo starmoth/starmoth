@@ -40,7 +40,7 @@ struct VertexAttribDesc {
 struct VertexBufferDesc {
 	VertexBufferDesc();
 	//byte offset of an existing attribute
-	Uint32 GetOffset(VertexAttrib) const;
+	Uint32 GetOffset(const VertexAttrib) const;
 	//shader location for an attribute
 	Sint32 GetLocation(const VertexAttrib attr) const;
 

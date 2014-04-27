@@ -10,6 +10,8 @@
 
 namespace Graphics {
 
+extern void CheckRenderErrors();
+
 namespace PiGL {
 
 static const char *s_glslVersion = "#version 150\n";
@@ -191,6 +193,7 @@ void Program::LoadShaders(const std::string &name, const std::string &defines)
 	glLinkProgram(m_program);
 
 	check_glsl_errors(name.c_str(), m_program);
+	CheckRenderErrors();
 
 	//shaders may now be deleted by Shader destructor
 }
@@ -225,6 +228,7 @@ void Program::InitShaderLocations()
 	heatingNormal.Init("heatingNormal", m_program);
 	heatingAmount.Init("heatingAmount", m_program);
 	sceneAmbient.Init("scene.ambient", m_program);
+	CheckRenderErrors();
 }
 
 } // PiGL

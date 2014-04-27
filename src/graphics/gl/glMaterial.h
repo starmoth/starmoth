@@ -17,7 +17,7 @@
 
 namespace Graphics {
 
-	class RendererGL2;
+	class glRenderer;
 
 	namespace PiGL {
 
@@ -34,9 +34,9 @@ namespace Graphics {
 			virtual void SetProgram(Program *p) { m_program = p; }
 
 		protected:
-			friend class Graphics::RendererGL2;
+			friend class Graphics::glRenderer;
 			Program *m_program;
-			RendererGL2 *m_renderer;
+			glRenderer *m_renderer;
 		};
 	}
 }

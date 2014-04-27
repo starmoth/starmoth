@@ -38,7 +38,7 @@ VertexBufferDesc::VertexBufferDesc()
 	assert(sizeof(Color4ub) == 4);
 }
 
-Uint32 VertexBufferDesc::GetOffset(VertexAttrib attr) const
+Uint32 VertexBufferDesc::GetOffset(const VertexAttrib attr) const
 {
 	for (Uint32 i = 0; i < MAX_ATTRIBS; i++) {
 		if (attrib[i].semantic == attr)

@@ -44,6 +44,7 @@ MultiProgram::MultiProgram(const MaterialDescriptor &desc, int lights)
 
 	m_name = "multi";
 	m_defines = ss.str();
+	CheckRenderErrors();
 
 	LoadShaders(m_name, m_defines);
 	InitShaderLocations();
