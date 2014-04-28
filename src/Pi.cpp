@@ -796,7 +796,7 @@ void Pi::Start()
 	auto b = ui->Button()->SetInnerWidget(ui->Label("Start"));
 	ui->DropAllLayers();
 	ui->GetTopLayer()->SetInnerWidget(b);
-	b->onClick.connect([]{ Pi::game = new Game(SystemPath(0,0,0,0,1)); return false; });
+	b->onClick.connect([]{ Pi::game = new Game(SystemPath(0,0,0,0,1), vector3d(EARTH_RADIUS*5)); return false; });
 
 	Pi::ui->SetMousePointer("icons/cursors/mouse_cursor_2.png", UI::Point(15, 8));
 
