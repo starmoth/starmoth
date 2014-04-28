@@ -9,103 +9,12 @@
 #include "StringF.h"
 #include "scenegraph/Model.h"
 #include "OS.h"
+#include "json/json.h"
 
 #include <algorithm>
 
 //static lua_State *s_lua;
 static std::string s_currentStationFile = "";
-std::vector<SpaceStationType> SpaceStationType::surfaceStationTypes;
-std::vector<SpaceStationType> SpaceStationType::orbitalStationTypes;
-
-SpaceStationType::SpaceStationType()
-: id("")
-, model(0)
-, modelName("")
-, angVel(0.f)
-, dockMethod(SURFACE)
-, numDockingPorts(0)
-, numDockingStages(0)
-, numUndockStages(0)
-, shipLaunchStage(0)
-, dockAnimStageDuration(0)
-, undockAnimStageDuration(0)
-, parkingDistance(0)
-, parkingGapSize(0)
-{}
-
-void SpaceStationType::OnSetupComplete()
-{
-	SceneGraph::Model::TVecMT approach_mts;
-	SceneGraph::Model::TVecMT docking_mts;
-	SceneGraph::Model::TVecMT leaving_mts;
-	model->FindTagsByStartOfName("approach_", approach_mts);
-	model->FindTagsByStartOfName("docking_", docking_mts);
-	model->FindTagsByStartOfName("leaving_", leaving_mts);
-
-	{
-		SceneGraph::Model::TVecMT::const_iterator apprIter = approach_mts.begin();
-		for (; apprIter!=approach_mts.end() ; ++apprIter)
-		{
-			int bay, stage;
-			PiVerify(2 == sscanf((*apprIter)->GetName().c_str(), "approach_stage%d_bay%d", &stage, &bay));
-			PiVerify(bay>0 && stage>0);
-			SBayGroup* pGroup = GetGroupByBay(bay-1);
-			assert(pGroup);
-			pGroup->m_approach[stage] = (*apprIter)->GetTransform();
-		}
-
-		SceneGraph::Model::TVecMT::const_iterator dockIter = docking_mts.begin();
-		for (; dockIter!=docking_mts.end() ; ++dockIter)
-		{
-			int bay, stage;
-			PiVerify(2 == sscanf((*dockIter)->GetName().c_str(), "docking_stage%d_bay%d", &stage, &bay));
-			PiVerify(bay>0 && stage>0);
-			m_ports[bay].m_docking[stage+1] = (*dockIter)->GetTransform();
-		}
-
-		SceneGraph::Model::TVecMT::const_iterator leaveIter = leaving_mts.begin();
-		for (; leaveIter!=leaving_mts.end() ; ++leaveIter)
-		{
-			int bay, stage;
-			PiVerify(2 == sscanf((*leaveIter)->GetName().c_str(), "leaving_stage%d_bay%d", &stage, &bay));
-			PiVerify(bay>0 && stage>0);
-			m_ports[bay].m_leaving[stage] = (*leaveIter)->GetTransform();
-		}
-
-		assert(!m_ports.empty());
-		assert(numDockingStages > 0);
-		assert(numUndockStages > 0);
-
-		for (PortMap::const_iterator pIt = m_ports.begin(), pItEnd = m_ports.end(); pIt!=pItEnd; ++pIt)
-		{
-			if (Uint32(numDockingStages-1) < pIt->second.m_docking.size()) {
-				Error(
-					"(%s): numDockingStages (%d) vs number of docking stages (" SIZET_FMT ")\n"
-					"Must have at least the same number of entries as the number of docking stages "
-					"PLUS the docking timeout at the start of the array.",
-					modelName.c_str(), (numDockingStages-1), pIt->second.m_docking.size());
-
-			} else if (Uint32(numDockingStages-1) != pIt->second.m_docking.size()) {
-				Warning(
-					"(%s): numDockingStages (%d) vs number of docking stages (" SIZET_FMT ")\n",
-					modelName.c_str(), (numDockingStages-1), pIt->second.m_docking.size());
-			}
-
-			if (0!=pIt->second.m_leaving.size() && Uint32(numUndockStages) < pIt->second.m_leaving.size()) {
-				Error(
-					"(%s): numUndockStages (%d) vs number of leaving stages (" SIZET_FMT ")\n"
-					"Must have at least the same number of entries as the number of leaving stages.",
-					modelName.c_str(), (numDockingStages-1), pIt->second.m_docking.size());
-
-			} else if(0!=pIt->second.m_leaving.size() && Uint32(numUndockStages) != pIt->second.m_leaving.size()) {
-				Warning(
-					"(%s): numUndockStages (%d) vs number of leaving stages (" SIZET_FMT ")\n",
-					modelName.c_str(), numUndockStages, pIt->second.m_leaving.size());
-			}
-
-		}
-	}
-}
 
 const SpaceStationType::SBayGroup* SpaceStationType::FindGroupByBay(const int zeroBaseBayID) const
 {
@@ -224,160 +133,184 @@ bool SpaceStationType::GetDockAnimPositionOrient(const unsigned int port, int st
 	return gotOrient;
 }
 
-#if 0
-static int _get_stage_durations(lua_State *L, const char *key, int &outNumStages, double **outDurationArray)
-{
-	LUA_DEBUG_START(L);
-	LuaTable stages = LuaTable(L, -1).Sub(key);
-	if (stages.GetLua() == 0) {
-		luaL_error(L, "Not a proper table (%s)", key);
-	}
-	if (stages.Size() < 1)
-		return luaL_error(L, "Station must have at least 1 stage in %s", key);
-	outNumStages = stages.Size();
-	*outDurationArray = new double[stages.Size()];
-	std::copy(stages.Begin<double>(), stages.End<double>(), *outDurationArray);
-	lua_pop(L, 1); // Popping t
-	LUA_DEBUG_END(L, 0);
-	return 0;
-}
+SpaceStationType::SpaceStationType(const std::string &_id, const std::string &path) {
+	Json::Reader reader;
+	Json::Value data;
 
-// Data format example:
-//	bay_groups = {
-//		{0, 500, {1}},
-//	},
-static int _get_bay_ids(lua_State *L, const char *key, SpaceStationType::TBayGroups &outBayGroups, unsigned int &outNumDockingPorts)
-{
-	LUA_DEBUG_START(L);
-	LuaTable t = LuaTable(L, -1).Sub(key);
-	if (t.GetLua() == 0) {
-		luaL_error(L, "The bay group isn't a proper table (%s)", key);
-	}
-	if (t.Size() < 1) {
-		return luaL_error(L, "Station must have at least 1 group of bays in %s", key);
+	auto fd = FileSystem::gameDataFiles.ReadFile(path);
+	if (!fd) {
+		Output("couldn't open station def '%s'\n", path.c_str());
+		return;
 	}
 
-	LuaTable::VecIter<LuaTable> it_end = t.End<LuaTable>();
-	for (LuaTable::VecIter<LuaTable> it = t.Begin<LuaTable>(); it != it_end; ++it) {
-		SpaceStationType::SBayGroup newBay;
-		newBay.minShipSize = it->Get<int>(1);
-		newBay.maxShipSize = it->Get<int>(2);
-		LuaTable group = it->Sub(3);
+	if (!reader.parse(fd->GetData(), fd->GetData()+fd->GetSize(), data)) {
+		Output("couldn't read station def '%s': %s\n", path.c_str(), reader.getFormattedErrorMessages().c_str());
+		return;
+	}
 
-		if (group.GetLua() == 0) {
-			luaL_error(L, "A group is of the form {int, int, table} (%s)", key);
+	id = _id;
+	modelName = data.get("model", "").asString();
+
+	const std::string type(data.get("type", "").asString());
+	if (type == "surface")
+		dockMethod = SURFACE;
+	else if (type == "orbital")
+		dockMethod = ORBITAL;
+	else {
+		Output("couldn't parse station def '%s': unknown type '%s'\n", path.c_str(), type.c_str());
+		return;
+	}
+
+	angVel = data.get("angular_velocity", 0.0f).asFloat();
+
+	parkingDistance = data.get("parking_distance", 0.0f).asFloat();
+	parkingGapSize = data.get("parking_gap_size", 0.0f).asFloat();
+
+	shipLaunchStage = data.get("ship_launch_stage", 0).asInt();
+
+	{
+		auto dockStages = data.get("dock_anim_stage_duration", Json::arrayValue);
+		if (dockStages.size() < 1) {
+			Output("couldn't parse station def '%s': dock_anim_stage_duration requires at least one stage\n", path.c_str());
+			return;
+		}
+		numDockingStages = dockStages.size();
+		for (auto i = dockStages.begin(); i != dockStages.end(); ++i)
+			dockAnimStageDuration.push_back((*i).asFloat());
+	}
+
+	{
+		auto undockStages = data.get("undock_anim_stage_duration", Json::arrayValue);
+		if (undockStages.size() < 1) {
+			Output("couldn't parse station def '%s': undock_anim_stage_duration requires at least one stage\n", path.c_str());
+			return;
+		}
+		numUndockStages = undockStages.size();
+		for (auto i = undockStages.begin(); i != undockStages.end(); ++i)
+			undockAnimStageDuration.push_back((*i).asFloat());
+	}
+
+	{
+		auto bayGroupData = data.get("bay_groups", Json::arrayValue);
+		if (bayGroupData.size() < 1) {
+			Output("couldn't parse station def '%s': bay_groups requires at least one group\n", path.c_str());
+			return;
 		}
 
-		if (group.Size() == 0) {
-			return luaL_error(L, "Group must have at least 1 bay %s", key);
-		}
-
-		newBay.bayIDs.reserve(group.Size());
-		LuaTable::VecIter<int> jt_end = group.End<int>();
-		for (LuaTable::VecIter<int> jt = group.Begin<int>(); jt != jt_end; ++jt) {
-			if ((*jt) < 1) {
-				return luaL_error(L, "Valid bay ID ranges start from 1 %s", key);
+		numDockingPorts = 0;
+		for (auto i = bayGroupData.begin(); i != bayGroupData.end(); ++i) {
+			auto bayData = (*i);
+			SpaceStationType::SBayGroup newBay;
+			newBay.minShipSize = bayData[0].asInt();
+			newBay.maxShipSize = bayData[1].asInt();
+			auto groupData = bayData[2];
+			if (groupData.size() < 1) {
+				Output("couldn't parse station def '%s': bay groups must have at least one bay\n", path.c_str());
+				return;
 			}
-			newBay.bayIDs.push_back((*jt)-1);
-			++outNumDockingPorts;
+			for (auto j = groupData.begin(); j != groupData.end(); ++j) {
+				newBay.bayIDs.push_back((*j).asUInt());
+				numDockingPorts++;
+			}
+			bayGroups.push_back(newBay);
 		}
-		lua_pop(L, 1); // Popping group
-		outBayGroups.push_back(newBay);
 	}
-	lua_pop(L, 1); // Popping t
-	LUA_DEBUG_END(L, 0);
-	return 0;
+
+	assert(!modelName.empty());
+	model = Pi::FindModel(modelName);
+
+	SceneGraph::Model::TVecMT approach_mts;
+	SceneGraph::Model::TVecMT docking_mts;
+	SceneGraph::Model::TVecMT leaving_mts;
+	model->FindTagsByStartOfName("approach_", approach_mts);
+	model->FindTagsByStartOfName("docking_", docking_mts);
+	model->FindTagsByStartOfName("leaving_", leaving_mts);
+
+	{
+		SceneGraph::Model::TVecMT::const_iterator apprIter = approach_mts.begin();
+		for (; apprIter!=approach_mts.end() ; ++apprIter)
+		{
+			int bay, stage;
+			PiVerify(2 == sscanf((*apprIter)->GetName().c_str(), "approach_stage%d_bay%d", &stage, &bay));
+			PiVerify(bay>0 && stage>0);
+			SBayGroup* pGroup = GetGroupByBay(bay);
+			assert(pGroup);
+			pGroup->m_approach[stage] = (*apprIter)->GetTransform();
+		}
+
+		SceneGraph::Model::TVecMT::const_iterator dockIter = docking_mts.begin();
+		for (; dockIter!=docking_mts.end() ; ++dockIter)
+		{
+			int bay, stage;
+			PiVerify(2 == sscanf((*dockIter)->GetName().c_str(), "docking_stage%d_bay%d", &stage, &bay));
+			PiVerify(bay>0 && stage>0);
+			m_ports[bay].m_docking[stage+1] = (*dockIter)->GetTransform();
+		}
+
+		SceneGraph::Model::TVecMT::const_iterator leaveIter = leaving_mts.begin();
+		for (; leaveIter!=leaving_mts.end() ; ++leaveIter)
+		{
+			int bay, stage;
+			PiVerify(2 == sscanf((*leaveIter)->GetName().c_str(), "leaving_stage%d_bay%d", &stage, &bay));
+			PiVerify(bay>0 && stage>0);
+			m_ports[bay].m_leaving[stage] = (*leaveIter)->GetTransform();
+		}
+
+		assert(!m_ports.empty());
+		assert(numDockingStages > 0);
+		assert(numUndockStages > 0);
+
+		for (PortMap::const_iterator pIt = m_ports.begin(), pItEnd = m_ports.end(); pIt!=pItEnd; ++pIt)
+		{
+			if (Uint32(numDockingStages-1) < pIt->second.m_docking.size()) {
+				Error(
+					"(%s): numDockingStages (%d) vs number of docking stages (" SIZET_FMT ")\n"
+					"Must have at least the same number of entries as the number of docking stages "
+					"PLUS the docking timeout at the start of the array.",
+					modelName.c_str(), (numDockingStages-1), pIt->second.m_docking.size());
+
+			} else if (Uint32(numDockingStages-1) != pIt->second.m_docking.size()) {
+				Warning(
+					"(%s): numDockingStages (%d) vs number of docking stages (" SIZET_FMT ")\n",
+					modelName.c_str(), (numDockingStages-1), pIt->second.m_docking.size());
+			}
+
+			if (0!=pIt->second.m_leaving.size() && Uint32(numUndockStages) < pIt->second.m_leaving.size()) {
+				Error(
+					"(%s): numUndockStages (%d) vs number of leaving stages (" SIZET_FMT ")\n"
+					"Must have at least the same number of entries as the number of leaving stages.",
+					modelName.c_str(), (numDockingStages-1), pIt->second.m_docking.size());
+
+			} else if(0!=pIt->second.m_leaving.size() && Uint32(numUndockStages) != pIt->second.m_leaving.size()) {
+				Warning(
+					"(%s): numUndockStages (%d) vs number of leaving stages (" SIZET_FMT ")\n",
+					modelName.c_str(), numUndockStages, pIt->second.m_leaving.size());
+			}
+
+		}
+	}
 }
 
-static int _define_station(lua_State *L, SpaceStationType &station)
-{
-	station.id = s_currentStationFile;
-
-	LUA_DEBUG_START(L);
-	LuaTable t(L, -1);
-	station.modelName = t.Get<std::string>("model");
-	station.angVel = t.Get("angular_velocity", 0.f);
-	station.parkingDistance = t.Get("parking_distance", 5000.f);
-	station.parkingGapSize = t.Get("parking_gap_size", 2000.f);
-	station.shipLaunchStage = t.Get<int>("ship_launch_stage");
-	_get_bay_ids(L, "bay_groups", station.bayGroups, station.numDockingPorts);
-	_get_stage_durations(L, "dock_anim_stage_duration", station.numDockingStages, &station.dockAnimStageDuration);
-	_get_stage_durations(L, "undock_anim_stage_duration", station.numUndockStages, &station.undockAnimStageDuration);
-	LUA_DEBUG_END(L, 0);
-
-	assert(!station.modelName.empty());
-
-	station.model = Pi::FindModel(station.modelName);
-	station.OnSetupComplete();
-	return 0;
-}
-
-static int define_orbital_station(lua_State *L)
-{
-	SpaceStationType station;
-	station.dockMethod = SpaceStationType::ORBITAL;
-	_define_station(L, station);
-	SpaceStationType::orbitalStationTypes.push_back(station);
-	return 0;
-}
-
-static int define_surface_station(lua_State *L)
-{
-	SpaceStationType station;
-	station.dockMethod = SpaceStationType::SURFACE;
-	_define_station(L, station);
-	SpaceStationType::surfaceStationTypes.push_back(station);
-	return 0;
-}
-#endif
+std::vector<SpaceStationType> SpaceStationType::surfaceTypes;
+std::vector<SpaceStationType> SpaceStationType::orbitalTypes;
 
 void SpaceStationType::Init()
 {
-	// XXX json station format
+	static bool isInitted = false;
+	if (isInitted) return;
+	isInitted = true;
 
-#if 0
-	assert(s_lua == 0);
-	if (s_lua != 0) return;
-
-	s_lua = luaL_newstate();
-	lua_State *L = s_lua;
-
-	LUA_DEBUG_START(L);
-	pi_lua_open_standard_base(L);
-
-	LuaVector::Register(L);
-
-	LUA_DEBUG_CHECK(L, 0);
-
-	lua_register(L, "define_orbital_station", define_orbital_station);
-	lua_register(L, "define_surface_station", define_surface_station);
-
+	// load all station definitions
 	namespace fs = FileSystem;
-	for (fs::FileEnumerator files(fs::gameDataFiles, "stations", fs::FileEnumerator::Recurse);
-			!files.Finished(); files.Next()) {
+	for (fs::FileEnumerator files(fs::gameDataFiles, "stations", 0); !files.Finished(); files.Next()) {
 		const fs::FileInfo &info = files.Current();
-		if (ends_with_ci(info.GetPath(), ".lua")) {
-			const std::string name = info.GetName();
-			s_currentStationFile = name.substr(0, name.size()-4);
-			pi_lua_dofile(L, info.GetPath());
-			s_currentStationFile.clear();
+		if (ends_with_ci(info.GetPath(), ".json")) {
+			const std::string id(info.GetName().substr(0, info.GetName().size()-4));
+			SpaceStationType st = SpaceStationType(id, info.GetPath());
+			switch (st.dockMethod) {
+				case SURFACE: surfaceTypes.push_back(st); break;
+				case ORBITAL: orbitalTypes.push_back(st); break;
+			}
 		}
 	}
-	LUA_DEBUG_END(L, 0);
-#endif
-}
-
-void SpaceStationType::Uninit()
-{
-	std::vector<SpaceStationType>::iterator i;
-	for (i=surfaceStationTypes.begin(); i!=surfaceStationTypes.end(); ++i) {
-		delete[] (*i).dockAnimStageDuration;
-		delete[] (*i).undockAnimStageDuration;
-	}
-	for (i=orbitalStationTypes.begin(); i!=orbitalStationTypes.end(); ++i) {
-		delete[] (*i).dockAnimStageDuration;
-		delete[] (*i).undockAnimStageDuration;
-	}
-
-	//lua_close(s_lua); s_lua = 0;
 }

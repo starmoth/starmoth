@@ -27,8 +27,6 @@ namespace SceneGraph { class Animation; }
 class SpaceStation: public ModelBody {
 public:
 	OBJDEF(SpaceStation, ModelBody, SPACESTATION);
-	static void Init();
-	static void Uninit();
 
 	// Should point to SystemBody in Pi::currentSystem
 	SpaceStation(const SystemBody *);

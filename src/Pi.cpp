@@ -344,8 +344,6 @@ void Pi::Init(const std::map<std::string,std::string> &options, bool no_gui)
 	jobQueue.reset(new JobQueue(numThreads));
 	Output("started %d worker threads\n", numThreads);
 
-	ShipType::Init();
-
 	Pi::ui.Reset(new UI::Context(Pi::renderer, Graphics::GetScreenWidth(), Graphics::GetScreenHeight()));
 
 	// Gui::Init shouldn't initialise any VBOs, since we haven't tested
@@ -386,7 +384,8 @@ void Pi::Init(const std::map<std::string,std::string> &options, bool no_gui)
 //_controlfp_s(&control_word, _EM_INEXACT | _EM_UNDERFLOW | _EM_ZERODIVIDE, _MCW_EM);
 //double fpexcept = Pi::timeAccelRates[1] / Pi::timeAccelRates[0];
 
-	draw_progress(gauge, label, 0.5f);
+	ShipType::Init();
+	SpaceStationType::Init();
 
 	BaseSphere::Init();
 	draw_progress(gauge, label, 0.6f);
@@ -394,7 +393,6 @@ void Pi::Init(const std::map<std::string,std::string> &options, bool no_gui)
 	CityOnPlanet::Init();
 	draw_progress(gauge, label, 0.7f);
 
-	SpaceStation::Init();
 	draw_progress(gauge, label, 0.8f);
 
 	NavLights::Init(Pi::renderer);
@@ -534,7 +532,6 @@ void Pi::Quit()
 	Shields::Uninit();
 	Sfx::Uninit();
 	Sound::Uninit();
-	SpaceStation::Uninit();
 	CityOnPlanet::Uninit();
 	BaseSphere::Uninit();
 	Galaxy::Uninit();

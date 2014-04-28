@@ -1,0 +1,17 @@
+{
+   "model" : "new_ground",
+   "type" : "surface",
+   "parking_distance" : 5000,
+   "parking_gap_size" : 2000,
+   "ship_launch_stage" : 0,
+   "dock_anim_stage_duration" : [ 300, 4 ],
+   "undock_anim_stage_duration" : [ 0 ],
+   "bay_groups" : [
+      [ 0, 500, [ 1 ] ],
+      [ 0, 500, [ 2 ] ],
+      [ 0, 500, [ 3 ] ],
+      [ 0, 500, [ 4 ] ],
+      [ 0, 500, [ 5 ] ],
+      [ 0, 500, [ 6 ] ]
+   ]
+}
