@@ -26,7 +26,7 @@ namespace Graphics {
 			}
 
 			virtual void Apply() {
-				m_program->Use();
+				PiGL::Material::Apply();
 				if(texture0) {
 					m_program->texture0.Set(texture0, 0);
 				}

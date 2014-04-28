@@ -12,7 +12,7 @@
 
 namespace Graphics {
 
-class glRenderer;
+class RendererGL;
 
 namespace PiGL {
 
@@ -40,7 +40,7 @@ public:
 	virtual void SetDepthTexture(Texture*);
 
 protected:
-	friend class Graphics::glRenderer;
+	friend class Graphics::RendererGL;
 	RenderTarget(const RenderTargetDesc &);
 	void Bind();
 	void Unbind();

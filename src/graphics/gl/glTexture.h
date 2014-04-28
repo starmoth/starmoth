@@ -23,7 +23,7 @@ public:
 	GLuint GetTexture() const { return m_texture; }
 
 private:
-	friend class glRenderer;
+	friend class RendererGL;
 	TextureGL(const TextureDescriptor &descriptor, const bool useCompressed);
 
 	GLenum m_target;

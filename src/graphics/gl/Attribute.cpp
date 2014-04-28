@@ -17,5 +17,12 @@ void Attribute::Init(const char *name, GLuint program)
 	m_location = glGetAttribLocation(program, name);
 }
 
+void Attribute::Bind()
+{
+	if (m_location != -1) {
+		glBindVertexArray(m_location);
+	}
+}
+
 }
 }

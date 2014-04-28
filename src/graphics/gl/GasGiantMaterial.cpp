@@ -69,12 +69,12 @@ void GasGiantSurfaceMaterial::Apply()
 
 void GasGiantSurfaceMaterial::SetGSUniforms()
 {
+	PiGL::Material::Apply();
+
 	GasGiantProgram *p = static_cast<GasGiantProgram*>(m_program);
 	const GeoSphere::MaterialParameters params = *static_cast<GeoSphere::MaterialParameters*>(this->specialParameter0);
 	const SystemBody::AtmosphereParameters ap = params.atmosphere;
 
-	p->Use();
-	p->invLogZfarPlus1.Set(m_renderer->m_invLogZfarPlus1);
 	p->emission.Set(this->emissive);
 	p->sceneAmbient.Set(m_renderer->GetAmbientColor());
 	p->atmosColor.Set(ap.atmosCol);

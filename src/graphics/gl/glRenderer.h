@@ -35,11 +35,11 @@ namespace PiGL {
 	class ShieldMaterial;
 }
 
-class glRenderer : public Renderer
+class RendererGL : public Renderer
 {
 public:
-	glRenderer(WindowSDL *window, const Graphics::Settings &vs);
-	virtual ~glRenderer();
+	RendererGL(WindowSDL *window, const Graphics::Settings &vs);
+	virtual ~RendererGL();
 
 	virtual const char* GetName() const { return "PiGL renderer"; }
 	virtual bool GetNearFarRange(float &near, float &far) const;

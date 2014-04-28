@@ -75,9 +75,9 @@ void LitMultiMaterial::SetProgram(Program *p)
 
 void MultiMaterial::Apply()
 {
+	PiGL::Material::Apply();
+
 	MultiProgram *p = static_cast<MultiProgram*>(m_program);
-	p->Use();
-	p->invLogZfarPlus1.Set(m_renderer->m_invLogZfarPlus1);
 
 	p->diffuse.Set(this->diffuse);
 

@@ -18,7 +18,7 @@
 namespace Graphics {
 
 class Texture;
-class glRenderer;
+class RendererGL;
 
 // Shorthand for unique effects
 // The other descriptor parameters may or may not have effect,
@@ -99,7 +99,7 @@ protected:
 	MaterialDescriptor m_descriptor;
 
 private:
-	friend class glRenderer;
+	friend class RendererGL;
 };
 
 }

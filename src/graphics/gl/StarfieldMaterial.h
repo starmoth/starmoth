@@ -22,7 +22,8 @@ namespace Graphics {
 
 			virtual void Apply() {
 				glEnable(GL_VERTEX_PROGRAM_POINT_SIZE_ARB);
-				m_program->Use();
+				PiGL::Material::Apply();
+
 				m_program->emission.Set(this->emissive);
 			}
 

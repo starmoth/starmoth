@@ -51,9 +51,9 @@ Program *ShieldMaterial::CreateProgram(const MaterialDescriptor &desc)
 
 void ShieldMaterial::Apply()
 {
+	PiGL::Material::Apply();
+
 	ShieldProgram *p = static_cast<ShieldProgram*>(m_program);
-	p->Use();
-	p->invLogZfarPlus1.Set(m_renderer->m_invLogZfarPlus1);
 
 	p->diffuse.Set(this->diffuse);
 

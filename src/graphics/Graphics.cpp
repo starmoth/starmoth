@@ -74,7 +74,7 @@ Renderer* Init(Settings vs)
 		Error("OpenGL Version 3.2 is not supported. Pioneer cannot run on your graphics card.");
 	CheckRenderErrors();
 	
-	Renderer *renderer = new glRenderer(window, vs);
+	Renderer *renderer = new RendererGL(window, vs);
 	CheckRenderErrors();
 
 	Output("Initialized %s\n", renderer->GetName());

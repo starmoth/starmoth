@@ -21,8 +21,8 @@ Program *RingMaterial::CreateProgram(const MaterialDescriptor &desc)
 
 void RingMaterial::Apply()
 {
-	m_program->Use();
-	m_program->invLogZfarPlus1.Set(m_renderer->m_invLogZfarPlus1);
+	PiGL::Material::Apply();
+
 	assert(this->texture0);
 	static_cast<TextureGL*>(texture0)->Bind();
 	m_program->texture0.Set(0);
