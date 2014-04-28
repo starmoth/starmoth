@@ -1869,6 +1869,10 @@ void SystemBody::PopulateAddStations(StarSystem *system)
 		m_children[i]->PopulateAddStations(system);
 	}
 
+	// only starports around rock planets (need rotating frame for surface starports)
+	if (GetSuperType() != SUPERTYPE_ROCKY_PLANET)
+		return;
+
 	Uint32 _init[6] = { system->m_path.systemIndex, Uint32(system->m_path.sectorX),
 			Uint32(system->m_path.sectorY), Uint32(system->m_path.sectorZ), this->m_seed, UNIVERSE_SEED };
 
