@@ -51,7 +51,7 @@ void ShipType::Init()
 	for (fs::FileEnumerator files(fs::gameDataFiles, "ships", 0); !files.Finished(); files.Next()) {
 		const fs::FileInfo &info = files.Current();
 		if (ends_with_ci(info.GetPath(), ".json")) {
-			const std::string id(info.GetName().substr(0, info.GetName().size()-4));
+			const std::string id(info.GetName().substr(0, info.GetName().size()-5));
 			ShipType st = ShipType(id, info.GetPath());
 			types.insert(std::make_pair(st.id, st));
 		}

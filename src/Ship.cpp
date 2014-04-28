@@ -714,7 +714,9 @@ void Ship::OnEnterSystem() {
 
 void Ship::SetShipId(const std::string &shipId)
 {
-	m_type = &(ShipType::types.find(shipId)->second);
+	auto i = ShipType::types.find(shipId);
+	assert(i != ShipType::types.end());
+	m_type = &((*i).second);
 	Properties().Set("shipId", shipId);
 }
 

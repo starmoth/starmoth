@@ -305,7 +305,7 @@ void SpaceStationType::Init()
 	for (fs::FileEnumerator files(fs::gameDataFiles, "stations", 0); !files.Finished(); files.Next()) {
 		const fs::FileInfo &info = files.Current();
 		if (ends_with_ci(info.GetPath(), ".json")) {
-			const std::string id(info.GetName().substr(0, info.GetName().size()-4));
+			const std::string id(info.GetName().substr(0, info.GetName().size()-5));
 			SpaceStationType st = SpaceStationType(id, info.GetPath());
 			switch (st.dockMethod) {
 				case SURFACE: surfaceTypes.push_back(st); break;
