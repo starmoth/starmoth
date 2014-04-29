@@ -173,7 +173,12 @@ public:
 		AIERROR_REFUSED_PERM,
 		AIERROR_ORBIT_IMPOSSIBLE
 	};
-	AIError AIMessage(AIError msg=AIERROR_NONE) { AIError tmp = m_aiMessage; m_aiMessage = msg; return tmp; }
+	AIError AIMessage(AIError msg=AIERROR_NONE) {
+		AIError tmp = m_aiMessage;
+		m_aiMessage = msg;
+		Output("AI message changed from %d to %d\n", tmp, m_aiMessage);
+		return tmp;
+	}
 
 	void AIKamikaze(Body *target);
 	//void AIJourney(SystemBodyPath &dest);
