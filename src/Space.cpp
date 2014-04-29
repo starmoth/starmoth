@@ -478,10 +478,12 @@ static Frame *MakeFrameFor(double at_time, SystemBody *sbody, Body *b, Frame *f)
 		b->SetFrame(rotFrame);
 		assert(rotFrame->IsRotFrame());
 		assert(rotFrame->GetBody()->IsType(Object::PLANET));
+		Planet *planet = static_cast<Planet*>(rotFrame->GetBody());
+		// XXX rubbish
 		matrix3x3d rot;
 		vector3d pos;
-		Planet *planet = static_cast<Planet*>(rotFrame->GetBody());
-		sbody->SetOrbitPlane(rot);
+		rot = sbody->GetOrbit().GetPlane();
+		pos = rot * vector3d(0,1,0);
 		b->SetPosition(pos * planet->GetTerrainHeight(pos));
 		b->SetOrient(rot);
 		return rotFrame;
