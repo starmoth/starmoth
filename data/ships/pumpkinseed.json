@@ -1,0 +1,13 @@
+{
+   "angular_thrust" : 16000000,
+   "down_thrust" : 340000,
+   "effective_exhaust_velocity" : 39000000,
+   "forward_thrust" : 3000000,
+   "hull_mass" : 10,
+   "left_thrust" : 340000,
+   "model" : "pumpkinseed",
+   "name" : "Pumpkinseed",
+   "reverse_thrust" : 1000000,
+   "right_thrust" : 340000,
+   "up_thrust" : 500000
+}

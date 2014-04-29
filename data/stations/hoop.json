@@ -1,0 +1,13 @@
+{
+   "model" : "hoop_spacestation",
+   "type" : "orbital",
+   "angular_velocity" : 0.08,
+   "parking_distance" : 5000,
+   "parking_gap_size" : 500,
+   "ship_launch_stage" : 3,
+   "dock_anim_stage_duration" : [ 300, 2, 5, 5 ],
+   "undock_anim_stage_duration" : [ 5, 5, 2 ],
+   "bay_groups" : [
+      [ 0, 500, [ 1, 2, 3, 4 ] ]
+   ]
+}

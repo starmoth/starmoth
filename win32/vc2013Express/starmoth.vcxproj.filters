@@ -48,9 +48,6 @@
     <ClCompile Include="..\..\src\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Missile.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\ModelBody.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -336,9 +333,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\matrix4x4.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Missile.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ModelBody.h">

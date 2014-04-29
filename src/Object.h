@@ -22,7 +22,6 @@ public:
 		PLANET,
 		STAR,
 		CITYONPLANET,   // <enum skip>
-		MISSILE,
 		HYPERSPACECLOUD // <enum skip>
 	};
 	virtual Type GetType() const { return OBJECT; }

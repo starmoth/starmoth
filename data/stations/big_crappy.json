@@ -1,0 +1,13 @@
+{
+   "model" : "big_crappy_spacestation",
+   "type" : "orbital",
+   "angular_velocity" : 0.1,
+   "parking_distance" : 5000,
+   "parking_gap_size" : 500,
+   "ship_launch_stage" : 3,
+   "dock_anim_stage_duration" : [ 300, 10, 5, 5 ],
+   "undock_anim_stage_duration" : [ 5, 5, 10 ],
+   "bay_groups" : [
+      [ 0, 500, [ 1, 2, 3, 4 ] ]
+   ]
+}

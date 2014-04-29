@@ -1,0 +1,13 @@
+{
+   "angular_thrust" : 50000000,
+   "down_thrust" : 8000000,
+   "effective_exhaust_velocity" : 25480000,
+   "forward_thrust" : 35000000,
+   "hull_mass" : 200,
+   "left_thrust" : 8000000,
+   "model" : "venturestar",
+   "name" : "Venturestar",
+   "reverse_thrust" : 11500000,
+   "right_thrust" : 8000000,
+   "up_thrust" : 15000000
+}

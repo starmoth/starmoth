@@ -14,7 +14,6 @@
 #include "BaseSphere.h"
 #include "Intro.h"
 #include "Lang.h"
-#include "Missile.h"
 #include "ModelCache.h"
 #include "ModManager.h"
 #include "NavLights.h"
@@ -345,8 +344,6 @@ void Pi::Init(const std::map<std::string,std::string> &options, bool no_gui)
 	jobQueue.reset(new JobQueue(numThreads));
 	Output("started %d worker threads\n", numThreads);
 
-	ShipType::Init();
-
 	Pi::ui.Reset(new UI::Context(Pi::renderer, Graphics::GetScreenWidth(), Graphics::GetScreenHeight()));
 
 	// Gui::Init shouldn't initialise any VBOs, since we haven't tested
@@ -387,7 +384,8 @@ void Pi::Init(const std::map<std::string,std::string> &options, bool no_gui)
 //_controlfp_s(&control_word, _EM_INEXACT | _EM_UNDERFLOW | _EM_ZERODIVIDE, _MCW_EM);
 //double fpexcept = Pi::timeAccelRates[1] / Pi::timeAccelRates[0];
 
-	draw_progress(gauge, label, 0.5f);
+	ShipType::Init();
+	SpaceStationType::Init();
 
 	BaseSphere::Init();
 	draw_progress(gauge, label, 0.6f);
@@ -395,7 +393,6 @@ void Pi::Init(const std::map<std::string,std::string> &options, bool no_gui)
 	CityOnPlanet::Init();
 	draw_progress(gauge, label, 0.7f);
 
-	SpaceStation::Init();
 	draw_progress(gauge, label, 0.8f);
 
 	NavLights::Init(Pi::renderer);
@@ -535,7 +532,6 @@ void Pi::Quit()
 	Shields::Uninit();
 	Sfx::Uninit();
 	Sound::Uninit();
-	SpaceStation::Uninit();
 	CityOnPlanet::Uninit();
 	BaseSphere::Uninit();
 	Galaxy::Uninit();
@@ -797,8 +793,10 @@ void Pi::Start()
 {
 	Pi::intro = new Intro(Pi::renderer, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
 
+	auto b = ui->Button()->SetInnerWidget(ui->Label("Start"));
 	ui->DropAllLayers();
-    // XXX menu
+	ui->GetTopLayer()->SetInnerWidget(b);
+	b->onClick.connect([]{ Pi::game = new Game(SystemPath(0,0,0,0,1), vector3d(EARTH_RADIUS*5)); return false; });
 
 	Pi::ui->SetMousePointer("icons/cursors/mouse_cursor_2.png", UI::Point(15, 8));
 

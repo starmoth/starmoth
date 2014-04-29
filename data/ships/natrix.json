@@ -1,0 +1,13 @@
+{
+   "angular_thrust" : 19500000,
+   "down_thrust" : 1800000,
+   "effective_exhaust_velocity" : 18200000,
+   "forward_thrust" : 6100000,
+   "hull_mass" : 50,
+   "left_thrust" : 1800000,
+   "model" : "natrix",
+   "name" : "Natrix",
+   "reverse_thrust" : 3800000,
+   "right_thrust" : 1800000,
+   "up_thrust" : 3800000
+}

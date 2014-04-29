@@ -23,7 +23,6 @@ class SpaceStation;
 class HyperspaceCloud;
 class AICommand;
 class ShipController;
-class Missile;
 namespace Graphics { class Renderer; }
 
 struct HeatGradientParameters_t {
@@ -44,7 +43,7 @@ class Ship: public DynamicBody {
 	friend class PlayerShipController;
 public:
 	OBJDEF(Ship, DynamicBody, SHIP);
-	Ship(ShipType::Id shipId);
+	Ship(const std::string &shipId);
 	Ship() {} //default constructor used before Load
 	virtual ~Ship();
 
@@ -150,7 +149,6 @@ public:
 
 	// 0 to 1.0 is alive, > 1.0 = death
 	double GetHullTemperature() const;
-	virtual Missile * SpawnMissile(ShipType::Id missile_type, int power=-1);
 
 	bool AIMatchVel(const vector3d &vel);
 	bool AIChangeVelBy(const vector3d &diffvel);		// acts in obj space
@@ -175,7 +173,12 @@ public:
 		AIERROR_REFUSED_PERM,
 		AIERROR_ORBIT_IMPOSSIBLE
 	};
-	AIError AIMessage(AIError msg=AIERROR_NONE) { AIError tmp = m_aiMessage; m_aiMessage = msg; return tmp; }
+	AIError AIMessage(AIError msg=AIERROR_NONE) {
+		AIError tmp = m_aiMessage;
+		m_aiMessage = msg;
+		Output("AI message changed from %d to %d\n", tmp, m_aiMessage);
+		return tmp;
+	}
 
 	void AIKamikaze(Body *target);
 	//void AIJourney(SystemBodyPath &dest);
@@ -189,7 +192,7 @@ public:
 	virtual void PostLoadFixup(Space *space);
 
 	const ShipType *GetShipType() const { return m_type; }
-	void SetShipType(const ShipType::Id &shipId);
+	void SetShipType(const std::string &shipId);
 
 	const SceneGraph::ModelSkin &GetSkin() const { return m_skin; }
 	void SetSkin(const SceneGraph::ModelSkin &skin);
@@ -241,7 +244,7 @@ private:
 	void Init();
 	bool IsFiringLasers();
 	void TestLanded();
-    void SetShipId(const ShipType::Id &shipId);
+    void SetShipId(const std::string &shipId);
 	void EnterHyperspace();
 	void InitMaterials();
 

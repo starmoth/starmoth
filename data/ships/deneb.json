@@ -1,0 +1,13 @@
+{
+   "angular_thrust" : 50000000,
+   "down_thrust" : 3000000,
+   "effective_exhaust_velocity" : 18600000,
+   "forward_thrust" : 10000000,
+   "hull_mass" : 75,
+   "left_thrust" : 3000000,
+   "model" : "deneb",
+   "name" : "Deneb",
+   "reverse_thrust" : 6000000,
+   "right_thrust" : 3000000,
+   "up_thrust" : 6000000
+}

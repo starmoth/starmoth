@@ -1,0 +1,13 @@
+{
+   "angular_thrust" : 2500000,
+   "down_thrust" : 1000000,
+   "effective_exhaust_velocity" : 8840000,
+   "forward_thrust" : 6000000,
+   "hull_mass" : 16,
+   "left_thrust" : 1000000,
+   "model" : "kanara_civ",
+   "name" : "Kanara Interceptor",
+   "reverse_thrust" : 2000000,
+   "right_thrust" : 1000000,
+   "up_thrust" : 1000000
+}

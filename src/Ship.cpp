@@ -5,7 +5,6 @@
 #include "CityOnPlanet.h"
 #include "Lang.h"
 #include "EnumStrings.h"
-#include "Missile.h"
 #include "Player.h"
 #include "ShipAICmd.h"
 #include "ShipController.h"
@@ -123,6 +122,7 @@ void Ship::Init()
 	m_navLights.reset(new NavLights(GetModel()));
 	m_navLights->SetEnabled(true);
 
+	SetMass(m_type->hullMass*1000.0f);
 	SetMassDistributionFromModel();
 	m_stats.hull_mass_left = float(m_type->hullMass);
 
@@ -154,7 +154,7 @@ void Ship::PostLoadFixup(Space *space)
 	m_controller->PostLoadFixup(space);
 }
 
-Ship::Ship(ShipType::Id shipId): DynamicBody(),
+Ship::Ship(const std::string &shipId): DynamicBody(),
 	m_controller(0),
 	m_landingGearAnimation(nullptr)
 {
@@ -176,10 +176,9 @@ Ship::Ship(ShipType::Id shipId): DynamicBody(),
 	m_aiMessage = AIERROR_NONE;
 	m_decelerating = false;
 
-	SetModel(m_type->modelName.c_str());
+	SetModel(m_type->model.c_str());
 	SetLabel("UNLABELED_SHIP");
 	m_skin.SetRandomColors(Pi::rng);
-	m_skin.SetDecal(m_type->manufacturer);
 	m_skin.Apply(GetModel());
 	GetModel()->SetPattern(Pi::rng.Int32(0, GetModel()->GetNumPatterns()));
 
@@ -401,21 +400,6 @@ void Ship::ResetHyperspaceCountdown()
 	m_hyperspace.now = false;
 }
 
-Missile * Ship::SpawnMissile(ShipType::Id missile_type, int power) {
-	if (GetFlightState() != FLYING)
-		return 0;
-
-	Missile *missile = new Missile(missile_type, this, power);
-	missile->SetOrient(GetOrient());
-	missile->SetFrame(GetFrame());
-	const vector3d pos = GetOrient() * vector3d(0, GetAabb().min.y - 10, GetAabb().min.z);
-	const vector3d vel = -40.0 * GetOrient().VectorZ();
-	missile->SetPosition(GetPosition()+pos);
-	missile->SetVelocity(GetVelocity()+vel);
-	Pi::game->GetSpace()->AddBody(missile);
-	return missile;
-}
-
 void Ship::SetFlightState(Ship::FlightState newState)
 {
 	if (m_flightState == newState) return;
@@ -586,7 +570,7 @@ void Ship::TimeAccelAdjust(const float timeStep)
 double Ship::GetHullTemperature() const
 {
 	double dragGs = GetAtmosForce().Length() / (GetMass() * 9.81);
-	return dragGs / 5.0;
+	return dragGs / 300.0;
 }
 
 void Ship::StaticUpdate(const float timeStep)
@@ -632,13 +616,6 @@ void Ship::StaticUpdate(const float timeStep)
 			m_hyperspace.now = true;
 			SetFlightState(JUMPING);
 		}
-	}
-
-	//Add smoke trails for missiles on thruster state
-	if (m_type->tag == ShipType::TAG_MISSILE && m_thrusters.z < 0.0 && 0.1*Pi::rng.Double() < timeStep) {
-		const vector3d pos = GetOrient() * vector3d(0, 0 , 5);
-		const float speed = std::min(10.0*GetVelocity().Length()*abs(m_thrusters.z),100.0);
-		Sfx::AddThrustSmoke(this, Sfx::TYPE_SMOKE, speed, pos);
 	}
 }
 
@@ -736,17 +713,18 @@ void Ship::OnEnterSystem() {
 	m_hyperspaceCloud = 0;
 }
 
-void Ship::SetShipId(const ShipType::Id &shipId)
+void Ship::SetShipId(const std::string &shipId)
 {
-	m_type = &ShipType::types[shipId];
+	auto i = ShipType::types.find(shipId);
+	assert(i != ShipType::types.end());
+	m_type = &((*i).second);
 	Properties().Set("shipId", shipId);
 }
 
-void Ship::SetShipType(const ShipType::Id &shipId)
+void Ship::SetShipType(const std::string &shipId)
 {
 	SetShipId(shipId);
-	SetModel(m_type->modelName.c_str());
-	m_skin.SetDecal(m_type->manufacturer);
+	SetModel(m_type->model.c_str());
 	m_skin.Apply(GetModel());
 	Init();
 	onFlavourChanged.emit();

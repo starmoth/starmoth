@@ -1,0 +1,13 @@
+{
+   "angular_thrust" : 80000000,
+   "down_thrust" : 28000000,
+   "effective_exhaust_velocity" : 16600000,
+   "forward_thrust" : 70000000,
+   "hull_mass" : 1200,
+   "left_thrust" : 28000000,
+   "model" : "dsminer",
+   "name" : "Deep Space Miner",
+   "reverse_thrust" : 28000000,
+   "right_thrust" : 28000000,
+   "up_thrust" : 28000000
+}

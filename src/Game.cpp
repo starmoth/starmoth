@@ -37,7 +37,7 @@ Game::Game(const SystemPath &path, double time) :
 	Pi::FlushCaches();
 
 	m_space.reset(new Space(this, path));
-	SpaceStation *station = static_cast<SpaceStation*>(m_space->FindBodyForPath(&path));
+	SpaceStation *station = dynamic_cast<SpaceStation*>(m_space->FindBodyForPath(&path));
 	assert(station);
 
 	m_player.reset(new Player("kanara"));

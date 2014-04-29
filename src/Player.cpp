@@ -19,7 +19,7 @@
 static Sound::Event s_soundUndercarriage;
 static Sound::Event s_soundHyperdrive;
 
-Player::Player(ShipType::Id shipId): Ship(shipId)
+Player::Player(const std::string &shipId): Ship(shipId)
 {
 	SetController(new PlayerShipController());
 	InitCockpit();
@@ -50,17 +50,17 @@ void Player::InitCockpit()
 	// all stays in the model cache anyway, its just awkward. the fix is to fix
 	// ShipCockpit so its not a ModelBody and thus does its model work
 	// directly, but we're not there yet
-	std::string cockpitModelName;
-	if (!GetShipType()->cockpitName.empty()) {
-		if (Pi::FindModel(GetShipType()->cockpitName, false))
-			cockpitModelName = GetShipType()->cockpitName;
+	std::string cockpitModel;
+	if (!GetShipType()->cockpitModel.empty()) {
+		if (Pi::FindModel(GetShipType()->cockpitModel, false))
+			cockpitModel = GetShipType()->cockpitModel;
 	}
-	if (cockpitModelName.empty()) {
+	if (cockpitModel.empty()) {
 		if (Pi::FindModel("default_cockpit", false))
-			cockpitModelName = "default_cockpit";
+			cockpitModel = "default_cockpit";
 	}
-	if (!cockpitModelName.empty())
-		m_cockpit.reset(new ShipCockpit(cockpitModelName));
+	if (!cockpitModel.empty())
+		m_cockpit.reset(new ShipCockpit(cockpitModel));
 }
 
 //XXX perhaps remove this, the sound is very annoying
@@ -87,15 +87,6 @@ bool Player::SetWheelState(bool down)
 		s_soundUndercarriage.Play(down ? "UC_out" : "UC_in", 1.0f, 1.0f, 0);
 	}
 	return did;
-}
-
-//XXX all ships should make this sound
-Missile * Player::SpawnMissile(ShipType::Id missile_type, int power)
-{
-	Missile * m = Ship::SpawnMissile(missile_type, power);
-	if (m)
-		Sound::PlaySfx("Missile_launch", 1.0f, 1.0f, 0);
-	return m;
 }
 
 void Player::NotifyRemoved(const Body* const removedBody)

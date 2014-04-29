@@ -21,16 +21,6 @@
 #include "scenegraph/ModelSkin.h"
 #include <algorithm>
 
-void SpaceStation::Init()
-{
-	SpaceStationType::Init();
-}
-
-void SpaceStation::Uninit()
-{
-	SpaceStationType::Uninit();
-}
-
 void SpaceStation::Save(Serializer::Writer &wr, Space *space)
 {
 	ModelBody::Save(wr, space);
@@ -134,11 +124,10 @@ void SpaceStation::InitStation()
 	for(int i=0; i<NUM_STATIC_SLOTS; i++) m_staticSlot[i] = false;
 	Random rand(m_sbody->GetSeed());
 	bool ground = m_sbody->GetType() == SystemBody::TYPE_STARPORT_ORBITAL ? false : true;
-	if (ground) {
-		m_type = &SpaceStationType::surfaceStationTypes[ rand.Int32(SpaceStationType::surfaceStationTypes.size()) ];
-	} else {
-		m_type = &SpaceStationType::orbitalStationTypes[ rand.Int32(SpaceStationType::orbitalStationTypes.size()) ];
-	}
+	if (ground)
+		m_type = &(SpaceStationType::surfaceTypes[ rand.Int32(SpaceStationType::orbitalTypes.size()) ]);
+	else
+		m_type = &(SpaceStationType::orbitalTypes[ rand.Int32(SpaceStationType::orbitalTypes.size()) ]);
 
 	if(m_shipDocking.empty()) {
 		m_shipDocking.reserve(m_type->numDockingPorts);
