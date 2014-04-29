@@ -586,14 +586,11 @@ void Game::CreateViews()
 	Pi::galacticView = new GalacticView();
 	Pi::systemView = new SystemView();
 	Pi::systemInfoView = new SystemInfoView();
-	Pi::spaceStationView = new UIView("StationView");
-	Pi::infoView = new UIView("InfoView");
 	Pi::deathView = new DeathView();
 	Pi::settingsView = new UIView("SettingsInGame");
 
 	// view manager will handle setting this probably
 	Pi::galacticView->SetRenderer(Pi::renderer);
-	Pi::infoView->SetRenderer(Pi::renderer);
 	Pi::sectorView->SetRenderer(Pi::renderer);
 	Pi::systemInfoView->SetRenderer(Pi::renderer);
 	Pi::systemView->SetRenderer(Pi::renderer);
@@ -627,8 +624,6 @@ void Game::LoadViews(Serializer::Reader &rd)
 	Pi::galacticView = new GalacticView();
 	Pi::systemView = new SystemView();
 	Pi::systemInfoView = new SystemInfoView();
-	Pi::spaceStationView = new UIView("StationView");
-	Pi::infoView = new UIView("InfoView");
 	Pi::deathView = new DeathView();
 	Pi::settingsView = new UIView("SettingsInGame");
 
@@ -638,7 +633,6 @@ void Game::LoadViews(Serializer::Reader &rd)
 #endif
 
 	Pi::galacticView->SetRenderer(Pi::renderer);
-	Pi::infoView->SetRenderer(Pi::renderer);
 	Pi::sectorView->SetRenderer(Pi::renderer);
 	Pi::systemInfoView->SetRenderer(Pi::renderer);
 	Pi::systemView->SetRenderer(Pi::renderer);
@@ -656,8 +650,6 @@ void Game::DestroyViews()
 
 	delete Pi::settingsView;
 	delete Pi::deathView;
-	delete Pi::infoView;
-	delete Pi::spaceStationView;
 	delete Pi::systemInfoView;
 	delete Pi::systemView;
 	delete Pi::galacticView;
@@ -668,8 +660,6 @@ void Game::DestroyViews()
 	Pi::objectViewerView = 0;
 	Pi::settingsView = 0;
 	Pi::deathView = 0;
-	Pi::infoView = 0;
-	Pi::spaceStationView = 0;
 	Pi::systemInfoView = 0;
 	Pi::systemView = 0;
 	Pi::galacticView = 0;

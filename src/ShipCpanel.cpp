@@ -105,15 +105,6 @@ void ShipCpanel::InitObject()
 	map_button->SetRenderDimensions(30, 22);
 	Add(map_button, 34, 56);
 
-	Gui::MultiStateImageButton *info_button = new Gui::MultiStateImageButton();
-	m_leftButtonGroup->Add(info_button);
-	info_button->SetSelected(false);
-	info_button->SetShortcut(SDLK_F3, KMOD_NONE);
-	info_button->AddState(0, "icons/cpan_f3_shipinfo.png", "icons/cpan_f3_shipinfo_on.png", Lang::SHIP_INFORMATION);
-	info_button->onClick.connect(sigc::mem_fun(this, &ShipCpanel::OnChangeInfoView));
-	info_button->SetRenderDimensions(30, 22);
-	Add(info_button, 66, 56);
-
 	Gui::MultiStateImageButton *comms_button = new Gui::MultiStateImageButton();
 	m_leftButtonGroup->Add(comms_button);
 	comms_button->SetSelected(false);
@@ -223,13 +214,6 @@ void ShipCpanel::OnChangeCamView(Gui::MultiStateImageButton *b)
 	Pi::SetView(Pi::worldView);
 }
 
-void ShipCpanel::OnChangeInfoView(Gui::MultiStateImageButton *b)
-{
-	Pi::BoinkNoise();
-	if (Pi::GetView() != Pi::infoView)
-		Pi::SetView(Pi::infoView);
-}
-
 void ShipCpanel::OnChangeToMapView(Gui::MultiStateImageButton *b)
 {
 	Pi::BoinkNoise();
@@ -278,11 +262,8 @@ void ShipCpanel::OnClickTimeaccel(Game::TimeAccel val)
 void ShipCpanel::OnClickComms(Gui::MultiStateImageButton *b)
 {
 	Pi::BoinkNoise();
-	if (Pi::player->GetFlightState() == Ship::DOCKED) Pi::SetView(Pi::spaceStationView);
-	else {
-		Pi::SetView(Pi::worldView);
-		Pi::worldView->ToggleTargetActions();
-	}
+	Pi::SetView(Pi::worldView);
+	Pi::worldView->ToggleTargetActions();
 }
 
 void ShipCpanel::OnClickRotationDamping(Gui::MultiStateImageButton *b)
