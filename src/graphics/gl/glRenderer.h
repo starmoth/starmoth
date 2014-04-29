@@ -111,13 +111,9 @@ protected:
 
 	//figure out states from a vertex array and enable them
 	//also sets vertex pointers
-	void EnableClientStates(const VertexArray*);
-	void EnableClientStates(const VertexBuffer*);
-	//disable previously enabled
-	virtual void DisableClientStates();
+	void EnableClientStates(const VertexArray*, const Material *);
 	int m_numLights;
 	int m_numDirLights;
-	std::vector<GLenum> m_clientStates;
 	float m_minZNear;
 	float m_maxZFar;
 

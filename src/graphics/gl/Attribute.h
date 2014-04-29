@@ -16,7 +16,6 @@ namespace Graphics {
 		public:
 			Attribute();
 			void Init(const char *name, GLuint program);
-			void Bind();
 
 		private:
 			GLint m_location;

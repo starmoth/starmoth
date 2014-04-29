@@ -11,13 +11,6 @@ namespace PiGL {
 void Material::Apply()
 {
 	m_program->Use();
-
-	// Attributes
-	m_program->aVertex.Bind();
-	m_program->aNormal.Bind();
-	m_program->aColor.Bind();
-	m_program->aUV0.Bind();
-
 	m_program->invLogZfarPlus1.Set(m_renderer->m_invLogZfarPlus1);
 }
 

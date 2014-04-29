@@ -458,12 +458,11 @@ bool RendererGL::DrawTriangles(const VertexArray *v, RenderState *rs, Material *
 	SetRenderState(rs);
 
 	m->Apply();
-	EnableClientStates(v);
+	EnableClientStates(v, m);
 
 	glDrawArrays(t, 0, v->GetNumVerts());
 
 	m->Unapply();
-	DisableClientStates();
 	CheckRenderErrors();
 
 	return true;
@@ -513,15 +512,11 @@ bool RendererGL::DrawBuffer(VertexBuffer* vb, RenderState* state, Material* mat,
 
 	auto gvb = static_cast<PiGL::VertexBuffer*>(vb);
 
-	glBindBuffer(GL_ARRAY_BUFFER, gvb->GetBuffer());
-
-	EnableClientStates(gvb);
+	glBindVertexArray(gvb->GetVAO());
 
 	glDrawArrays(pt, 0, gvb->GetVertexCount());
 
-	DisableClientStates();
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 	CheckRenderErrors();
 
 	return true;
@@ -535,24 +530,18 @@ bool RendererGL::DrawBufferIndexed(VertexBuffer *vb, IndexBuffer *ib, RenderStat
 	auto gvb = static_cast<PiGL::VertexBuffer*>(vb);
 	auto gib = static_cast<PiGL::IndexBuffer*>(ib);
 
-	glBindBuffer(GL_ARRAY_BUFFER, gvb->GetBuffer());
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gib->GetBuffer());
-
-	EnableClientStates(gvb);
+	glBindVertexArray(gvb->GetVAO());
 
 	glDrawElements(pt, ib->GetIndexCount(), GL_UNSIGNED_SHORT, 0);
 
-	DisableClientStates();
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 	CheckRenderErrors();
 
 	return true;
 }
 
 
-void RendererGL::EnableClientStates(const VertexArray *v)
+void RendererGL::EnableClientStates(const VertexArray *v, const Material *m)
 {
 	PROFILE_SCOPED();
 
@@ -560,69 +549,24 @@ void RendererGL::EnableClientStates(const VertexArray *v)
 	assert(v->position.size() > 0); //would be strange
 
 	// XXX could be 3D or 2D
-	m_clientStates.push_back(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_FLOAT, 0, reinterpret_cast<const GLvoid *>(&v->position[0]));
 
 	if (v->HasAttrib(ATTRIB_DIFFUSE)) {
 		assert(! v->diffuse.empty());
-		m_clientStates.push_back(GL_COLOR_ARRAY);
 		glEnableClientState(GL_COLOR_ARRAY);
 		glColorPointer(4, GL_UNSIGNED_BYTE, 0, reinterpret_cast<const GLvoid *>(&v->diffuse[0]));
 	}
 	if (v->HasAttrib(ATTRIB_NORMAL)) {
 		assert(! v->normal.empty());
-		m_clientStates.push_back(GL_NORMAL_ARRAY);
 		glEnableClientState(GL_NORMAL_ARRAY);
 		glNormalPointer(GL_FLOAT, 0, reinterpret_cast<const GLvoid *>(&v->normal[0]));
 	}
 	if (v->HasAttrib(ATTRIB_UV0)) {
 		assert(! v->uv0.empty());
-		m_clientStates.push_back(GL_TEXTURE_COORD_ARRAY);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(2, GL_FLOAT, 0, reinterpret_cast<const GLvoid *>(&v->uv0[0]));
 	}
-	CheckRenderErrors();
-}
-
-void RendererGL::EnableClientStates(const VertexBuffer *vb)
-{
-	if (!vb) return;
-	const auto& vbd = vb->GetDesc();
-
-	for (Uint32 i = 0; i < MAX_ATTRIBS; i++) {
-		switch (vbd.attrib[i].semantic) {
-		case ATTRIB_POSITION:
-			m_clientStates.push_back(GL_VERTEX_ARRAY);
-			break;
-		case ATTRIB_DIFFUSE:
-			m_clientStates.push_back(GL_COLOR_ARRAY);
-			break;
-		case ATTRIB_NORMAL:
-			m_clientStates.push_back(GL_NORMAL_ARRAY);
-			break;
-		case ATTRIB_UV0:
-			m_clientStates.push_back(GL_TEXTURE_COORD_ARRAY);
-			break;
-		default:
-			break;
-		}
-	}
-
-	for (auto it : m_clientStates) {
-		glEnableClientState(it);
-	}
-
-	CheckRenderErrors();
-}
-
-void RendererGL::DisableClientStates()
-{
-	PROFILE_SCOPED();
-
-	for (std::vector<GLenum>::const_iterator i = m_clientStates.begin(); i != m_clientStates.end(); ++i)
-		glDisableClientState(*i);
-	m_clientStates.clear();
 	CheckRenderErrors();
 }
 
