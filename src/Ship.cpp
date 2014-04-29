@@ -570,7 +570,7 @@ void Ship::TimeAccelAdjust(const float timeStep)
 double Ship::GetHullTemperature() const
 {
 	double dragGs = GetAtmosForce().Length() / (GetMass() * 9.81);
-	return dragGs / 5.0;
+	return dragGs / 300.0;
 }
 
 void Ship::StaticUpdate(const float timeStep)
