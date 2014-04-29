@@ -200,8 +200,6 @@ void SectorView::InitObject()
 	m_currentSystemLabels.distance.label = (new Gui::Label(""))->Color(255, 0, 0);
 	m_currentSystemLabels.distance.line = NULL;
 	m_currentSystemLabels.distance.okayColor = ::Color(0, 255, 0);
-	m_currentSystemLabels.distance.unsuffFuelColor = ::Color(255, 255, 0);
-	m_currentSystemLabels.distance.outOfRangeColor = ::Color(255, 0, 0);
 	hbox->PackEnd(m_currentSystemLabels.systemName);
 	hbox->PackEnd(m_currentSystemLabels.sector);
 	systemBox->PackEnd(hbox);
@@ -227,8 +225,6 @@ void SectorView::InitObject()
 	m_targetSystemLabels.distance.label = (new Gui::Label(""))->Color(255, 0, 0);
 	m_targetSystemLabels.distance.line = &m_jumpLine;
 	m_targetSystemLabels.distance.okayColor = ::Color(0, 255, 0);
-	m_targetSystemLabels.distance.unsuffFuelColor = ::Color(255, 255, 0);
-	m_targetSystemLabels.distance.outOfRangeColor = ::Color(255, 0, 0);
 	hbox->PackEnd(m_targetSystemLabels.systemName);
 	hbox->PackEnd(m_targetSystemLabels.sector);
 	systemBox->PackEnd(hbox);
@@ -238,8 +234,6 @@ void SectorView::InitObject()
 	m_secondDistance.label = (new Gui::Label(""))->Color(0, 128, 255);
 	m_secondDistance.line = &m_secondLine;
 	m_secondDistance.okayColor = ::Color(51, 153, 128);
-	m_secondDistance.unsuffFuelColor = ::Color(153, 128, 51);
-	m_secondDistance.outOfRangeColor = ::Color(191, 89, 0);
 	systemBox->PackEnd(m_secondDistance.label);
 	locationsBox->PackEnd(systemBox);
 	// 1.3 selected system
@@ -258,8 +252,6 @@ void SectorView::InitObject()
 	m_selectedSystemLabels.distance.label = (new Gui::Label(""))->Color(255, 0, 0);
 	m_selectedSystemLabels.distance.line = &m_selectedLine;
 	m_selectedSystemLabels.distance.okayColor = ::Color(0, 255, 0);
-	m_selectedSystemLabels.distance.unsuffFuelColor = ::Color(255, 255, 0);
-	m_selectedSystemLabels.distance.outOfRangeColor = ::Color(255, 0, 0);
 	hbox->PackEnd(m_selectedSystemLabels.systemName);
 	hbox->PackEnd(m_selectedSystemLabels.sector);
 	systemBox->PackEnd(hbox);
@@ -280,25 +272,7 @@ void SectorView::InitObject()
 	Gui::Label *label = (new Gui::Label(Lang::DRAW_VERTICAL_LINES))->Color(255, 255, 255);
 	hbox->PackEnd(label);
 	filterBox->PackEnd(hbox);
-	// 2.2 Draw planet labels out of range
-	hbox = new Gui::HBox();
-	hbox->SetSpacing(5.0f);
-	m_drawOutRangeLabelButton = new Gui::ToggleButton();
-	m_drawOutRangeLabelButton->SetPressed(false); // TODO: replace with var
-	hbox->PackEnd(m_drawOutRangeLabelButton);
-	label = (new Gui::Label(Lang::DRAW_OUT_RANGE_LABELS))->Color(255, 255, 255);
-	hbox->PackEnd(label);
-	filterBox->PackEnd(hbox);
-	// 2.3 Draw planet labels uninhabited
-	hbox = new Gui::HBox();
-	hbox->SetSpacing(5.0f);
-	m_drawUninhabitedLabelButton = (new Gui::ToggleButton());
-	m_drawUninhabitedLabelButton->SetPressed(true); // TODO: replace with var
-	hbox->PackEnd(m_drawUninhabitedLabelButton);
-	label = (new Gui::Label(Lang::DRAW_UNINHABITED_LABELS))->Color(255, 255, 255);
-	hbox->PackEnd(label);
-	filterBox->PackEnd(hbox);
-	// 2.4 Selection follows movement
+	// 2.1 Selection follows movement
 	hbox = new Gui::HBox();
 	hbox->SetSpacing(5.0f);
 	m_automaticSystemSelectionButton = (new Gui::ToggleButton());
@@ -584,16 +558,6 @@ void SectorView::PutSystemLabels(RefCountedPtr<Sector> sec, const vector3f &orig
 		// skip the system if it doesn't fall within the sphere we're viewing.
 		if ((m_pos*Sector::SIZE - (*sys).FullPosition()).Length() > drawRadius) continue;
 
-		// if the system is the current system or target we can't skip it
-		bool can_skip = !sys->IsSameSystem(m_selected)
-						&& !sys->IsSameSystem(m_hyperspaceTarget)
-						&& !sys->IsSameSystem(m_current);
-
-		// determine if system in hyperjump range or not
-		RefCountedPtr<const Sector> playerSec = GetCached(m_current);
-		float dist = Sector::DistanceBetween(sec, sysIdx, playerSec, m_current.systemIndex);
-		bool inRange = dist <= m_playerHyperspaceRange;
-
 		// place the label
 		vector3d systemPos = vector3d((*sys).FullPosition() - origin);
 		vector3d screenPos;
@@ -605,13 +569,8 @@ void SectorView::PutSystemLabels(RefCountedPtr<Sector> sec, const vector3f &orig
 			// get a system path to pass to the event handler when the label is licked
 			SystemPath sysPath = SystemPath((*sys).sx, (*sys).sy, (*sys).sz, sysIdx);
 
-			// label text
-			std::string text = "";
-			if(((inRange || m_drawOutRangeLabelButton->GetPressed()) && ((*sys).population > 0 || m_drawUninhabitedLabelButton->GetPressed())) || !can_skip)
-				text = (*sys).name;
-
 			// setup the label;
-			m_clickableLabels->Add(text, sigc::bind(sigc::mem_fun(this, &SectorView::OnClickSystem), sysPath), screenPos.x, screenPos.y, Color::WHITE);
+			m_clickableLabels->Add((*sys).name, sigc::bind(sigc::mem_fun(this, &SectorView::OnClickSystem), sysPath), screenPos.x, screenPos.y, Color::WHITE);
 		}
 	}
 }
@@ -662,14 +621,6 @@ void SectorView::UpdateDistanceLabelAndLine(DistanceIndicator &distance, const S
 				distance.label->Color(distance.okayColor);
 				if (distance.line)
 					distance.line->SetColor(distance.okayColor);
-				break;
-			case Ship::HYPERJUMP_OUT_OF_RANGE:
-				snprintf(format, sizeof(format), "[ %s ]", Lang::NUMBER_LY);
-				distance.label->SetText(stringf(format,
-					formatarg("distance", dist)));
-				distance.label->Color(distance.outOfRangeColor);
-				if (distance.line)
-					distance.line->SetColor(distance.outOfRangeColor);
 				break;
 			default:
 				distance.label->SetText("");
@@ -788,11 +739,6 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 						&& !i->IsSameSystem(m_hyperspaceTarget)
 						&& !bIsCurrentSystem;
 
-		// determine if system in hyperjump range or not
-		RefCountedPtr<const Sector> playerSec = GetCached(m_current);
-		float dist = Sector::DistanceBetween(ps, sysIdx, playerSec, m_current.systemIndex);
-		bool inRange = dist <= m_playerHyperspaceRange;
-
 		// only do this once we've pretty much stopped moving.
 		vector3f diff = vector3f(
 				fabs(m_posMovingTo.x - m_pos.x),
@@ -808,9 +754,8 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 		matrix4x4f systrans = trans * matrix4x4f::Translation((*i).p.x, (*i).p.y, (*i).p.z);
 		m_renderer->SetTransform(systrans);
 
-		// for out-of-range systems draw leg only if we draw label
-		if ((m_drawSystemLegButton->GetPressed() && (inRange || m_drawOutRangeLabelButton->GetPressed()) && ((*i).population > 0 || m_drawUninhabitedLabelButton->GetPressed())) || !can_skip) {
-
+		// legs
+		if (m_drawSystemLegButton->GetPressed() || !can_skip) {
 			const Color light(128);
 			const Color dark(51);
 
@@ -891,12 +836,6 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 			m_disk->SetColor(Color(77));
 			m_renderer->SetTransform(systrans * matrix4x4f::ScaleMatrix(2.f));
 			m_disk->Draw(m_renderer);
-		}
-		if(bIsCurrentSystem && m_jumpSphere && m_playerHyperspaceRange>0.0f) {
-			const matrix4x4f sphTrans = trans * matrix4x4f::Translation((*i).p.x, (*i).p.y, (*i).p.z);
-			m_renderer->SetTransform(sphTrans * matrix4x4f::ScaleMatrix(m_playerHyperspaceRange));
-			m_jumpSphere->Draw(m_renderer);
-			m_jumpDisk->Draw(m_renderer);
 		}
 	}
 }
@@ -1109,24 +1048,6 @@ void SectorView::Update()
 	}
 
 	ShrinkCache();
-
-	m_playerHyperspaceRange = Pi::player->GetStats().hyperspace_range;
-
-	if(!m_jumpSphere)
-	{
-		Graphics::RenderStateDesc rsd;
-		rsd.blendMode = Graphics::BLEND_ALPHA;
-		rsd.depthTest = false;
-		rsd.depthWrite = false;
-		rsd.cullMode = Graphics::CULL_NONE;
-		m_jumpSphereState = m_renderer->CreateRenderState(rsd);
-
-		Graphics::MaterialDescriptor matdesc;
-		matdesc.effect = EFFECT_FRESNEL_SPHERE;
-		RefCountedPtr<Graphics::Material> fresnelMat(m_renderer->CreateMaterial(matdesc));
-		m_jumpSphere.reset( new Graphics::Drawables::Sphere3D(m_renderer, fresnelMat, m_jumpSphereState, 3, 1.0f) );
-		m_jumpDisk.reset( new Graphics::Drawables::Disk(fresnelMat, m_jumpSphereState, 72, 1.0f) );
-	}
 
 	UIView::Update();
 }
