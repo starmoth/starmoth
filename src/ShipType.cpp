@@ -32,8 +32,15 @@ ShipType::ShipType(const std::string &_id, const std::string &path) {
 	linThrust[THRUSTER_DOWN] = data.get("down_thrust", 0.0f).asFloat();
 	linThrust[THRUSTER_LEFT] = data.get("left_thrust", 0.0f).asFloat();
 	linThrust[THRUSTER_RIGHT] = data.get("right_thrust", 0.0f).asFloat();
-
 	angThrust = data.get("angular_thrust", 0.0f).asFloat();
+
+	// invert values where necessary
+	linThrust[THRUSTER_FORWARD] *= -1.f;
+	linThrust[THRUSTER_LEFT] *= -1.f;
+	linThrust[THRUSTER_DOWN] *= -1.f;
+	// angthrust fudge (XXX: why?)
+	angThrust = angThrust / 2;
+
 	hullMass = data.get("hull_mass", 0).asFloat();
 	effectiveExhaustVelocity = data.get("effective_exhaust_velocity", 0.0f).asFloat();
 }

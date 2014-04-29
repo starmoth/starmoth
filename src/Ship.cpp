@@ -122,6 +122,7 @@ void Ship::Init()
 	m_navLights.reset(new NavLights(GetModel()));
 	m_navLights->SetEnabled(true);
 
+	SetMass(m_type->hullMass*1000.0f);
 	SetMassDistributionFromModel();
 	m_stats.hull_mass_left = float(m_type->hullMass);
 
