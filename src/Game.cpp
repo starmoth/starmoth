@@ -332,7 +332,7 @@ void Game::SwitchToHyperspace()
 {
 	PROFILE_SCOPED()
 	// remember where we came from so we can properly place the player on exit
-	m_hyperspaceSource = m_space->GetStarSystem()->GetPath();
+	m_hyperspaceSource = m_space->GetStarSystem()->GetSystemPath();
 	m_hyperspaceDest =  m_player->GetHyperspaceDest();
 
 	// find all the departure clouds, convert them to arrival clouds and store

@@ -3,8 +3,7 @@
 
 #include "StarSystem.h"
 #include "Sector.h"
-#include "SectorCache.h"
-
+#include "GalaxyCache.h"
 #include "Serializer.h"
 #include "Pi.h"
 #include "enum_table.h"
@@ -18,7 +17,8 @@
 #include <SDL_stdinc.h>
 #include "EnumStrings.h"
 
-StarSystemCache::SystemCacheMap StarSystemCache::s_cachedSystems;
+StarSystemCache StarSystem::attic;
+RefCountedPtr<StarSystemCache::Slave> StarSystem::cache = attic.NewSlaveCache();
 
 static const double CELSIUS	= 273.15;
 //#define DEBUG_DUMP
@@ -1238,8 +1238,8 @@ SystemBody::AtmosphereParameters SystemBody::CalcAtmosphereParams() const
  *
  * We must be sneaky and avoid floating point in these places.
  */
-StarSystem::StarSystem(const SystemPath &path) : m_path(path), m_numStars(0),
-	m_unexplored(false), m_seed(0)
+StarSystem::StarSystem(const SystemPath &path, StarSystemCache* cache) : m_path(path), m_numStars(0),
+	m_unexplored(false), m_seed(0), m_cache(cache)
 {
 	PROFILE_SCOPED()
 	assert(path.IsSystemPath());
@@ -1988,6 +1988,8 @@ StarSystem::~StarSystem()
 	// clear parent and children pointers. someone (Lua) might still have a
 	// reference to things that are about to be deleted
 	m_rootBody->ClearParentAndChildPointers();
+	if (m_cache)
+		m_cache->RemoveFromAttic(m_path);
 }
 
 void StarSystem::Serialize(Serializer::Writer &wr, StarSystem *s)
@@ -2010,7 +2012,7 @@ RefCountedPtr<StarSystem> StarSystem::Unserialize(Serializer::Reader &rd)
 		int sec_y = rd.Int32();
 		int sec_z = rd.Int32();
 		int sys_idx = rd.Int32();
-		return StarSystemCache::GetCached(SystemPath(sec_x, sec_y, sec_z, sys_idx));
+		return StarSystem::cache->GetCached(SystemPath(sec_x, sec_y, sec_z, sys_idx));
 	} else {
 		return RefCountedPtr<StarSystem>(0);
 	}
@@ -2060,66 +2062,4 @@ void StarSystem::Dump(FILE* file, const char* indent, bool suppressSectorData) c
 		m_rootBody->Dump(file, buf);
 	}
 	fprintf(file, "%s}\n", indent);
-}
-
-
-RefCountedPtr<StarSystem> StarSystemCache::GetCached(const SystemPath &path)
-{
-	PROFILE_SCOPED()
-	SystemPath sysPath(path.SystemOnly());
-
-	StarSystem *s = 0;
-	std::pair<SystemCacheMap::iterator, bool>
-		ret = s_cachedSystems.insert(SystemCacheMap::value_type(sysPath, static_cast<StarSystem*>(0)));
-	if (ret.second) {
-		s = new StarSystem(sysPath);
-		ret.first->second = s;
-		s->IncRefCount(); // the cache owns one reference
-	} else {
-		s = ret.first->second;
-	}
-	return RefCountedPtr<StarSystem>(s);
-}
-
-static bool WithinBox(const SystemPath &here, const int Xmin, const int Xmax, const int Ymin, const int Ymax, const int Zmin, const int Zmax) {
-	PROFILE_SCOPED()
-	if(here.sectorX >= Xmin && here.sectorX <= Xmax) {
-		if(here.sectorY >= Ymin && here.sectorY <= Ymax) {
-			if(here.sectorZ >= Zmin && here.sectorZ <= Zmax) {
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
-void StarSystemCache::ShrinkCache(const SystemPath &here, const bool clear/*=false*/)
-{
-	PROFILE_SCOPED()
-	// we're going to use these to determine if our StarSystems are within a range that we'll keep for later use
-	static const int survivorRadius = 30;	// 3 times the distance used by the SectorCache population method.
-
-	// min/max box limits
-	const int xmin = here.sectorX-survivorRadius;
-	const int xmax = here.sectorX+survivorRadius;
-	const int ymin = here.sectorY-survivorRadius;
-	const int ymax = here.sectorY+survivorRadius;
-	const int zmin = here.sectorZ-survivorRadius;
-	const int zmax = here.sectorZ+survivorRadius;
-
-	std::map<SystemPath,StarSystem*>::iterator i = s_cachedSystems.begin();
-	while (i != s_cachedSystems.end()) {
-		StarSystem *s = (*i).second;
-
-		const bool outsideVolume = clear || !WithinBox(s->GetPath(), xmin, xmax, ymin, ymax, zmin, zmax);
-
-		assert(s->GetRefCount() >= 1); // sanity check
-		// if the cache is the only owner, then delete it
-		if (outsideVolume && s->GetRefCount() == 1) {
-			delete s;
-			s_cachedSystems.erase(i++);
-		} else {
-			++i;
-		}
-	}
 }

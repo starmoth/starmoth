@@ -82,13 +82,13 @@ Space::Space(Game *game, const SystemPath &path)
 	, m_processingFinalizationQueue(false)
 #endif
 {
-	m_starSystem = StarSystemCache::GetCached(path);
+	m_starSystem = StarSystem::cache->GetCached(path);
 
 	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
 	m_background.reset(new Background::Container(Pi::renderer, rand));
 
-	CityOnPlanet::SetCityModelPatterns(m_starSystem->GetPath());
+	CityOnPlanet::SetCityModelPatterns(m_starSystem->GetSystemPath());
 
 	// XXX set radius in constructor
 	m_rootFrame.reset(new Frame(0, Lang::SYSTEM));
@@ -114,14 +114,14 @@ Space::Space(Game *game, Serializer::Reader &rd, double at_time)
 {
 	m_starSystem = StarSystem::Unserialize(rd);
 
-	const SystemPath &path = m_starSystem->GetPath();
+	const SystemPath &path = m_starSystem->GetSystemPath();
 	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
 	m_background.reset(new Background::Container(Pi::renderer, rand));
 
 	RebuildSystemBodyIndex();
 
-	CityOnPlanet::SetCityModelPatterns(m_starSystem->GetPath());
+	CityOnPlanet::SetCityModelPatterns(m_starSystem->GetSystemPath());
 
 	Serializer::Reader section = rd.RdSection("Frames");
 	m_rootFrame.reset(Frame::Unserialize(section, this, 0, at_time));
@@ -493,6 +493,9 @@ static Frame *MakeFrameFor(double at_time, SystemBody *sbody, Body *b, Frame *f)
 	return 0;
 }
 
+// used to define a cube centred on your current location
+static const int sectorRadius = 5;
+
 // sort using a custom function object
 class SectorDistanceSort {
 public:
@@ -518,7 +521,7 @@ void Space::GenSectorCache(const SystemPath* here)
 	if (!here) {
 		if (!m_starSystem.Valid())
 			return;
-		here = &m_starSystem->GetPath();
+		here = &m_starSystem->GetSystemPath();
 	}
 	const int here_x = here->sectorX;
 	const int here_y = here->sectorY;
@@ -541,7 +544,70 @@ void Space::GenSectorCache(const SystemPath* here)
 	SectorDistanceSort SDS(here);
 	std::sort(paths.begin(), paths.end(), SDS);
 	m_sectorCache = Sector::cache.NewSlaveCache();
-	m_sectorCache->FillCache(paths);
+	const SystemPath& center(*here);
+	m_sectorCache->FillCache(paths, [this,center]() { UpdateStarSystemCache(&center); });
+}
+
+static bool WithinBox(const SystemPath &here, const int Xmin, const int Xmax, const int Ymin, const int Ymax, const int Zmin, const int Zmax) {
+	PROFILE_SCOPED()
+	if(here.sectorX >= Xmin && here.sectorX <= Xmax) {
+		if(here.sectorY >= Ymin && here.sectorY <= Ymax) {
+			if(here.sectorZ >= Zmin && here.sectorZ <= Zmax) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+void Space::UpdateStarSystemCache(const SystemPath* here)
+{
+	PROFILE_SCOPED()
+
+	// current location
+	if (!here) {
+		if (!m_starSystem.Valid())
+			return;
+		here = &m_starSystem->GetSystemPath();
+	}
+	const int here_x = here->sectorX;
+	const int here_y = here->sectorY;
+	const int here_z = here->sectorZ;
+
+	// we're going to use these to determine if our StarSystems are within a range that we'll keep for later use
+	static const int survivorRadius = sectorRadius*3;
+
+	// min/max box limits
+	const int xmin = here->sectorX-survivorRadius;
+	const int xmax = here->sectorX+survivorRadius;
+	const int ymin = here->sectorY-survivorRadius;
+	const int ymax = here->sectorY+survivorRadius;
+	const int zmin = here->sectorZ-survivorRadius;
+	const int zmax = here->sectorZ+survivorRadius;
+
+	StarSystemCache::CacheMap::const_iterator i = StarSystem::cache->Begin();
+	while (i != StarSystem::cache->End()) {
+		if (!WithinBox(i->second->GetSystemPath(), xmin, xmax, ymin, ymax, zmin, zmax))
+			StarSystem::cache->Erase(i++);
+		else
+			++i;
+	}
+
+	SectorCache::PathVector paths;
+	// build all of the possible paths we'll need to build star systems for
+	for (int x = here_x-sectorRadius; x <= here_x+sectorRadius; x++) {
+		for (int y = here_y-sectorRadius; y <= here_y+sectorRadius; y++) {
+			for (int z = here_z-sectorRadius; z <= here_z+sectorRadius; z++) {
+				SystemPath path(x, y, z);
+				RefCountedPtr<Sector> sec(m_sectorCache->GetIfCached(path));
+				assert(sec);
+				for (const Sector::System& ss : sec->m_systems)
+					paths.push_back(SystemPath(ss.sx, ss.sy, ss.sz, ss.idx));
+			}
+		}
+	}
+
+	StarSystem::cache->FillCache(paths);
 }
 
 void Space::GenBody(double at_time, SystemBody *sbody, Frame *f)
