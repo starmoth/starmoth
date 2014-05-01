@@ -53,8 +53,6 @@ private:
 		Gui::Label *label;
 		Graphics::Drawables::Line3D *line;
 		Color okayColor;
-		Color unsuffFuelColor;
-		Color outOfRangeColor;
 	};
 
 	struct SystemLabels {
@@ -114,8 +112,6 @@ private:
 	Gui::ImageButton *m_galaxyButton;
 	Gui::TextEntry *m_searchBox;
 	Gui::Label *m_statusLabel;
-	Gui::ToggleButton *m_drawOutRangeLabelButton;
-	Gui::ToggleButton *m_drawUninhabitedLabelButton;
 	Gui::ToggleButton *m_drawSystemLegButton;
 	Gui::ToggleButton *m_automaticSystemSelectionButton;
 	void OnAutomaticSystemSelectionChange(Gui::ToggleButton *b, bool pressed);
@@ -140,7 +136,6 @@ private:
 	RefCountedPtr<SectorCache::Slave> m_sectorCache;
 	std::string m_previousSearch;
 
-	float m_playerHyperspaceRange;
 	Graphics::Drawables::Line3D m_selectedLine;
 	Graphics::Drawables::Line3D m_secondLine;
 	Graphics::Drawables::Line3D m_jumpLine;
@@ -166,8 +161,6 @@ private:
 
 	std::unique_ptr<Graphics::VertexArray> m_lineVerts;
 	std::unique_ptr<Graphics::VertexArray> m_secLineVerts;
-	std::unique_ptr<Graphics::Drawables::Sphere3D> m_jumpSphere;
-	std::unique_ptr<Graphics::Drawables::Disk> m_jumpDisk;
 	std::unique_ptr<Graphics::VertexArray> m_starVerts;
 };
 

@@ -44,7 +44,6 @@ private:
 	void OnChangeCamView(Gui::MultiStateImageButton *b);
 	void OnChangeToMapView(Gui::MultiStateImageButton *b);
 	void OnChangeMapView(enum MapView);
-	void OnChangeInfoView(Gui::MultiStateImageButton *b);
 	void OnClickTimeaccel(Game::TimeAccel val);
 	void OnClickComms(Gui::MultiStateImageButton *b);
 	void OnClickRotationDamping(Gui::MultiStateImageButton *b);

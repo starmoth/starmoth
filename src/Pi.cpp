@@ -71,8 +71,6 @@ Player *Pi::player;
 View *Pi::currentView;
 WorldView *Pi::worldView;
 DeathView *Pi::deathView;
-UIView *Pi::spaceStationView;
-UIView *Pi::infoView;
 SectorView *Pi::sectorView;
 GalacticView *Pi::galacticView;
 UIView *Pi::settingsView;

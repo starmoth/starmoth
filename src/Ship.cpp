@@ -320,7 +320,7 @@ Ship::HyperjumpStatus Ship::GetHyperspaceDetails(const SystemPath &src, const Sy
 {
 	assert(dest.HasValidSystem());
 
-	outDurationSecs = 0.0;
+	outDurationSecs = 5.0f;
 
 	if (src.IsSameSystem(dest))
 		return HYPERJUMP_CURRENT_SYSTEM;
@@ -680,6 +680,8 @@ void Ship::EnterHyperspace() {
 			SetFlightState(FLYING);
 		return;
 	}
+
+	m_hyperspace.duration = 5.0f;
 
 	SetFlightState(Ship::HYPERSPACE);
 
