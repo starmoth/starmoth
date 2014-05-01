@@ -9,7 +9,7 @@
 #include "vector3.h"
 #include "Serializer.h"
 #include "RefCounted.h"
-#include "galaxy/SectorCache.h"
+#include "galaxy/GalaxyCache.h"
 #include "galaxy/StarSystem.h"
 #include "Background.h"
 #include "IterationProxy.h"
@@ -57,7 +57,7 @@ public:
 
 	vector3d GetHyperspaceExitPoint(const SystemPath &source, const SystemPath &dest) const;
 	vector3d GetHyperspaceExitPoint(const SystemPath &source) const {
-		return GetHyperspaceExitPoint(source, m_starSystem->GetPath());
+		return GetHyperspaceExitPoint(source, m_starSystem->GetSystemPath());
 	}
 
 	Body *FindNearestTo(const Body *b, Object::Type t) const;
@@ -82,6 +82,7 @@ public:
 
 private:
 	void GenSectorCache(const SystemPath* here);
+	void UpdateStarSystemCache(const SystemPath* here);
 	void GenBody(double at_time, SystemBody *b, Frame *f);
 	// make sure SystemBody* is in Pi::currentSystem
 	Frame *GetFrameWithSystemBody(const SystemBody *b) const;

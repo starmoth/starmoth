@@ -11,7 +11,7 @@
 #include "Sound.h"
 #include "Sfx.h"
 #include "galaxy/Sector.h"
-#include "galaxy/SectorCache.h"
+#include "galaxy/GalaxyCache.h"
 #include "Frame.h"
 #include "WorldView.h"
 #include "HyperspaceCloud.h"
@@ -334,7 +334,7 @@ Ship::HyperjumpStatus Ship::GetHyperspaceDetails(const SystemPath &dest, double 
 		outDurationSecs = 0.0;
 		return HYPERJUMP_DRIVE_ACTIVE;
 	}
-	return GetHyperspaceDetails(Pi::game->GetSpace()->GetStarSystem()->GetPath(), dest, outDurationSecs);
+	return GetHyperspaceDetails(Pi::game->GetSpace()->GetStarSystem()->GetSystemPath(), dest, outDurationSecs);
 }
 
 Ship::HyperjumpStatus Ship::CheckHyperjumpCapability() const {
@@ -363,7 +363,7 @@ Ship::HyperjumpStatus Ship::InitiateHyperjumpTo(const SystemPath &dest, int warm
 	if (!dest.HasValidSystem() || GetFlightState() != FLYING || warmup_time < 1)
 		return HYPERJUMP_SAFETY_LOCKOUT;
 	StarSystem *s = Pi::game->GetSpace()->GetStarSystem().Get();
-	if (s && s->GetPath().IsSameSystem(dest))
+	if (s && s->GetSystemPath().IsSameSystem(dest))
 		return HYPERJUMP_CURRENT_SYSTEM;
 
 	m_hyperspace.dest = dest;

@@ -9,14 +9,14 @@ AM_CPPFLAGS += -isystem $(top_srcdir)/contrib -I$(srcdir)/..
 noinst_LIBRARIES = libgalaxy.a
 noinst_HEADERS = \
 	Galaxy.h \
+	GalaxyCache.h \
 	Sector.h \
-	SectorCache.h \
 	StarSystem.h \
 	SystemPath.h
 
 libgalaxy_a_SOURCES = \
 	Galaxy.cpp \
+	GalaxyCache.cpp \
 	Sector.cpp \
-	SectorCache.cpp \
 	StarSystem.cpp \
 	SystemPath.cpp
