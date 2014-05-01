@@ -306,7 +306,7 @@ vector3d Space::GetHyperspaceExitPoint(const SystemPath &source, const SystemPat
 	assert(m_starSystem);
 	assert(source.IsSystemPath());
 
-	assert(dest.IsSameSystem(m_starSystem->GetPath()));
+	assert(dest.IsSameSystem(m_starSystem->GetSystemPath()));
 
 	RefCountedPtr<const Sector> source_sec = m_sectorCache->GetCached(source);
 	RefCountedPtr<const Sector> dest_sec = m_sectorCache->GetCached(dest);
@@ -527,14 +527,11 @@ void Space::GenSectorCache(const SystemPath* here)
 	const int here_y = here->sectorY;
 	const int here_z = here->sectorZ;
 
-	// used to define a cube centred on your current location
-	const int diff_sec = 5;
-
 	SectorCache::PathVector paths;
 	// build all of the possible paths we'll need to build sectors for
-	for (int x = here_x-diff_sec; x <= here_x+diff_sec; x++) {
-		for (int y = here_y-diff_sec; y <= here_y+diff_sec; y++) {
-			for (int z = here_z-diff_sec; z <= here_z+diff_sec; z++) {
+	for (int x = here_x-sectorRadius; x <= here_x+sectorRadius; x++) {
+		for (int y = here_y-sectorRadius; y <= here_y+sectorRadius; y++) {
+			for (int z = here_z-sectorRadius; z <= here_z+sectorRadius; z++) {
 				SystemPath path(x, y, z);
 				paths.push_back(path);
 			}

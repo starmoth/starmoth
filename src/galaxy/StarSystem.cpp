@@ -1238,11 +1238,10 @@ SystemBody::AtmosphereParameters SystemBody::CalcAtmosphereParams() const
  *
  * We must be sneaky and avoid floating point in these places.
  */
-StarSystem::StarSystem(const SystemPath &path, StarSystemCache* cache) : m_path(path), m_numStars(0),
+StarSystem::StarSystem(const SystemPath &path, StarSystemCache* cache) : m_path(path.SystemOnly()), m_numStars(0),
 	m_unexplored(false), m_seed(0), m_cache(cache)
 {
 	PROFILE_SCOPED()
-	assert(path.IsSystemPath());
 
 	RefCountedPtr<const Sector> s = Sector::cache.GetCached(m_path);
 	assert(m_path.systemIndex >= 0 && m_path.systemIndex < s->m_systems.size());

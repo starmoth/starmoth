@@ -323,7 +323,7 @@ void Sector::Dump(FILE* file, const char* indent) const
 			fprintf(file, "\t\t\t%s\n", EnumStrings::GetString("BodyType", sys.starType[i]));
 		if (sys.numStars > 0) fprintf(file, "\t\t}\n");
 		RefCountedPtr<StarSystem> ssys = StarSystem::cache->GetCached(SystemPath(sys.sx, sys.sy, sys.sz, sys.idx));
-		assert(ssys->GetPath().IsSameSystem(SystemPath(sys.sx, sys.sy, sys.sz, sys.idx)));
+		assert(ssys->GetSystemPath().IsSameSystem(SystemPath(sys.sx, sys.sy, sys.sz, sys.idx)));
 		assert(ssys->GetNumStars() == sys.numStars);
 		assert(ssys->GetName() == sys.name);
 		assert(ssys->GetUnexplored() == !sys.explored);
