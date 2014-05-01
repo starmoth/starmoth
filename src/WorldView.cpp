@@ -63,7 +63,6 @@ void WorldView::InitObject()
 	GetSizeRequested(size);
 
 	m_showTargetActionsTimeout = 0;
-	m_showLowThrustPowerTimeout = 0;
 	m_showCameraNameTimeout = 0;
 	m_showCameraName = 0;
 	m_labelsOn = true;
@@ -96,27 +95,6 @@ void WorldView::InitObject()
 	m_commsNavOptions->SetSpacing(5);
 	portal->Add(m_commsNavOptions);
 
-	m_lowThrustPowerOptions = new Gui::Fixed(size[0], size[1]/2);
-	m_lowThrustPowerOptions->SetTransparency(true);
-	Add(m_lowThrustPowerOptions, 10, 200);
-	for (int i = 0; i < int(COUNTOF(LOW_THRUST_LEVELS)); ++i) {
-		assert(i < 9); // otherwise the shortcuts break
-		const int ypos = i*32;
-
-		Gui::Label *label = new Gui::Label(
-				stringf(Lang::SET_LOW_THRUST_POWER_LEVEL_TO_X_PERCENT,
-					formatarg("power", 100.0f * LOW_THRUST_LEVELS[i], "f.0")));
-		m_lowThrustPowerOptions->Add(label, 50, float(ypos));
-
-		char buf[8];
-		snprintf(buf, sizeof(buf), "%d", (i + 1));
-		Gui::Button *btn = new Gui::LabelButton(new Gui::Label(buf));
-		btn->SetShortcut(SDL_Keycode(SDLK_1 + i), KMOD_NONE);
-		m_lowThrustPowerOptions->Add(btn, 16, float(ypos));
-
-		btn->onClick.connect(sigc::bind(sigc::mem_fun(this, &WorldView::OnSelectLowThrustPower), LOW_THRUST_LEVELS[i]));
-	}
-
 	m_wheelsButton = new Gui::MultiStateImageButton();
 	m_wheelsButton->SetShortcut(SDLK_F6, KMOD_NONE);
 	m_wheelsButton->AddState(0, "icons/wheels_up.png", Lang::WHEELS_ARE_UP);
@@ -124,13 +102,6 @@ void WorldView::InitObject()
 	m_wheelsButton->onClick.connect(sigc::mem_fun(this, &WorldView::OnChangeWheelsState));
 	m_wheelsButton->SetRenderDimensions(30.0f, 22.0f);
 	m_rightButtonBar->Add(m_wheelsButton, 34, 2);
-
-	Gui::ImageButton *set_low_thrust_power_button = new Gui::ImageButton("icons/set_low_thrust_power.png");
-	set_low_thrust_power_button->SetShortcut(SDLK_F8, KMOD_NONE);
-	set_low_thrust_power_button->SetToolTip(Lang::SELECT_LOW_THRUST_POWER_LEVEL);
-	set_low_thrust_power_button->onClick.connect(sigc::mem_fun(this, &WorldView::OnClickLowThrustPower));
-	set_low_thrust_power_button->SetRenderDimensions(30.0f, 22.0f);
-	m_rightButtonBar->Add(set_low_thrust_power_button, 98, 2);
 
 	m_hyperspaceButton = new Gui::ImageButton("icons/hyperspace_f8.png");
 	m_hyperspaceButton->SetShortcut(SDLK_F7, KMOD_NONE);
@@ -553,14 +524,6 @@ void WorldView::RefreshButtonStateAndVisibility()
 		m_commsNavOptionsContainer->Hide();
 	}
 
-	if (m_showLowThrustPowerTimeout) {
-		if (SDL_GetTicks() - m_showLowThrustPowerTimeout > 20000) {
-			m_showLowThrustPowerTimeout = 0;
-		}
-		m_lowThrustPowerOptions->Show();
-	} else {
-		m_lowThrustPowerOptions->Hide();
-	}
 #if WITH_DEVKEYS
 	if (Pi::showDebugInfo) {
 		std::ostringstream ss;
@@ -854,7 +817,6 @@ void WorldView::ShowTargetActions()
 {
 	m_showTargetActionsTimeout = SDL_GetTicks();
 	UpdateCommsOptions();
-	HideLowThrustPowerOptions();
 }
 
 void WorldView::HideTargetActions()
@@ -882,7 +844,6 @@ void WorldView::OnClickCommsNavOption(Body *target)
 {
 	Pi::player->SetNavTarget(target);
 	m_showTargetActionsTimeout = SDL_GetTicks();
-	HideLowThrustPowerOptions();
 }
 
 void WorldView::AddCommsNavOption(const std::string &msg, Body *target)
@@ -919,34 +880,6 @@ void WorldView::BuildCommsNavOptions()
 			AddCommsNavOption((*j)->GetName(), body);
 		}
 	}
-}
-
-void WorldView::HideLowThrustPowerOptions()
-{
-	m_showLowThrustPowerTimeout = 0;
-	m_lowThrustPowerOptions->Hide();
-}
-
-void WorldView::ShowLowThrustPowerOptions()
-{
-	m_showLowThrustPowerTimeout = SDL_GetTicks();
-	m_lowThrustPowerOptions->Show();
-	HideTargetActions();
-}
-
-void WorldView::OnClickLowThrustPower()
-{
-	Pi::BoinkNoise();
-	if (m_showLowThrustPowerTimeout)
-		HideLowThrustPowerOptions();
-	else
-		ShowLowThrustPowerOptions();
-}
-
-void WorldView::OnSelectLowThrustPower(float power)
-{
-	Pi::player->GetPlayerController()->SetLowThrustPower(power);
-	HideLowThrustPowerOptions();
 }
 
 static void PlayerRequestDockingClearance(SpaceStation *s)
