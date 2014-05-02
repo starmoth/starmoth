@@ -25,53 +25,9 @@
 #include "ModManager.h"
 #include <sstream>
 
-class ProcessModel {
-public:
-	ProcessModel(Graphics::Renderer *r) : m_renderer(r) {}
-	~ProcessModel() {}
-
-	void Run(const std::string &modelName)
-	{
-		SetModel( modelName );
-		SaveModelToBinary();
-	}
-
-private:
-	void SaveModelToBinary()
-	{
-		//load the current model in a pristine state (no navlights, shields...)
-		//and then save it into binary
-		std::unique_ptr<SceneGraph::Model> model;
-		try {
-			SceneGraph::Loader ld(m_renderer);
-			model.reset(ld.LoadModel(m_modelName));
-		} catch (...) {
-			//minimal error handling, this is not expected to happen since we got this far.
-			return;
-		}
-
-		try {
-			SceneGraph::BinaryConverter bc(m_renderer);
-			bc.Save(m_modelName, model.get());
-		} catch (const CouldNotOpenFileException&) {
-		} catch (const CouldNotWriteToFileException&) {
-		}
-	}
-	void SetModel(const std::string &modelName)
-	{
-		m_modelName = modelName;
-	}
-
-	Graphics::Renderer *m_renderer;
-	std::string m_modelName;
-};
-
 void RunCompiler(const std::string &modelName)
 {
 	std::unique_ptr<GameConfig> config(new GameConfig);
-
-	Graphics::Renderer *renderer;
-	std::unique_ptr<ProcessModel> compiler;
 
 	//init components
 	FileSystem::Init();
@@ -92,10 +48,25 @@ void RunCompiler(const std::string &modelName)
 	videoSettings.useTextureCompression = (config->Int("UseTextureCompression") != 0);
 	videoSettings.iconFile = OS::GetIconFilename();
 	videoSettings.title = "Model viewer";
-	renderer = Graphics::Init(videoSettings);
+	Graphics::Renderer *renderer = Graphics::Init(videoSettings);
 
-	compiler.reset(new ProcessModel( renderer ));
-	compiler->Run( modelName );
+	//load the current model in a pristine state (no navlights, shields...)
+	//and then save it into binary
+	std::unique_ptr<SceneGraph::Model> model;
+	try {
+		SceneGraph::Loader ld(renderer);
+		model.reset(ld.LoadModel(modelName));
+	} catch (...) {
+		//minimal error handling, this is not expected to happen since we got this far.
+		return;
+	}
+
+	try {
+		SceneGraph::BinaryConverter bc(renderer);
+		bc.Save(modelName, model.get());
+	} catch (const CouldNotOpenFileException&) {
+	} catch (const CouldNotWriteToFileException&) {
+	}
 }
 
 
