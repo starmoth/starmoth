@@ -41,7 +41,7 @@ static const Uint8 HUD_ALPHA          = 87;
 
 WorldView::WorldView(): UIView()
 {
-	m_camType = CAM_INTERNAL;
+	m_camType = CamType::CAM_INTERNAL;
 	InitObject();
 }
 
@@ -167,7 +167,7 @@ void WorldView::InitObject()
 	m_onMouseWheelCon =
 		Pi::onMouseWheel.connect(sigc::mem_fun(this, &WorldView::MouseWheel));
 
-	Pi::player->GetPlayerController()->SetMouseForRearView(GetCamType() == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
+	Pi::player->GetPlayerController()->SetMouseForRearView(GetCamType() == CamType::CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
 	KeyBindings::toggleHudMode.onPress.connect(sigc::mem_fun(this, &WorldView::OnToggleLabels));
 }
 
@@ -187,31 +187,31 @@ void WorldView::Save(Serializer::Writer &wr)
 	m_siderealCameraController->Save(wr);
 }
 
-void WorldView::SetCamType(enum CamType c)
+void WorldView::SetCamType(CamType c)
 {
 	Pi::BoinkNoise();
 
 	// don't allow external cameras when docked inside space stations.
 	// they would clip through the station model
 	if (Pi::player->GetFlightState() == Ship::DOCKED && !Pi::player->GetDockedWith()->IsGroundStation())
-		c = CAM_INTERNAL;
+		c = CamType::CAM_INTERNAL;
 
 	m_camType = c;
 
 	switch(m_camType) {
-		case CAM_INTERNAL:
+		case CamType::CAM_INTERNAL:
 			m_activeCameraController = m_internalCameraController.get();
 			Pi::player->OnCockpitActivated();
 			break;
-		case CAM_EXTERNAL:
+		case CamType::CAM_EXTERNAL:
 			m_activeCameraController = m_externalCameraController.get();
 			break;
-		case CAM_SIDEREAL:
+		case CamType::CAM_SIDEREAL:
 			m_activeCameraController = m_siderealCameraController.get();
 			break;
 	}
 
-	Pi::player->GetPlayerController()->SetMouseForRearView(m_camType == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
+	Pi::player->GetPlayerController()->SetMouseForRearView(m_camType == CamType::CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
 
 	m_activeCameraController->Reset();
 
@@ -226,7 +226,7 @@ void WorldView::ChangeInternalCameraMode(InternalCameraController::Mode m)
 
 	Pi::BoinkNoise();
 	m_internalCameraController->SetMode(m);
-	Pi::player->GetPlayerController()->SetMouseForRearView(m_camType == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
+	Pi::player->GetPlayerController()->SetMouseForRearView(m_camType == CamType::CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
 	UpdateCameraName();
 }
 
@@ -259,7 +259,7 @@ void WorldView::Draw3D()
 
 	Body* excludeBody = nullptr;
 	ShipCockpit* cockpit = nullptr;
-	if(GetCamType() == CAM_INTERNAL) {
+	if(GetCamType() == CamType::CAM_INTERNAL) {
 		excludeBody = Pi::player;
 		if (m_internalCameraController->GetMode() == InternalCameraController::MODE_FRONT)
 			cockpit = Pi::player->GetCockpit();
@@ -427,7 +427,7 @@ void WorldView::Update()
 
 	bool targetObject = false;
 
-	if (GetCamType() == CAM_INTERNAL) {
+	if (GetCamType() == CamType::CAM_INTERNAL) {
 		if      (KeyBindings::frontCamera.IsActive())  ChangeInternalCameraMode(InternalCameraController::MODE_FRONT);
 		else if (KeyBindings::rearCamera.IsActive())   ChangeInternalCameraMode(InternalCameraController::MODE_REAR);
 		else if (KeyBindings::leftCamera.IsActive())   ChangeInternalCameraMode(InternalCameraController::MODE_LEFT);
@@ -627,7 +627,7 @@ void WorldView::OnPlayerChangeTarget()
 
 static void autopilot_flyto(Body *b)
 {
-	Pi::player->GetPlayerController()->SetFlightControlState(CONTROL_AUTOPILOT);
+	Pi::player->GetPlayerController()->SetFlightControlState(FlightControlState::CONTROL_AUTOPILOT);
 	Pi::player->AIFlyTo(b);
 }
 static void autopilot_dock(Body *b)
@@ -635,12 +635,12 @@ static void autopilot_dock(Body *b)
 	if(Pi::player->GetFlightState() != Ship::FLYING)
 		return;
 
-	Pi::player->GetPlayerController()->SetFlightControlState(CONTROL_AUTOPILOT);
+	Pi::player->GetPlayerController()->SetFlightControlState(FlightControlState::CONTROL_AUTOPILOT);
 	Pi::player->AIDock(static_cast<SpaceStation*>(b));
 }
 static void autopilot_orbit(Body *b, double alt)
 {
-	Pi::player->GetPlayerController()->SetFlightControlState(CONTROL_AUTOPILOT);
+	Pi::player->GetPlayerController()->SetFlightControlState(FlightControlState::CONTROL_AUTOPILOT);
 	Pi::player->AIOrbit(b, alt);
 }
 
@@ -759,7 +759,7 @@ void WorldView::UpdateProjectedObjects()
 	m_projectedPos.clear();
 	for (Body* b : Pi::game->GetSpace()->GetBodies()) {
 		// don't show the player label on internal camera
-		if (b->IsType(Object::PLAYER) && GetCamType() == CAM_INTERNAL)
+		if (b->IsType(Object::PLAYER) && GetCamType() == CamType::CAM_INTERNAL)
 			continue;
 
 		vector3d pos = b->GetInterpPositionRelTo(cam_frame);
@@ -783,7 +783,7 @@ void WorldView::UpdateProjectedObjects()
 	// orientation according to mouse
 	if (Pi::player->GetPlayerController()->IsMouseActive()) {
 		vector3d mouseDir = Pi::player->GetPlayerController()->GetMouseDir() * cam_rot;
-		if (GetCamType() == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR)
+		if (GetCamType() == CamType::CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR)
 			mouseDir = -mouseDir;
 		UpdateIndicator(m_mouseDirIndicator, (Pi::player->GetPhysRadius() * 1.5) * mouseDir);
 	} else
@@ -1044,7 +1044,7 @@ void WorldView::Draw()
 	glLineWidth(1.0f);
 
 	// normal crosshairs
-	if (GetCamType() == CAM_INTERNAL) {
+	if (GetCamType() == CamType::CAM_INTERNAL) {
 		switch (m_internalCameraController->GetMode()) {
 			case InternalCameraController::MODE_FRONT:
 				DrawCrosshair(Gui::Screen::GetWidth()/2.0f, Gui::Screen::GetHeight()/2.0f, HUD_CROSSHAIR_SIZE, white);

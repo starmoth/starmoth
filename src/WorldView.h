@@ -33,13 +33,13 @@ public:
 	virtual void Draw();
 	static const double PICK_OBJECT_RECT_SIZE;
 	virtual void Save(Serializer::Writer &wr);
-	enum CamType {
+	enum class CamType {
 		CAM_INTERNAL,
 		CAM_EXTERNAL,
 		CAM_SIDEREAL
 	};
-	void SetCamType(enum CamType);
-	enum CamType GetCamType() const { return m_camType; }
+	void SetCamType(CamType);
+	CamType GetCamType() const { return m_camType; }
 	CameraController *GetCameraController() const { return m_activeCameraController; }
 	void ToggleTargetActions();
 	void ShowTargetActions();
@@ -112,7 +112,7 @@ private:
 	Gui::HBox *m_commsNavOptionsContainer;
 	Gui::Label *m_debugText;
 	bool m_labelsOn;
-	enum CamType m_camType;
+	CamType m_camType;
 	Uint32 m_showTargetActionsTimeout;
 	Uint32 m_showCameraNameTimeout;
 
