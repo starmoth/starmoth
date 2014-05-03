@@ -85,7 +85,6 @@ noinst_HEADERS = \
 	ShipAICmd.h \
 	ShipCockpit.h \
 	ShipController.h \
-	ShipCpanel.h \
 	ShipType.h \
 	Sound.h \
 	SoundMusic.h \
@@ -174,7 +173,6 @@ pioneer_SOURCES	= \
 	ShipAICmd.cpp \
 	ShipCockpit.cpp \
 	ShipController.cpp \
-	ShipCpanel.cpp \
 	ShipType.cpp \
 	Sound.cpp \
 	SoundMusic.cpp \

@@ -9,7 +9,6 @@
 #include "Player.h"
 #include "SectorView.h"
 #include "Serializer.h"
-#include "ShipCpanel.h"
 #include "StringF.h"
 #include "SystemInfoView.h"
 #include "galaxy/Sector.h"

@@ -26,7 +26,6 @@
 #include "SectorView.h"
 #include "Serializer.h"
 #include "Sfx.h"
-#include "ShipCpanel.h"
 #include "ShipType.h"
 #include "Sound.h"
 #include "SoundMusic.h"
@@ -76,7 +75,6 @@ GalacticView *Pi::galacticView;
 UIView *Pi::settingsView;
 SystemView *Pi::systemView;
 SystemInfoView *Pi::systemInfoView;
-ShipCpanel *Pi::cpan;
 Game *Pi::game;
 Random Pi::rng;
 float Pi::frameTime;
@@ -790,7 +788,6 @@ void Pi::StartGame()
 {
 	Pi::player->onDock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
 	Pi::player->onUndock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
-	cpan->ShowAll();
 	DrawGUI = true;
 	SetView(worldView);
 }
@@ -1039,7 +1036,6 @@ void Pi::MainLoop()
 			// this is something we need not do every turn...
 			if (!config->Int("DisableSound")) AmbientSounds::Update();
 		}
-		cpan->Update();
 		musicPlayer.Update();
 
 		syncJobQueue->RunJobs(SYNC_JOBS_PER_LOOP);

@@ -10,7 +10,6 @@
 #include "galaxy/GalaxyCache.h"
 #include "SectorView.h"
 #include "Serializer.h"
-#include "ShipCpanel.h"
 #include "Sound.h"
 #include "Space.h"
 #include "SpaceStation.h"
@@ -95,43 +94,6 @@ void WorldView::InitObject()
 	m_commsNavOptions->SetSpacing(5);
 	portal->Add(m_commsNavOptions);
 
-	m_wheelsButton = new Gui::MultiStateImageButton();
-	m_wheelsButton->SetShortcut(SDLK_F6, KMOD_NONE);
-	m_wheelsButton->AddState(0, "icons/wheels_up.png", Lang::WHEELS_ARE_UP);
-	m_wheelsButton->AddState(1, "icons/wheels_down.png", Lang::WHEELS_ARE_DOWN);
-	m_wheelsButton->onClick.connect(sigc::mem_fun(this, &WorldView::OnChangeWheelsState));
-	m_wheelsButton->SetRenderDimensions(30.0f, 22.0f);
-	m_rightButtonBar->Add(m_wheelsButton, 34, 2);
-
-	m_hyperspaceButton = new Gui::ImageButton("icons/hyperspace_f8.png");
-	m_hyperspaceButton->SetShortcut(SDLK_F7, KMOD_NONE);
-	m_hyperspaceButton->SetToolTip(Lang::HYPERSPACE_JUMP);
-	m_hyperspaceButton->onClick.connect(sigc::mem_fun(this, &WorldView::OnClickHyperspace));
-	m_hyperspaceButton->SetRenderDimensions(30.0f, 22.0f);
-	m_rightButtonBar->Add(m_hyperspaceButton, 66, 2);
-
-	m_launchButton = new Gui::ImageButton("icons/blastoff.png");
-	m_launchButton->SetShortcut(SDLK_F5, KMOD_NONE);
-	m_launchButton->SetToolTip(Lang::TAKEOFF);
-	m_launchButton->onClick.connect(sigc::mem_fun(this, &WorldView::OnClickBlastoff));
-	m_launchButton->SetRenderDimensions(30.0f, 22.0f);
-	m_rightButtonBar->Add(m_launchButton, 2, 2);
-
-	m_flightControlButton = new Gui::MultiStateImageButton();
-	m_flightControlButton->SetShortcut(SDLK_F5, KMOD_NONE);
-	// these states must match Player::FlightControlState (so that the enum values match)
-	m_flightControlButton->AddState(CONTROL_MANUAL, "icons/manual_control.png", Lang::MANUAL_CONTROL);
-	m_flightControlButton->AddState(CONTROL_FIXSPEED, "icons/manual_control.png", Lang::COMPUTER_SPEED_CONTROL);
-	m_flightControlButton->AddState(CONTROL_FIXHEADING_FORWARD, "icons/manual_control.png", Lang::COMPUTER_HEADING_CONTROL);
-	m_flightControlButton->AddState(CONTROL_FIXHEADING_BACKWARD, "icons/manual_control.png", Lang::COMPUTER_HEADING_CONTROL);
-	m_flightControlButton->AddState(CONTROL_AUTOPILOT, "icons/autopilot.png", Lang::AUTOPILOT_ON);
-	m_flightControlButton->onClick.connect(sigc::mem_fun(this, &WorldView::OnChangeFlightState));
-	m_flightControlButton->SetRenderDimensions(30.0f, 22.0f);
-	m_rightButtonBar->Add(m_flightControlButton, 2, 2);
-
-	m_flightStatus = (new Gui::Label(""))->Color(255, 178, 0);
-	m_rightRegion2->Add(m_flightStatus, 2, 0);
-
 #if WITH_DEVKEYS
 	Gui::Screen::PushFont("ConsoleFont");
 	m_debugInfo = (new Gui::Label(""))->Color(204, 204, 204);
@@ -202,8 +164,6 @@ void WorldView::InitObject()
 
 	m_onPlayerChangeTargetCon =
 		Pi::onPlayerChangeTarget.connect(sigc::mem_fun(this, &WorldView::OnPlayerChangeTarget));
-	m_onChangeFlightControlStateCon =
-		Pi::onPlayerChangeFlightControlState.connect(sigc::mem_fun(this, &WorldView::OnPlayerChangeFlightControlState));
 	m_onMouseWheelCon =
 		Pi::onMouseWheel.connect(sigc::mem_fun(this, &WorldView::MouseWheel));
 
@@ -288,67 +248,6 @@ void WorldView::UpdateCameraName()
 	m_showCameraNameTimeout = SDL_GetTicks();
 }
 
-void WorldView::OnChangeWheelsState(Gui::MultiStateImageButton *b)
-{
-	Pi::BoinkNoise();
-	if (!Pi::player->SetWheelState(b->GetState()!=0)) {
-		b->StatePrev();
-	}
-}
-
-/* This is UI click to change flight control state (manual, speed ctrl) */
-void WorldView::OnChangeFlightState(Gui::MultiStateImageButton *b)
-{
-	Pi::BoinkNoise();
-	int newState = b->GetState();
-	if (Pi::KeyState(SDLK_LCTRL) || Pi::KeyState(SDLK_RCTRL)) {
-		// skip certain states
-		switch (newState) {
-			case CONTROL_FIXSPEED: newState = CONTROL_FIXHEADING_FORWARD; break;
-			case CONTROL_AUTOPILOT: newState = CONTROL_MANUAL; break;
-			default: break;
-		}
-	} else {
-		// skip certain states
-		switch (newState) {
-			case CONTROL_FIXHEADING_FORWARD: // fallthrough
-			case CONTROL_FIXHEADING_BACKWARD: newState = CONTROL_MANUAL; break;
-			case CONTROL_AUTOPILOT: newState = CONTROL_MANUAL; break;
-			default: break;
-		}
-	}
-	b->SetActiveState(newState);
-	Pi::player->GetPlayerController()->SetFlightControlState(static_cast<FlightControlState>(newState));
-}
-
-/* This is when the flight control state actually changes... */
-void WorldView::OnPlayerChangeFlightControlState()
-{
-	m_flightControlButton->SetActiveState(Pi::player->GetPlayerController()->GetFlightControlState());
-}
-
-void WorldView::OnClickBlastoff()
-{
-	Pi::BoinkNoise();
-	if (Pi::player->GetFlightState() == Ship::DOCKED) {
-		Pi::player->Undock();
-	} else {
-		Pi::player->Blastoff();
-	}
-}
-
-void WorldView::OnClickHyperspace()
-{
-	if (Pi::player->IsHyperspaceActive()) {
-		// Hyperspace countdown in effect.. abort!
-		Pi::player->ResetHyperspaceCountdown();
-	} else {
-		// Initiate hyperspace drive
-		SystemPath path = Pi::sectorView->GetHyperspaceTarget();
-		Pi::player->StartHyperspaceCountdown(path);
-	}
-}
-
 void WorldView::Draw3D()
 {
 	PROFILE_SCOPED()
@@ -414,103 +313,18 @@ static Color get_color_for_warning_meter_bar(float v) {
 	return c;
 }
 
-void WorldView::RefreshHyperspaceButton() {
-	if (Pi::player->CanHyperspaceTo(Pi::sectorView->GetHyperspaceTarget()))
-		m_hyperspaceButton->Show();
-	else
-		m_hyperspaceButton->Hide();
-}
-
 void WorldView::RefreshButtonStateAndVisibility()
 {
 	assert(Pi::game);
 	assert(Pi::player);
 	assert(!Pi::player->IsDead());
 
-	Pi::cpan->ClearOverlay();
-
 	if (Pi::game->IsPaused())
 		m_pauseText->Show();
 	else
 		m_pauseText->Hide();
 
-	if (Pi::player->GetFlightState() != Ship::HYPERSPACE) {
-		Pi::cpan->SetOverlayToolTip(ShipCpanel::OVERLAY_TOP_LEFT,     Lang::SHIP_VELOCITY_BY_REFERENCE_OBJECT);
-		Pi::cpan->SetOverlayToolTip(ShipCpanel::OVERLAY_TOP_RIGHT,    Lang::DISTANCE_FROM_SHIP_TO_NAV_TARGET);
-		Pi::cpan->SetOverlayToolTip(ShipCpanel::OVERLAY_BOTTOM_LEFT,  Lang::EXTERNAL_ATMOSPHERIC_PRESSURE);
-		Pi::cpan->SetOverlayToolTip(ShipCpanel::OVERLAY_BOTTOM_RIGHT, Lang::SHIP_ALTITUDE_ABOVE_TERRAIN);
-	}
-
-	m_wheelsButton->SetActiveState(int(Pi::player->GetWheelState()) || Pi::player->GetWheelTransition() == 1);
-
-	RefreshHyperspaceButton();
-
-	switch(Pi::player->GetFlightState()) {
-		case Ship::LANDED:
-			m_flightStatus->SetText(Lang::LANDED);
-			m_launchButton->Show();
-			m_flightControlButton->Hide();
-			break;
-
-		case Ship::DOCKING:
-			m_flightStatus->SetText(Lang::DOCKING);
-			m_launchButton->Hide();
-			m_flightControlButton->Hide();
-			break;
-
-		case Ship::DOCKED:
-			m_flightStatus->SetText(Lang::DOCKED);
-			m_launchButton->Show();
-			m_flightControlButton->Hide();
-			break;
-
-		case Ship::JUMPING:
-		case Ship::HYPERSPACE:
-			m_flightStatus->SetText(Lang::HYPERSPACE);
-			m_launchButton->Hide();
-			m_flightControlButton->Hide();
-			break;
-
-		case Ship::FLYING:
-		default:
-			const FlightControlState fstate = Pi::player->GetPlayerController()->GetFlightControlState();
-			switch (fstate) {
-				case CONTROL_MANUAL:
-					m_flightStatus->SetText(Lang::MANUAL_CONTROL); break;
-
-				case CONTROL_FIXSPEED: {
-					std::string msg;
-					const double setspeed = Pi::player->GetPlayerController()->GetSetSpeed();
-					if (setspeed > 1000) {
-						msg = stringf(Lang::SET_SPEED_KM_S, formatarg("speed", setspeed*0.001));
-					} else {
-						msg = stringf(Lang::SET_SPEED_M_S, formatarg("speed", setspeed));
-					}
-					m_flightStatus->SetText(msg);
-					break;
-				}
-
-				case CONTROL_FIXHEADING_FORWARD:
-					m_flightStatus->SetText(Lang::HEADING_LOCK_FORWARD);
-					break;
-				case CONTROL_FIXHEADING_BACKWARD:
-					m_flightStatus->SetText(Lang::HEADING_LOCK_BACKWARD);
-					break;
-
-				case CONTROL_AUTOPILOT:
-					m_flightStatus->SetText(Lang::AUTOPILOT);
-					break;
-
-				default: assert(0); break;
-			}
-
-			m_launchButton->Hide();
-			m_flightControlButton->Show();
-	}
-
 	// Direction indicator
-	vector3d vel = Pi::player->GetVelocity();
-
 	if (m_showTargetActionsTimeout) {
 		if (SDL_GetTicks() - m_showTargetActionsTimeout > 20000) {
 			m_showTargetActionsTimeout = 0;
@@ -560,109 +374,12 @@ void WorldView::RefreshButtonStateAndVisibility()
 		m_debugInfo->Hide();
 	}
 #endif
-	if (Pi::player->GetFlightState() == Ship::HYPERSPACE) {
-		const SystemPath dest = Pi::player->GetHyperspaceDest();
-		RefCountedPtr<StarSystem> s = StarSystem::cache->GetCached(dest);
 
-		Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_TOP_LEFT, stringf(Lang::IN_TRANSIT_TO_N_X_X_X,
-			formatarg("system", dest.IsBodyPath() ? s->GetBodyByPath(dest)->GetName() : s->GetName()),
-			formatarg("x", dest.sectorX),
-			formatarg("y", dest.sectorY),
-			formatarg("z", dest.sectorZ)));
-
-		Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_TOP_RIGHT, stringf(Lang::PROBABILITY_OF_ARRIVAL_X_PERCENT,
-			formatarg("probability", Pi::game->GetHyperspaceArrivalProbability()*100.0, "f3.1")));
-	}
-
-	else {
-		{
-			std::string str;
-			double _vel = 0;
-			const char *rel_to = 0;
-			const Body *set_speed_target = Pi::player->GetSetSpeedTarget();
-			if (set_speed_target) {
-				rel_to = set_speed_target->GetLabel().c_str();
-				_vel = Pi::player->GetVelocityRelTo(set_speed_target).Length();
-			} else {
-				rel_to = Pi::player->GetFrame()->GetLabel().c_str();
-				_vel = vel.Length();
-			}
-			if (_vel > 1000) {
-				str = stringf(Lang::KM_S_RELATIVE_TO, formatarg("speed", _vel*0.001), formatarg("frame", rel_to));
-			} else {
-				str = stringf(Lang::M_S_RELATIVE_TO, formatarg("speed", _vel), formatarg("frame", rel_to));
-			}
-			Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_TOP_LEFT, str);
-		}
-
-		if (Body *navtarget = Pi::player->GetNavTarget()) {
-			double dist = Pi::player->GetPositionRelTo(navtarget).Length();
-			Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_TOP_RIGHT, stringf(Lang::N_DISTANCE_TO_TARGET,
-				formatarg("distance", format_distance(dist))));
-		}
-		else
-			Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_TOP_RIGHT, "");
-
-		// altitude
-		const Frame* frame = Pi::player->GetFrame();
-		if (frame->GetBody() && frame->GetBody()->IsType(Object::SPACESTATION))
-			frame = frame->GetParent();
-		if (frame && frame->GetBody() && frame->GetBody()->IsType(Object::TERRAINBODY) &&
-				(frame->HasRotFrame() || frame->IsRotFrame())) {
-			Body *astro = frame->GetBody();
-			//(GetFrame()->m_sbody->GetSuperType() == SUPERTYPE_ROCKY_PLANET)) {
-			assert(astro->IsType(Object::TERRAINBODY));
-			TerrainBody* terrain = static_cast<TerrainBody*>(astro);
-			if (!frame->IsRotFrame())
-				frame = frame->GetRotFrame();
-			vector3d pos = (frame == Pi::player->GetFrame() ? Pi::player->GetPosition() : Pi::player->GetPositionRelTo(frame));
-			double center_dist = pos.Length();
-			// Avoid calculating terrain if we are too far anyway.
-			// This should rather be 1.5 * max_radius, but due to quirkses in terrain generation we must be generous.
-			if (center_dist <= 3.0 * terrain->GetMaxFeatureRadius()) {
-				vector3d surface_pos = pos.Normalized();
-				double radius = terrain->GetTerrainHeight(surface_pos);
-				double altitude = center_dist - radius;
-				if (altitude < 10000000.0 && altitude < 0.5 * radius) {
-					vector3d velocity = (frame == Pi::player->GetFrame() ? vel : Pi::player->GetVelocityRelTo(frame));
-					double vspeed = velocity.Dot(surface_pos);
-					if (fabs(vspeed) < 0.05) vspeed = 0.0; // Avoid alternating between positive/negative zero
-					if (altitude < 0) altitude = 0;
-					if (altitude >= 100000.0)
-						Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_BOTTOM_RIGHT, stringf(Lang::ALT_IN_KM, formatarg("altitude", altitude / 1000.0),
-							formatarg("vspeed", vspeed / 1000.0)));
-					else
-						Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_BOTTOM_RIGHT, stringf(Lang::ALT_IN_METRES, formatarg("altitude", altitude),
-							formatarg("vspeed", vspeed)));
-				} else {
-					Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_BOTTOM_RIGHT, "");
-				}
-			} else {
-				Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_BOTTOM_RIGHT, "");
-			}
-
-			if (astro->IsType(Object::PLANET)) {
-				double pressure, density;
-				static_cast<Planet*>(astro)->GetAtmosphericState(center_dist, &pressure, &density);
-
-				if (pressure > 0.001)
-					Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_BOTTOM_LEFT, stringf(Lang::PRESSURE_N_ATMOSPHERES, formatarg("pressure", pressure)));
-				else
-					Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_BOTTOM_LEFT, "");
-				if (Pi::player->GetHullTemperature() > 0.01) {
-					m_hudHullTemp->SetValue(float(Pi::player->GetHullTemperature()));
-					m_hudHullTemp->Show();
-				} else {
-					m_hudHullTemp->Hide();
-				}
-			} else {
-				Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_BOTTOM_LEFT, ""); // No atmosphere, no pressure
-			}
-		} else {
-			Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_BOTTOM_LEFT, "");
-			Pi::cpan->SetOverlayText(ShipCpanel::OVERLAY_BOTTOM_RIGHT, "");
-			m_hudHullTemp->Hide();
-		}
+	if (Pi::player->GetHullTemperature() > 0.01) {
+		m_hudHullTemp->SetValue(float(Pi::player->GetHullTemperature()));
+		m_hudHullTemp->Show();
+	} else {
+		m_hudHullTemp->Hide();
 	}
 
 	float hull = Pi::player->GetPercentHull();

@@ -22,7 +22,6 @@ class ModelCache;
 class Player;
 class SectorView;
 class Ship;
-class ShipCpanel;
 class SpaceStation;
 class StarSystem;
 class SystemInfoView;
@@ -136,7 +135,6 @@ public:
 	static SystemView *systemView;
 	static WorldView *worldView;
 	static DeathView *deathView;
-	static ShipCpanel *cpan;
 	static Sound::MusicPlayer &GetMusicPlayer() { return musicPlayer; }
 	static Graphics::Renderer *renderer; // blargh
 	static ModelCache *modelCache;
