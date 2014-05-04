@@ -9,7 +9,6 @@
 #include "Pi.h"
 #include "SectorView.h"
 #include "Serializer.h"
-#include "ShipCpanel.h"
 #include "Sound.h"
 #include "SpaceStation.h"
 #include "WorldView.h"
@@ -104,14 +103,14 @@ void Player::OnEnterHyperspace()
 	SetNavTarget(0);
 
 	Pi::worldView->HideTargetActions(); // hide the comms menu
-	m_controller->SetFlightControlState(CONTROL_MANUAL); //could set CONTROL_HYPERDRIVE
+	m_controller->SetFlightControlState(FlightControlState::CONTROL_MANUAL); //could set CONTROL_HYPERDRIVE
 	ClearThrusterState();
 	Pi::game->WantHyperspace();
 }
 
 void Player::OnEnterSystem()
 {
-	m_controller->SetFlightControlState(CONTROL_MANUAL);
+	m_controller->SetFlightControlState(FlightControlState::CONTROL_MANUAL);
 	//XXX don't call sectorview from here, use signals instead
 	Pi::sectorView->ResetHyperspaceTarget();
 }

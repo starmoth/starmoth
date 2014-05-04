@@ -8,7 +8,6 @@
 #include "SpaceStation.h"
 #include "HyperspaceCloud.h"
 #include "Pi.h"
-#include "ShipCpanel.h"
 #include "Sfx.h"
 #include "MathUtil.h"
 #include "SectorView.h"
@@ -195,10 +194,6 @@ void Game::Serialize(Serializer::Writer &wr)
 	wr.WrSection("HyperspaceClouds", section.GetData());
 
 	// views. must be saved in init order
-	section = Serializer::Writer();
-	Pi::cpan->Save(section);
-	wr.WrSection("ShipCpanel", section.GetData());
-
 	section = Serializer::Writer();
 	Pi::sectorView->Save(section);
 	wr.WrSection("SectorView", section.GetData());
@@ -580,7 +575,6 @@ void Game::CreateViews()
 	Pi::game = this;
 	Pi::player = m_player.get();
 
-	Pi::cpan = new ShipCpanel(Pi::renderer);
 	Pi::sectorView = new SectorView();
 	Pi::worldView = new WorldView();
 	Pi::galacticView = new GalacticView();
@@ -612,10 +606,7 @@ void Game::LoadViews(Serializer::Reader &rd)
 	Pi::game = this;
 	Pi::player = m_player.get();
 
-	Serializer::Reader section = rd.RdSection("ShipCpanel");
-	Pi::cpan = new ShipCpanel(section, Pi::renderer);
-
-	section = rd.RdSection("SectorView");
+	Serializer::Reader section = rd.RdSection("SectorView");
 	Pi::sectorView = new SectorView(section);
 
 	section = rd.RdSection("WorldView");
@@ -655,7 +646,6 @@ void Game::DestroyViews()
 	delete Pi::galacticView;
 	delete Pi::worldView;
 	delete Pi::sectorView;
-	delete Pi::cpan;
 
 	Pi::objectViewerView = 0;
 	Pi::settingsView = 0;
@@ -665,7 +655,6 @@ void Game::DestroyViews()
 	Pi::galacticView = 0;
 	Pi::worldView = 0;
 	Pi::sectorView = 0;
-	Pi::cpan = 0;
 }
 
 Game *Game::LoadGame(const std::string &filename)

@@ -13,7 +13,7 @@
 class Ship;
 class Space;
 
-enum FlightControlState {
+enum class FlightControlState {
 	CONTROL_MANUAL,
 	CONTROL_FIXSPEED,
 	CONTROL_FIXHEADING_FORWARD,

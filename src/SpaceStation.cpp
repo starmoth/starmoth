@@ -15,7 +15,6 @@
 #include "Ship.h"
 #include "Space.h"
 #include "StringF.h"
-#include "ShipCpanel.h"
 #include "galaxy/StarSystem.h"
 #include "graphics/Graphics.h"
 #include "scenegraph/ModelSkin.h"

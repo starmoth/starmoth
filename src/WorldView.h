@@ -33,18 +33,17 @@ public:
 	virtual void Draw();
 	static const double PICK_OBJECT_RECT_SIZE;
 	virtual void Save(Serializer::Writer &wr);
-	enum CamType {
+	enum class CamType {
 		CAM_INTERNAL,
 		CAM_EXTERNAL,
 		CAM_SIDEREAL
 	};
-	void SetCamType(enum CamType);
-	enum CamType GetCamType() const { return m_camType; }
+	void SetCamType(CamType);
+	CamType GetCamType() const { return m_camType; }
 	CameraController *GetCameraController() const { return m_activeCameraController; }
 	void ToggleTargetActions();
 	void ShowTargetActions();
 	void HideTargetActions();
-	void OnClickBlastoff();
 
 	sigc::signal<void> onChangeCamType;
 
@@ -96,13 +95,9 @@ private:
 	void OnClickCommsNavOption(Body *target);
 	void BuildCommsNavOptions();
 
-	void OnClickHyperspace();
-	void OnChangeWheelsState(Gui::MultiStateImageButton *b);
-	void OnChangeFlightState(Gui::MultiStateImageButton *b);
 	void OnHyperspaceTargetChanged();
 	void OnPlayerDockOrUndock();
 	void OnPlayerChangeTarget();
-	void OnPlayerChangeFlightControlState();
 	void SelectBody(Body *, bool reselectIsDeselect);
 	Body* PickBody(const double screenX, const double screenY) const;
 	void MouseWheel(bool up);
@@ -110,19 +105,14 @@ private:
 	NavTunnelWidget *m_navTunnel;
 	std::unique_ptr<SpeedLines> m_speedLines;
 
-	Gui::ImageButton *m_hyperspaceButton;
-
 	Gui::Label *m_pauseText;
 	Gui::Label *m_showCameraName;
 	Gui::Fixed *m_commsOptions;
 	Gui::VBox *m_commsNavOptions;
 	Gui::HBox *m_commsNavOptionsContainer;
-	Gui::Label *m_flightStatus, *m_debugText;
-	Gui::ImageButton *m_launchButton;
-	Gui::MultiStateImageButton *m_wheelsButton;
-	Gui::MultiStateImageButton *m_flightControlButton;
+	Gui::Label *m_debugText;
 	bool m_labelsOn;
-	enum CamType m_camType;
+	CamType m_camType;
 	Uint32 m_showTargetActionsTimeout;
 	Uint32 m_showCameraNameTimeout;
 

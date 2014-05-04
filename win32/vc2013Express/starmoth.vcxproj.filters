@@ -84,9 +84,6 @@
     <ClCompile Include="..\..\src\ShipAICmd.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\ShipCpanel.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\ShipType.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -378,9 +375,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ShipAICmd.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\ShipCpanel.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ShipType.h">

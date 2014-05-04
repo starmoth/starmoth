@@ -5,7 +5,6 @@
 #include "galaxy/Sector.h"
 #include "SectorView.h"
 #include "SystemInfoView.h"
-#include "ShipCpanel.h"
 #include "Player.h"
 #include "Space.h"
 #include "galaxy/SystemPath.h"

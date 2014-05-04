@@ -26,7 +26,6 @@
 #include "SectorView.h"
 #include "Serializer.h"
 #include "Sfx.h"
-#include "ShipCpanel.h"
 #include "ShipType.h"
 #include "Sound.h"
 #include "SoundMusic.h"
@@ -76,7 +75,6 @@ GalacticView *Pi::galacticView;
 UIView *Pi::settingsView;
 SystemView *Pi::systemView;
 SystemInfoView *Pi::systemInfoView;
-ShipCpanel *Pi::cpan;
 Game *Pi::game;
 Random Pi::rng;
 float Pi::frameTime;
@@ -577,7 +575,7 @@ void Pi::OnChangeDetailLevel()
 {
 	BaseSphere::OnChangeDetailLevel();
 }
-
+#pragma optimize("",off)
 void Pi::HandleEvents()
 {
 	PROFILE_SCOPED()
@@ -618,6 +616,7 @@ void Pi::HandleEvents()
 					}
 					break;
 				}
+
 				// special keys. LCTRL+turd
 				if ((KeyState(SDLK_LCTRL) || (KeyState(SDLK_RCTRL)))) {
 					switch (event.key.keysym.sym) {
@@ -626,6 +625,20 @@ void Pi::HandleEvents()
 								Pi::EndGame();
 							Pi::Quit();
 							break;
+
+						// XXX - this hack to be replaced by proper keyboard input handling!
+						case SDLK_0:	// TIMEACCEL_PAUSED,
+						case SDLK_1:	// TIMEACCEL_1X,
+						case SDLK_2:	// TIMEACCEL_10X,
+						case SDLK_3:	// TIMEACCEL_100X,
+						case SDLK_4:	// TIMEACCEL_1000X,
+						case SDLK_5:	// TIMEACCEL_10000X,
+							if (Pi::game) {
+								const Game::TimeAccel ta = static_cast<Game::TimeAccel>(event.key.keysym.sym - SDLK_0);
+								Pi::game->RequestTimeAccel( ta );
+							}
+							break;
+
 						case SDLK_PRINTSCREEN: // print
 						case SDLK_KP_MULTIPLY: // screen
 						{
@@ -678,6 +691,42 @@ void Pi::HandleEvents()
 						}
 						default:
 							break; // This does nothing but it stops the compiler warnings
+					}
+				} else {
+					// XXX - this hack to be replaced by proper keyboard input handling!
+					switch (event.key.keysym.sym) {
+						case SDLK_F4: {
+							if (Pi::GetView() == Pi::worldView) {
+								Pi::worldView->ShowTargetActions();
+							}
+							break;
+						}
+
+						case SDLK_F5: {
+							if (Pi::game && Pi::game->GetPlayer() ) {
+								PlayerShipController *psc = Pi::game->GetPlayer()->GetPlayerController();
+								if (psc) {
+									FlightControlState fcs = psc->GetFlightControlState();
+									switch(fcs) {
+									case FlightControlState::CONTROL_MANUAL:
+										psc->SetFlightControlState(FlightControlState::CONTROL_FIXSPEED);
+										break;
+									case FlightControlState::CONTROL_FIXSPEED:
+										if (psc->GetNavTarget())
+											psc->SetFlightControlState(FlightControlState::CONTROL_AUTOPILOT);
+										else
+											psc->SetFlightControlState(FlightControlState::CONTROL_MANUAL);
+										break;
+									case FlightControlState::CONTROL_AUTOPILOT:
+										psc->SetFlightControlState(FlightControlState::CONTROL_MANUAL);
+										break;
+									default:
+										break;
+									};
+								}
+							}
+							break;
+						}
 					}
 				}
 				Pi::keyState[event.key.keysym.sym] = true;
@@ -790,7 +839,6 @@ void Pi::StartGame()
 {
 	Pi::player->onDock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
 	Pi::player->onUndock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
-	cpan->ShowAll();
 	DrawGUI = true;
 	SetView(worldView);
 }
@@ -1039,7 +1087,6 @@ void Pi::MainLoop()
 			// this is something we need not do every turn...
 			if (!config->Int("DisableSound")) AmbientSounds::Update();
 		}
-		cpan->Update();
 		musicPlayer.Update();
 
 		syncJobQueue->RunJobs(SYNC_JOBS_PER_LOOP);
