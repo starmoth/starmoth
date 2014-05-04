@@ -695,6 +695,17 @@ void Pi::HandleEvents()
 				} else {
 					// XXX - this hack to be replaced by proper keyboard input handling!
 					switch (event.key.keysym.sym) {
+						case SDLK_F1: {
+							if (Pi::GetView() == Pi::worldView) {
+								switch(Pi::worldView->GetCamType()) {
+								case WorldView::CamType::CAM_INTERNAL:	Pi::worldView->SetCamType(WorldView::CamType::CAM_EXTERNAL);	break;
+								case WorldView::CamType::CAM_EXTERNAL:	Pi::worldView->SetCamType(WorldView::CamType::CAM_SIDEREAL);	break;
+								case WorldView::CamType::CAM_SIDEREAL:	Pi::worldView->SetCamType(WorldView::CamType::CAM_INTERNAL);	break;
+								};
+							}
+							break;
+						}
+
 						case SDLK_F4: {
 							if (Pi::GetView() == Pi::worldView) {
 								Pi::worldView->ShowTargetActions();
