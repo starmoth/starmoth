@@ -114,9 +114,10 @@ namespace {
 } // anonymous namespace
 
 namespace SceneGraph {
-Loader::Loader(Graphics::Renderer *r, bool logWarnings)
+Loader::Loader(Graphics::Renderer *r, bool logWarnings, bool loadSGMfiles)
 : BaseLoader(r)
 , m_doLog(logWarnings)
+, m_loadSGMs(loadSGMfiles)
 , m_mostDetailedLod(false)
 {
 }
@@ -143,18 +144,20 @@ Model *Loader::LoadModel(const std::string &shortname, const std::string &basepa
 		if (info.IsFile()) {
 			if (ends_with_ci(fpath, ".model")) {	// store the path for ".model" files
 				list_model.push_back(fpath);
-			} else if (ends_with_ci(fpath, ".sgm")) {// store only the shortname for ".sgm" files.
+			} else if (m_loadSGMs & ends_with_ci(fpath, ".sgm")) {// store only the shortname for ".sgm" files.
 				list_sgm.push_back(info.GetName().substr(0, info.GetName().size()-4));
 			}
 		}
 	}
 
-	for (auto &sgmname : list_sgm) {
-		if (sgmname == shortname) {
-			//binary loader expects extension-less name. Might want to change this.
-			SceneGraph::BinaryConverter bc(m_renderer);
-			m_model = bc.Load(shortname);
-			return m_model;
+	if (m_loadSGMs) {
+		for (auto &sgmname : list_sgm) {
+			if (sgmname == shortname) {
+				//binary loader expects extension-less name. Might want to change this.
+				SceneGraph::BinaryConverter bc(m_renderer);
+				m_model = bc.Load(shortname);
+				return m_model;
+			}
 		}
 	}
 

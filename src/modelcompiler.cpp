@@ -25,12 +25,14 @@
 #include "ModManager.h"
 #include <sstream>
 
-void RunCompiler(const std::string &modelName)
+std::unique_ptr<GameConfig> s_config;
+std::unique_ptr<Graphics::Renderer> s_renderer;
+
+void SetupRenderer()
 {
-	std::unique_ptr<GameConfig> config(new GameConfig);
+	s_config.reset(new GameConfig);
 
 	//init components
-	FileSystem::Init();
 	FileSystem::userFiles.MakeDirectory(""); // ensure the config directory exists
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 		Error("SDL initialization failed: %s\n", SDL_GetError());
@@ -39,22 +41,25 @@ void RunCompiler(const std::string &modelName)
 
 	//video
 	Graphics::Settings videoSettings = {};
-	videoSettings.width = config->Int("ScrWidth");
-	videoSettings.height = config->Int("ScrHeight");
-	videoSettings.fullscreen = (config->Int("StartFullscreen") != 0);
+	videoSettings.width = s_config->Int("ScrWidth");
+	videoSettings.height = s_config->Int("ScrHeight");
+	videoSettings.fullscreen = (s_config->Int("StartFullscreen") != 0);
 	videoSettings.hidden = false;
-	videoSettings.requestedSamples = config->Int("AntiAliasingMode");
-	videoSettings.vsync = (config->Int("VSync") != 0);
-	videoSettings.useTextureCompression = (config->Int("UseTextureCompression") != 0);
+	videoSettings.requestedSamples = s_config->Int("AntiAliasingMode");
+	videoSettings.vsync = (s_config->Int("VSync") != 0);
+	videoSettings.useTextureCompression = (s_config->Int("UseTextureCompression") != 0);
 	videoSettings.iconFile = OS::GetIconFilename();
 	videoSettings.title = "Model viewer";
-	Graphics::Renderer *renderer = Graphics::Init(videoSettings);
+	s_renderer.reset(Graphics::Init(videoSettings));
+}
 
+void RunCompiler(const std::string &modelName)
+{
 	//load the current model in a pristine state (no navlights, shields...)
 	//and then save it into binary
 	std::unique_ptr<SceneGraph::Model> model;
 	try {
-		SceneGraph::Loader ld(renderer);
+		SceneGraph::Loader ld(s_renderer.get(), false, false);
 		model.reset(ld.LoadModel(modelName));
 	} catch (...) {
 		//minimal error handling, this is not expected to happen since we got this far.
@@ -62,7 +67,7 @@ void RunCompiler(const std::string &modelName)
 	}
 
 	try {
-		SceneGraph::BinaryConverter bc(renderer);
+		SceneGraph::BinaryConverter bc(s_renderer.get());
 		bc.Save(modelName, model.get());
 	} catch (const CouldNotOpenFileException&) {
 	} catch (const CouldNotWriteToFileException&) {
@@ -72,6 +77,7 @@ void RunCompiler(const std::string &modelName)
 
 enum RunMode {
 	MODE_MODELCOMPILER=0,
+	MODE_MODELBATCHEXPORT,
 	MODE_VERSION,
 	MODE_USAGE,
 	MODE_USAGE_ERROR
@@ -99,6 +105,11 @@ int main(int argc, char** argv)
 			goto start;
 		}
 
+		if (modeopt == "batch" || modeopt == "b") {
+			mode = MODE_MODELBATCHEXPORT;
+			goto start;
+		}
+
 		if (modeopt == "version" || modeopt == "v") {
 			mode = MODE_VERSION;
 			goto start;
@@ -113,15 +124,42 @@ int main(int argc, char** argv)
 	}
 
 start:
+	
+	// Init here since we'll need it for both batch and RunCompiler modes.
+	FileSystem::Init();
 
+	// what mode are we in?
 	switch (mode) {
 		case MODE_MODELCOMPILER: {
 			std::string modelName;
 			if (argc > 2) {
 				modelName = argv[2];
+				SetupRenderer();
 				RunCompiler(modelName);
 			}
 			break;
+		}
+
+		case MODE_MODELBATCHEXPORT: {
+			std::vector<std::string> list_model;
+			FileSystem::FileSource &fileSource = FileSystem::gameDataFiles;
+			for (FileSystem::FileEnumerator files(fileSource, "models", FileSystem::FileEnumerator::Recurse); !files.Finished(); files.Next())
+			{
+				const FileSystem::FileInfo &info = files.Current();
+				const std::string &fpath = info.GetPath();
+
+				//check it's the expected type
+				if (info.IsFile()) {
+					if (ends_with_ci(fpath, ".model")) {	// store the path for ".model" files
+						list_model.push_back(info.GetName().substr(0, info.GetName().size()-6));
+					}
+				}
+			}
+
+			SetupRenderer();
+			for (auto &modelName : list_model) {
+				RunCompiler(modelName);
+			}
 		}
 
 		case MODE_VERSION: {
