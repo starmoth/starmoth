@@ -28,6 +28,8 @@
 std::unique_ptr<GameConfig> s_config;
 std::unique_ptr<Graphics::Renderer> s_renderer;
 
+static const std::string s_dummyPath("");
+
 void SetupRenderer()
 {
 	s_config.reset(new GameConfig);
@@ -43,17 +45,17 @@ void SetupRenderer()
 	Graphics::Settings videoSettings = {};
 	videoSettings.width = s_config->Int("ScrWidth");
 	videoSettings.height = s_config->Int("ScrHeight");
-	videoSettings.fullscreen = (s_config->Int("StartFullscreen") != 0);
-	videoSettings.hidden = false;
+	videoSettings.fullscreen = false;
+	videoSettings.hidden = true;
 	videoSettings.requestedSamples = s_config->Int("AntiAliasingMode");
-	videoSettings.vsync = (s_config->Int("VSync") != 0);
-	videoSettings.useTextureCompression = (s_config->Int("UseTextureCompression") != 0);
+	videoSettings.vsync = false;
+	videoSettings.useTextureCompression = true;
 	videoSettings.iconFile = OS::GetIconFilename();
-	videoSettings.title = "Model viewer";
+	videoSettings.title = "Model Compiler";
 	s_renderer.reset(Graphics::Init(videoSettings));
 }
 
-void RunCompiler(const std::string &modelName)
+void RunCompiler(const std::string &modelName, const std::string &filepath)
 {
 	//load the current model in a pristine state (no navlights, shields...)
 	//and then save it into binary
@@ -67,8 +69,14 @@ void RunCompiler(const std::string &modelName)
 	}
 
 	try {
-		SceneGraph::BinaryConverter bc(s_renderer.get());
-		bc.Save(modelName, model.get());
+		if (filepath.empty()) {
+			SceneGraph::BinaryConverter bc(s_renderer.get());
+			bc.Save(modelName, model.get());
+		} else {
+			const std::string DataPath = FileSystem::NormalisePath(filepath.substr(0, filepath.size()-6));
+			SceneGraph::BinaryConverter bc(s_renderer.get());
+			bc.Save(modelName, DataPath, model.get());
+		}
 	} catch (const CouldNotOpenFileException&) {
 	} catch (const CouldNotWriteToFileException&) {
 	}
@@ -135,13 +143,13 @@ start:
 			if (argc > 2) {
 				modelName = argv[2];
 				SetupRenderer();
-				RunCompiler(modelName);
+				RunCompiler(modelName, s_dummyPath);
 			}
 			break;
 		}
 
 		case MODE_MODELBATCHEXPORT: {
-			std::vector<std::string> list_model;
+			std::vector<std::pair<std::string, std::string>> list_model;
 			FileSystem::FileSource &fileSource = FileSystem::gameDataFiles;
 			for (FileSystem::FileEnumerator files(fileSource, "models", FileSystem::FileEnumerator::Recurse); !files.Finished(); files.Next())
 			{
@@ -151,14 +159,14 @@ start:
 				//check it's the expected type
 				if (info.IsFile()) {
 					if (ends_with_ci(fpath, ".model")) {	// store the path for ".model" files
-						list_model.push_back(info.GetName().substr(0, info.GetName().size()-6));
+						list_model.push_back( std::make_pair(info.GetName().substr(0, info.GetName().size()-6), fpath) );
 					}
 				}
 			}
 
 			SetupRenderer();
 			for (auto &modelName : list_model) {
-				RunCompiler(modelName);
+				RunCompiler(modelName.first, modelName.second);
 			}
 		}
 
