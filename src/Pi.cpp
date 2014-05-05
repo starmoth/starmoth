@@ -575,7 +575,7 @@ void Pi::OnChangeDetailLevel()
 {
 	BaseSphere::OnChangeDetailLevel();
 }
-#pragma optimize("",off)
+
 void Pi::HandleEvents()
 {
 	PROFILE_SCOPED()
