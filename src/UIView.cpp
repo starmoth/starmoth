@@ -4,13 +4,11 @@
 #include "UIView.h"
 #include "Pi.h"
 #include "ui/Context.h"
-#include "gameui/Panel.h"
 
 void UIView::OnSwitchTo()
 {
 	UI::VBox *box = Pi::ui->VBox();
 	// XXX get something onscreen
-	box->PackEnd(new GameUI::Panel(Pi::ui.Get()));
 
 	Pi::ui->DropAllLayers();
 	Pi::ui->GetTopLayer()->SetInnerWidget(box);
