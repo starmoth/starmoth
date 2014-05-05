@@ -10,7 +10,6 @@
 #include "galaxy/GalaxyCache.h"
 #include "SectorView.h"
 #include "Serializer.h"
-#include "Sound.h"
 #include "Space.h"
 #include "SpaceStation.h"
 #include "galaxy/StarSystem.h"
@@ -189,8 +188,6 @@ void WorldView::Save(Serializer::Writer &wr)
 
 void WorldView::SetCamType(CamType c)
 {
-	Pi::BoinkNoise();
-
 	// don't allow external cameras when docked inside space stations.
 	// they would clip through the station model
 	if (Pi::player->GetFlightState() == Ship::DOCKED && !Pi::player->GetDockedWith()->IsGroundStation())
@@ -224,7 +221,6 @@ void WorldView::ChangeInternalCameraMode(InternalCameraController::Mode m)
 {
 	if (m_internalCameraController->GetMode() == m) return;
 
-	Pi::BoinkNoise();
 	m_internalCameraController->SetMode(m);
 	Pi::player->GetPlayerController()->SetMouseForRearView(m_camType == CamType::CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
 	UpdateCameraName();
@@ -616,7 +612,6 @@ void WorldView::OnPlayerChangeTarget()
 {
 	Body *b = Pi::player->GetNavTarget();
 	if (b) {
-		Sound::PlaySfx("OK");
 		Ship *s = b->IsType(Object::HYPERSPACECLOUD) ? static_cast<HyperspaceCloud*>(b)->GetShip() : 0;
 		if (!s || !Pi::sectorView->GetHyperspaceTarget().IsSameSystem(s->GetHyperspaceDest()))
 			Pi::sectorView->FloatHyperspaceTarget();

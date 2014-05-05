@@ -238,7 +238,6 @@ protected:
 	ShipController *m_controller;
 
 private:
-	void DoThrusterSounds() const;
 	void FireWeapon(int num);
 	void Init();
 	bool IsFiringLasers();

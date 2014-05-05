@@ -3,7 +3,6 @@
 
 #include "Pi.h"
 #include "libs.h"
-#include "AmbientSounds.h"
 #include "CityOnPlanet.h"
 #include "DeathView.h"
 #include "FaceGenManager.h"
@@ -27,8 +26,6 @@
 #include "Serializer.h"
 #include "Sfx.h"
 #include "ShipType.h"
-#include "Sound.h"
-#include "SoundMusic.h"
 #include "Space.h"
 #include "SpaceStation.h"
 #include "Star.h"
@@ -111,7 +108,6 @@ Graphics::RenderState *Pi::quadRenderState = nullptr;
 ObjectViewerView *Pi::objectViewerView;
 #endif
 
-Sound::MusicPlayer Pi::musicPlayer;
 std::unique_ptr<AsyncJobQueue> Pi::asyncJobQueue;
 std::unique_ptr<SyncJobQueue> Pi::syncJobQueue;
 
@@ -394,20 +390,9 @@ void Pi::Init(const std::map<std::string,std::string> &options, bool no_gui)
 	draw_progress(gauge, label, 0.8f);
 
 	NavLights::Init(Pi::renderer);
-	Sfx::Init(Pi::renderer);
 	draw_progress(gauge, label, 0.9f);
 
-	if (!no_gui && !config->Int("DisableSound")) {
-		Sound::Init();
-		Sound::SetMasterVolume(config->Float("MasterVolume"));
-		Sound::SetSfxVolume(config->Float("SfxVolume"));
-		GetMusicPlayer().SetVolume(config->Float("MusicVolume"));
-
-		Sound::Pause(0);
-		if (config->Int("MasterMuted")) Sound::Pause(1);
-		if (config->Int("SfxMuted")) Sound::SetSfxVolume(0.f);
-		if (config->Int("MusicMuted")) GetMusicPlayer().SetEnabled(false);
-	}
+	Sfx::Init(Pi::renderer);
 	draw_progress(gauge, label, 1.0f);
 
 	OS::NotifyLoadEnd();
@@ -529,7 +514,6 @@ void Pi::Quit()
 	NavLights::Uninit();
 	Shields::Uninit();
 	Sfx::Uninit();
-	Sound::Uninit();
 	CityOnPlanet::Uninit();
 	BaseSphere::Uninit();
 	Galaxy::Uninit();
@@ -557,11 +541,6 @@ void Pi::FlushCaches()
 	Sector::cache.ClearCache();
 	// XXX Ideally the cache would now be empty, but we still have Faction::m_homesector :(
 	// assert(Sector::cache.IsEmpty());
-}
-
-void Pi::BoinkNoise()
-{
-	Sound::PlaySfx("Click", 0.3f, 0.3f, false);
 }
 
 void Pi::SetView(View *v)
@@ -836,8 +815,6 @@ void Pi::InitGame()
 		std::fill(state.hats.begin(), state.hats.end(), 0);
 		std::fill(state.axes.begin(), state.axes.end(), 0.f);
 	}
-
-	if (!config->Int("DisableSound")) AmbientSounds::Init();
 }
 
 static void OnPlayerDockOrUndock()
@@ -920,12 +897,6 @@ void Pi::Start()
 void Pi::EndGame()
 {
 	Pi::SetMouseGrab(false);
-
-	Pi::musicPlayer.Stop();
-	Sound::DestroyAllEvents();
-
-	if (!config->Int("DisableSound")) AmbientSounds::Uninit();
-	Sound::DestroyAllEvents();
 
 	assert(game);
 	delete game;
@@ -1092,13 +1063,6 @@ void Pi::MainLoop()
 
 		if (Pi::game->UpdateTimeAccel())
 			accumulator = 0; // fix for huge pauses 10000x -> 1x
-
-		if (!Pi::player->IsDead()) {
-			// XXX should this really be limited to while the player is alive?
-			// this is something we need not do every turn...
-			if (!config->Int("DisableSound")) AmbientSounds::Update();
-		}
-		musicPlayer.Update();
 
 		syncJobQueue->RunJobs(SYNC_JOBS_PER_LOOP);
 		asyncJobQueue->FinishJobs();

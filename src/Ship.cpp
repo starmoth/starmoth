@@ -8,7 +8,6 @@
 #include "Player.h"
 #include "ShipAICmd.h"
 #include "ShipController.h"
-#include "Sound.h"
 #include "Sfx.h"
 #include "galaxy/Sector.h"
 #include "galaxy/GalaxyCache.h"
@@ -214,10 +213,8 @@ void Ship::SetPercentHull(float p)
 
 bool Ship::OnDamage(Object *attacker, float kgDamage, const CollisionContact& contactData)
 {
-	if (m_invulnerable) {
-		Sound::BodyMakeNoise(this, "Hull_hit_Small", 0.5f);
+	if (m_invulnerable)
 		return true;
-	}
 
 	if (!IsDead()) {
 		float dam = kgDamage*0.001f;
@@ -230,11 +227,6 @@ bool Ship::OnDamage(Object *attacker, float kgDamage, const CollisionContact& co
 		} else {
 			if (Pi::rng.Double() < kgDamage)
 				Sfx::Add(this, Sfx::TYPE_DAMAGE);
-
-			if (dam < 0.01 * float(GetShipType()->hullMass))
-				Sound::BodyMakeNoise(this, "Hull_hit_Small", 1.0f);
-			else
-				Sound::BodyMakeNoise(this, "Hull_Hit_Medium", 1.0f);
 		}
 	}
 
@@ -271,7 +263,6 @@ void Ship::Explode()
 	Pi::game->GetSpace()->KillBody(this);
 	if (this->GetFrame() == Pi::player->GetFrame()) {
 		Sfx::AddExplosion(this, Sfx::TYPE_EXPLOSION);
-		Sound::BodyMakeNoise(this, "Explosion_1", 1.0f);
 	}
 	ClearThrusterState();
 }
@@ -468,7 +459,6 @@ void Ship::TestLanded()
 				SetAngVelocity(vector3d(0, 0, 0));
 				ClearThrusterState();
 				SetFlightState(LANDED);
-				Sound::BodyMakeNoise(this, "Rough_Landing", 1.0f);
 			}
 		}
 	}
@@ -518,40 +508,6 @@ void Ship::TimeStepUpdate(const float timeStep)
 	if (m_sensors.get()) m_sensors->Update(timeStep);
 }
 
-void Ship::DoThrusterSounds() const
-{
-	// XXX any ship being the current camera body should emit sounds
-	// also, ship sounds could be split to internal and external sounds
-
-	// XXX sound logic could be part of a bigger class (ship internal sounds)
-	/* Ship engine noise. less loud inside */
-	float v_env = (Pi::worldView->GetCameraController()->IsExternal() ? 1.0f : 0.5f) * Sound::GetSfxVolume();
-	static Sound::Event sndev;
-	float volBoth = 0.0f;
-	volBoth += 0.5f*fabs(GetThrusterState().y);
-	volBoth += 0.5f*fabs(GetThrusterState().z);
-
-	float targetVol[2] = { volBoth, volBoth };
-	if (GetThrusterState().x > 0.0)
-		targetVol[0] += 0.5f*float(GetThrusterState().x);
-	else targetVol[1] += -0.5f*float(GetThrusterState().x);
-
-	targetVol[0] = v_env * Clamp(targetVol[0], 0.0f, 1.0f);
-	targetVol[1] = v_env * Clamp(targetVol[1], 0.0f, 1.0f);
-	float dv_dt[2] = { 4.0f, 4.0f };
-	if (!sndev.VolumeAnimate(targetVol, dv_dt)) {
-		sndev.Play("Thruster_large", 0.0f, 0.0f, Sound::OP_REPEAT);
-		sndev.VolumeAnimate(targetVol, dv_dt);
-	}
-	float angthrust = 0.1f * v_env * float(GetAngThrusterState().Length());
-
-	static Sound::Event angThrustSnd;
-	if (!angThrustSnd.VolumeAnimate(angthrust, angthrust, 5.0f, 5.0f)) {
-		angThrustSnd.Play("Thruster_Small", 0.0f, 0.0f, Sound::OP_REPEAT);
-		angThrustSnd.VolumeAnimate(angthrust, angthrust, 5.0f, 5.0f);
-	}
-}
-
 // for timestep changes, to stop autopilot overshoot
 // either adds half of current accel if decelerating
 void Ship::TimeAccelAdjust(const float timeStep)
@@ -575,9 +531,6 @@ double Ship::GetHullTemperature() const
 
 void Ship::StaticUpdate(const float timeStep)
 {
-	// do player sounds before dead check, so they also turn off
-	if (IsType(Object::PLAYER)) DoThrusterSounds();
-
 	if (IsDead()) return;
 
 	if (m_controller) m_controller->StaticUpdate(timeStep);
@@ -690,7 +643,6 @@ void Ship::EnterHyperspace() {
 }
 
 void Ship::OnEnterHyperspace() {
-	Sound::BodyMakeNoise(this, "Hyperdrive_Jump", 1.f);
 	m_hyperspaceCloud = new HyperspaceCloud(this, Pi::game->GetTime() + m_hyperspace.duration, false);
 	m_hyperspaceCloud->SetFrame(GetFrame());
 	m_hyperspaceCloud->SetPosition(GetPosition());

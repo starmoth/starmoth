@@ -32,7 +32,6 @@ class WorldView;
 class SDLGraphics;
 namespace Graphics { class Renderer; }
 namespace SceneGraph { class Model; }
-namespace Sound { class MusicPlayer; }
 namespace UI { class Context; }
 
 #if WITH_OBJECTVIEWER
@@ -87,7 +86,6 @@ public:
 	}
 	static void SetMouseGrab(bool on);
 	static void FlushCaches();
-	static void BoinkNoise();
 	static float CalcHyperspaceRangeMax(int hyperclass, int total_mass_in_tonnes);
 	static float CalcHyperspaceRange(int hyperclass, float total_mass_in_tonnes, int fuel);
 	static float CalcHyperspaceDuration(int hyperclass, int total_mass_in_tonnes, float dist);
@@ -135,7 +133,6 @@ public:
 	static SystemView *systemView;
 	static WorldView *worldView;
 	static DeathView *deathView;
-	static Sound::MusicPlayer &GetMusicPlayer() { return musicPlayer; }
 	static Graphics::Renderer *renderer; // blargh
 	static ModelCache *modelCache;
 	static Intro *intro;
@@ -194,7 +191,6 @@ private:
 		std::vector<float> axes;
 	};
 	static std::map<SDL_JoystickID,JoystickState> joysticks;
-	static Sound::MusicPlayer musicPlayer;
 
 	static bool navTunnelDisplayed;
 	static bool speedLinesDisplayed;
