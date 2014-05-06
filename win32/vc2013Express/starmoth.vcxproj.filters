@@ -12,9 +12,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\AmbientSounds.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Body.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -87,9 +84,6 @@
     <ClCompile Include="..\..\src\ShipType.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Sound.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Space.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -112,9 +106,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Background.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\SoundMusic.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\FormController.cpp">
@@ -278,9 +269,6 @@
     <ClInclude Include="..\..\src\WorldView.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\AmbientSounds.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Body.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -380,9 +368,6 @@
     <ClInclude Include="..\..\src\ShipType.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Sound.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Space.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -411,9 +396,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Background.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\SoundMusic.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\FormController.h">
