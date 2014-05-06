@@ -145,6 +145,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>../../../src;../../src;../../../pioneer-thirdparty/win32/include;../../../../pioneer-thirdparty/win32/include;../../win32/include;../../include;../../../contrib;../../contrib</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -161,12 +162,19 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>../../../src;../../src;../../../pioneer-thirdparty/win32/include;../../../../pioneer-thirdparty/win32/include;../../win32/include;../../include;../../../contrib;../../contrib</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>../../win32/lib;../../../pioneer-thirdparty/win32/lib;$(SolutionDir)$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew.lib;json.lib;assimp.lib;jenkins.lib;shlwapi.lib;libogg_static_vc2013_release.lib;libvorbis_static_vc2013_release.lib;libvorbisfile_static_vc2013_release.lib;sdl2.lib;sdl2main.lib;opengl32.lib;glu32.lib;SDL2_image.lib;freetype2312MT.lib;glew32.lib;sigc-vc120-2_0.lib;libpng15.lib;zlib.lib;text.lib;galaxy.lib;collider.lib;graphics.lib;terrain.lib;gui.lib;ui.lib;scenegraph.lib;gameui.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -179,6 +187,9 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>../../../src;../../src;../../../pioneer-thirdparty/win32/include;../../../../pioneer-thirdparty/win32/include;../../win32/include;../../include;../../../contrib;../../contrib</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -199,6 +210,9 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_SECURE_SCL=0;_ITERATOR_DEBUG_LEVEL=0;_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>../../../src;../../src;../../../pioneer-thirdparty/win32/include;../../../../pioneer-thirdparty/win32/include;../../win32/include;../../include;../../../contrib;../../contrib</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
