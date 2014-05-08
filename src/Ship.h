@@ -38,6 +38,23 @@ struct shipstats_t {
 	float hyperspace_range_max;
 };
 
+// Transit State
+enum class SliceDriveState {
+	DRIVE_OFF,
+	DRIVE_READY,
+	DRIVE_START,
+	DRIVE_ON,
+	DRIVE_STOP,
+	DRIVE_FINISHED
+};
+
+// Transit Constants
+static const double SLICE_GRAVITY_RANGE_1 = 15000.0;
+static const double SLICE_GRAVITY_RANGE_2 = 1000000.0;
+static const double SLICE_START_SPEED = 50000.0;
+static const double SLICE_DRIVE_1_SPEED = 299000.0;
+static const double SLICE_DRIVE_2_SPEED = 99999999999.0;
+
 class Ship: public DynamicBody {
 	friend class ShipController; //only controllers need access to AITimeStep
 	friend class PlayerShipController;
@@ -106,7 +123,15 @@ public:
 	};
 
 	FlightState GetFlightState() const { return m_flightState; }
-	void SetFlightState(FlightState s);
+	void SetFlightState(const FlightState s);
+
+	SliceDriveState GetSliceDriveState() const { return m_sliceDriveState; }
+	void SetSliceDriveState(const SliceDriveState &driveState) { 
+		m_sliceDriveState = driveState; 
+	}
+	void EngageSliceDrive();
+	void DisengageSliceDrive();
+
 	float GetWheelState() const { return m_wheelState; }
 	int GetWheelTransition() const { return m_wheelTransition; }
 
@@ -222,6 +247,8 @@ public:
 
 	double GetLandingPosOffset() const { return m_landingMinOffset; }
 
+	float GetLaunchLockTimeout() const { return m_launchLockTimeout; }
+
 protected:
 	virtual void Save(Serializer::Writer &wr, Space *space);
 	virtual void Load(Serializer::Reader &rd, Space *space);
@@ -253,8 +280,10 @@ private:
 	SceneGraph::ModelSkin m_skin;
 
 	FlightState m_flightState;
+	SliceDriveState m_sliceDriveState;
 	bool m_testLanded;
 	float m_launchLockTimeout;
+	float m_sliceDriveStartTimeout;
 	float m_wheelState;
 	int m_wheelTransition;
 

@@ -717,6 +717,14 @@ void Pi::HandleEvents()
 							}
 							break;
 						}
+
+						case SDLK_F6:
+							if (FlightControlState::CONTROL_SLICE != Pi::player->GetPlayerController()->GetFlightControlState()) {
+								Pi::player->GetPlayerController()->SetFlightControlState(FlightControlState::CONTROL_SLICE);
+							} else {
+								Pi::player->GetPlayerController()->SetFlightControlState(FlightControlState::CONTROL_MANUAL);
+							}
+							break;
 					}
 				}
 				Pi::keyState[event.key.keysym.sym] = true;

@@ -34,8 +34,10 @@ void Ship::Save(Serializer::Writer &wr, Space *space)
 	wr.Int32(m_wheelTransition);
 	wr.Float(m_wheelState);
 	wr.Float(m_launchLockTimeout);
+	wr.Int32(Uint32(m_sliceDriveState));
+	wr.Float(m_sliceDriveStartTimeout);
 	wr.Bool(m_testLanded);
-	wr.Int32(int(m_flightState));
+	wr.Int32(Uint32(m_flightState));
 
 	// XXX make sure all hyperspace attrs and the cloud get saved
 	m_hyperspace.dest.Serialize(wr);
@@ -66,6 +68,8 @@ void Ship::Load(Serializer::Reader &rd, Space *space)
 	m_wheelTransition = rd.Int32();
 	m_wheelState = rd.Float();
 	m_launchLockTimeout = rd.Float();
+	m_sliceDriveState = static_cast<SliceDriveState>(rd.Int32());
+	m_sliceDriveStartTimeout = rd.Float();
 	m_testLanded = rd.Bool();
 	m_flightState = static_cast<FlightState>(rd.Int32());
 	Properties().Set("flightState", EnumStrings::GetString("ShipFlightState", m_flightState));
@@ -159,9 +163,11 @@ Ship::Ship(const std::string &shipId): DynamicBody(),
 {
 	m_flightState = FLYING;
 	Properties().Set("flightState", EnumStrings::GetString("ShipFlightState", m_flightState));
+	m_sliceDriveState = SliceDriveState::DRIVE_OFF;
 
 	m_testLanded = false;
 	m_launchLockTimeout = 0;
+	m_sliceDriveStartTimeout = 0.0f;
 	m_wheelTransition = 0;
 	m_wheelState = 0;
 	m_dockedWith = 0;
@@ -391,7 +397,7 @@ void Ship::ResetHyperspaceCountdown()
 	m_hyperspace.now = false;
 }
 
-void Ship::SetFlightState(Ship::FlightState newState)
+void Ship::SetFlightState(const FlightState newState)
 {
 	if (m_flightState == newState) return;
 	if (IsHyperspaceActive() && (newState != FLYING))
@@ -492,9 +498,8 @@ void Ship::TimeStepUpdate(const float timeStep)
 	// If docked, station is responsible for updating position/orient of ship
 	// but we call this crap anyway and hope it doesn't do anything bad
 
-	vector3d maxThrust = GetMaxThrust(m_thrusters);
-	vector3d thrust = vector3d(maxThrust.x*m_thrusters.x, maxThrust.y*m_thrusters.y,
-		maxThrust.z*m_thrusters.z);
+	const vector3d maxThrust = GetMaxThrust(m_thrusters);
+	const vector3d thrust = vector3d(maxThrust.x*m_thrusters.x, maxThrust.y*m_thrusters.y, maxThrust.z*m_thrusters.z);
 	AddRelForce(thrust);
 	AddRelTorque(GetShipType()->angThrust * m_angThrusters);
 
@@ -569,6 +574,42 @@ void Ship::StaticUpdate(const float timeStep)
 			m_hyperspace.now = true;
 			SetFlightState(JUMPING);
 		}
+	}
+
+	//play start transit drive
+	if (GetSliceDriveState() == SliceDriveState::DRIVE_READY && IsType(Object::PLAYER)) {
+		SetSliceDriveState(SliceDriveState::DRIVE_START);
+		m_sliceDriveStartTimeout = 2.0f;	// XXX - hack, need to read from a config or wait for some timeout event like audio of drive warming up etc.
+	}
+	if(GetSliceDriveState() == SliceDriveState::DRIVE_START && IsType(Object::PLAYER)) {
+		if(m_sliceDriveStartTimeout > 0.0f) {
+			m_sliceDriveStartTimeout -= timeStep;
+		} else {
+			m_sliceDriveStartTimeout = 0.0f;
+			SetSliceDriveState(SliceDriveState::DRIVE_ON);
+		}
+	}
+	//play stop transit drive
+	if (GetSliceDriveState() == SliceDriveState::DRIVE_STOP && IsType(Object::PLAYER) ) {
+		SetSliceDriveState(SliceDriveState::DRIVE_FINISHED);
+	}
+}
+
+void Ship::EngageSliceDrive()
+{
+	if(GetSliceDriveState() == SliceDriveState::DRIVE_OFF && IsType(Object::PLAYER)) {
+		SetSliceDriveState(SliceDriveState::DRIVE_READY);
+	}
+}
+
+void Ship::DisengageSliceDrive()
+{
+	if(GetSliceDriveState() != SliceDriveState::DRIVE_OFF && IsType(Object::PLAYER)) {
+		// Transit interrupted
+		//float interrupt_velocity = GetMaxManeuverSpeed();
+		float interrupt_velocity = 1000.0;
+		SetVelocity(GetOrient()*vector3d(0, 0, -interrupt_velocity));
+		SetSliceDriveState(SliceDriveState::DRIVE_OFF);
 	}
 }
 

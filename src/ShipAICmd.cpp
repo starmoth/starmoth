@@ -43,7 +43,7 @@ AICommand::AICommand(Serializer::Reader &rd, CmdName name)
 {
 	m_cmdName = name;
 	m_shipIndex = rd.Int32();
-	m_child = Load(rd);
+	m_child.reset(Load(rd));
 }
 
 void AICommand::PostLoadFixup(Space *space)
@@ -57,7 +57,7 @@ bool AICommand::ProcessChild()
 {
 	if (!m_child) return true;						// no child present
 	if (!m_child->TimeStepUpdate()) return false;	// child still active
-	delete m_child; m_child = 0;
+	m_child.reset();
 	return true;								// child finished
 }
 
@@ -68,6 +68,8 @@ static void LaunchShip(Ship *ship)
 	else if (ship->GetFlightState() == Ship::DOCKED)
 		ship->Undock();
 }
+
+//-------------------------------- Command: Kamikaze
 
 bool AICmdKamikaze::TimeStepUpdate()
 {
@@ -263,6 +265,7 @@ static bool CheckSuicide(Ship *ship, const vector3d &tandir)
 	return false;
 }
 
+//-------------------------------- Command: Fly To
 
 extern double calc_ivel(double dist, double vel, double acc);
 
@@ -332,7 +335,7 @@ Output("Autopilot dist = %.1f, speed = %.1f, zthrust = %.2f, state = %i\n",
 
 	// frame switch stuff - clear children/collision state
 	if (m_frame != m_ship->GetFrame()) {
-		if (m_child) { delete m_child; m_child = 0; }
+		m_child.reset();
 		if (m_tangent && m_frame) return true;		// regen tangent on frame switch
 		m_reldir = reldir;							// for +vel termination condition
 		m_frame = m_ship->GetFrame();
@@ -347,15 +350,20 @@ Output("Autopilot dist = %.1f, speed = %.1f, zthrust = %.2f, state = %i\n",
 	{
 		int coll = CheckCollision(m_ship, reldir, targdist, targpos, m_endvel, erad);
 		if (coll == 0) {				// no collision
-			if (m_child) { delete m_child; m_child = 0; }
+			m_child.reset();
 		}
 		else if (coll == 1) {			// below feature height, target not below
 			double ang = m_ship->AIFaceDirection(m_ship->GetPosition());
 			m_ship->AIMatchVel(ang < 0.05 ? 1000.0 * m_ship->GetPosition().Normalized() : vector3d(0.0));
 		}
 		else {							// same thing for 2/3/4
-			if (!m_child) m_child = new AICmdFlyAround(m_ship, m_frame->GetBody(), erad*1.05, 0.0);
-			static_cast<AICmdFlyAround*>(m_child)->SetTargPos(targpos);
+			if (m_ship->IsType(Object::PLAYER) && targdist > NO_TRANSIT_RANGE) {
+				m_child.reset(new AICmdTransitAround(m_ship, m_frame->GetBody()));
+				static_cast<AICmdTransitAround*>(m_child.get())->SetTargPos(targpos);
+			} else {
+				m_child.reset(new AICmdFlyAround(m_ship, m_frame->GetBody(), erad*1.05, 0.0));
+				static_cast<AICmdFlyAround*>(m_child.get())->SetTargPos(targpos);
+			}
 			ProcessChild();
 		}
 		if (coll) { m_state = -coll; return false; }
@@ -447,6 +455,7 @@ Output("Autopilot dist = %.1f, speed = %.1f, zthrust = %.2f, state = %i\n",
 	return false;
 }
 
+//-------------------------------- Command: Dock
 
 AICmdDock::AICmdDock(Ship *ship, SpaceStation *target) : AICommand(ship, CMD_DOCK)
 {
@@ -479,7 +488,7 @@ bool AICmdDock::TimeStepUpdate()
 	// if we're not close to target, do a flyto first
 	double targdist = m_target->GetPositionRelTo(m_ship).Length();
 	if (targdist > 16000.0) {
-		m_child = new AICmdFlyTo(m_ship, m_target);
+		m_child.reset(new AICmdFlyTo(m_ship, m_target));
 		ProcessChild(); return false;
 	}
 
@@ -522,7 +531,7 @@ bool AICmdDock::TimeStepUpdate()
 	}
 
 	if (m_state == 1) {			// fly to first docking waypoint
-		m_child = new AICmdFlyTo(m_ship, m_target->GetFrame(), m_dockpos, 0.0, false);
+		m_child.reset(new AICmdFlyTo(m_ship, m_target->GetFrame(), m_dockpos, 0.0, false));
 		ProcessChild(); return false;
 	}
 
@@ -577,6 +586,7 @@ bool AICmdHoldPosition::TimeStepUpdate()
 	return false;
 }
 
+//-------------------------------- Command: FlyAround
 
 void AICmdFlyAround::Setup(Body *obstructor, double alt, double vel, int mode)
 {
@@ -650,7 +660,7 @@ bool AICmdFlyAround::TimeStepUpdate()
 		if (m_targmode) v = m_vel;
 		else if (relpos.LengthSqr() < obsdist + tpos_obs.LengthSqr()) v = 0.0;
 		else v = MaxVel((tpos_obs-tangent).Length(), tpos_obs.Length());
-		m_child = new AICmdFlyTo(m_ship, obsframe, tangent, v, true);
+		m_child.reset(new AICmdFlyTo(m_ship, obsframe, tangent, v, true));
 		ProcessChild(); return false;
 	}
 
@@ -688,6 +698,123 @@ bool AICmdFlyAround::TimeStepUpdate()
 	return false;
 }
 
+//------------------------------- Command: Transit Around
+// Assumptions:
+// - Only player ship uses this logic
+
+AICmdTransitAround::AICmdTransitAround(Ship *ship, Body *obstructor) : AICommand(ship, CMD_TRANSITAROUND)
+{
+	m_obstructor = obstructor;
+	m_alt = 0.0;
+	m_state = AITA_READY;
+	m_warmUpTime = 2.0f;
+}
+
+AICmdTransitAround::~AICmdTransitAround()
+{
+	if(m_ship && m_ship->GetSliceDriveState() != SliceDriveState::DRIVE_OFF) {
+		m_ship->EngageSliceDrive();
+		if(m_ship->GetVelocity().Length() > 700.0f) {
+			m_ship->SetVelocity(m_ship->GetVelocity().Normalized() * 10000.0);
+		}
+	}
+}
+
+bool AICmdTransitAround::TimeStepUpdate()
+{
+	if (!ProcessChild()) return false;
+	const double time_step = Pi::game->GetTimeStep();
+	const double transit_low = std::max<double>(SLICE_GRAVITY_RANGE_1 + (m_obstructor->GetPhysRadius() * 0.0019), SLICE_GRAVITY_RANGE_1);
+	const double transit_high = std::max<double>(SLICE_GRAVITY_RANGE_1 + (m_obstructor->GetPhysRadius() * 0.0059), SLICE_GRAVITY_RANGE_1 + 25000.0);
+	const double transit_altitude = transit_low + ((transit_high - transit_low) / 2);
+	const double altitude_correction_speed = 10000.0;
+	const vector3d ship_to_obstructor = m_obstructor->GetPositionRelTo(m_ship->GetFrame()) - m_ship->GetPosition();
+	const vector3d ship_to_target = m_targetPosition - m_ship->GetPosition();
+	const vector3d up_vector = -ship_to_obstructor.Normalized();
+	const vector3d right_vector = ship_to_obstructor.Cross(ship_to_target).Normalized();
+	vector3d velocity_vector = up_vector.Cross(right_vector).NormalizedSafe();
+
+	// 1: if target is close then use normal fly instead of transit otherwise FlyTo will keep overshooting
+	if(ship_to_target.Length() <= NO_TRANSIT_RANGE) {
+		m_warmUpTime = 2.0;
+		return true;
+	}
+
+	// 2: determine suitable altitude and move towards it
+	const double th = transit_altitude + 6000.0;
+	const double tl = transit_altitude - 6000.0;
+	if(m_state != AITA_TRANSIT && m_obstructor->IsType(Object::TERRAINBODY)) {
+		//m_obstructor->GetSystemBody()->
+		const Frame* frame = m_ship->GetFrame();
+		const vector3d pos = (frame == m_ship->GetFrame() ? m_ship->GetPosition() : m_ship->GetPositionRelTo(frame));
+		
+		const double radius = m_obstructor->GetSystemBody()->GetRadius();
+		m_alt = pos.Length() - radius;
+
+		if(m_alt < tl || m_alt > th) {
+			m_warmUpTime = 2.0;
+			m_state = AITA_ALTITUDE;
+			const double curve_factor = abs(m_alt - transit_altitude) / 10000.0;
+			if(m_alt < tl) {
+				velocity_vector = up_vector.Normalized();
+			} else if(m_alt > th) {
+				velocity_vector = -up_vector.Normalized();
+			}
+			m_ship->AIMatchVel(velocity_vector * altitude_correction_speed * std::min<double>(1.0, curve_factor));
+			m_ship->AIFaceDirection(velocity_vector);
+			m_ship->AIFaceUpdir(up_vector);
+			return false;
+		}
+	}
+
+	// Adjust velocity slightly to follow the exact transit altitude arc
+	if(m_alt > transit_altitude) {
+		if(m_alt > transit_altitude + 6000) {
+			velocity_vector = velocity_vector + (-up_vector * 0.005);
+		} else {
+			velocity_vector = velocity_vector + (-up_vector * 0.001);
+		}
+	} else if(m_alt < transit_altitude) {
+		if(m_alt < transit_altitude - 6000.0) {
+			velocity_vector = velocity_vector + (up_vector * 0.005);
+		} else {
+			velocity_vector = velocity_vector + (up_vector * 0.001);
+		}
+	}
+
+	if(m_state == AITA_ALTITUDE) {
+		// Adjust velocity for transit by sharp turning towards velocity vector
+		m_ship->SetVelocity(velocity_vector * m_ship->GetVelocity().Length());
+	}
+	m_state = AITA_TRANSIT;
+
+	// 3: Engage transit after 2 seconds to give sound effects enough time to play
+	if(m_ship->GetSliceDriveState() == SliceDriveState::DRIVE_OFF) {
+		m_ship->EngageSliceDrive();
+	}
+
+	// 4: follow flight tangent at Transit speed
+	//m_ship->SetJuice(std::max<double>(80.0, m_ship->GetVelocity().Length() * 0.008));
+
+	//smooth transit around when nearing target.
+	double factor = 1.0;
+	if (ship_to_target.Length() / 1000000.0 < 1.0) factor = ship_to_target.Length() / 1000000.0;
+
+	//dispose of heat if needed (emergency)
+	if (m_ship->GetHullTemperature() > 0.1) {
+		m_ship->AIMatchVel(velocity_vector * SLICE_DRIVE_1_SPEED * 0.01);
+	}
+	else {
+		m_ship->AIMatchVel(velocity_vector * SLICE_DRIVE_1_SPEED * factor);
+	}
+
+	m_ship->AIFaceDirection(velocity_vector);
+	m_ship->AIFaceUpdir(up_vector);
+	return false;
+}
+
+//-------------------------------- Command: Formation
+
 AICmdFormation::AICmdFormation(Ship *ship, Ship *target, const vector3d &posoff) :
 	AICommand(ship, CMD_FORMATION),
 	m_target(target),
@@ -707,7 +834,7 @@ bool AICmdFormation::TimeStepUpdate()
 	// if too far away, do an intercept first
 	// TODO: adjust distance cap by timestep so we don't bounce?
 	if (m_target->GetPositionRelTo(m_ship).Length() > 30000.0) {
-		m_child = new AICmdFlyTo(m_ship, m_target);
+		m_child.reset(new AICmdFlyTo(m_ship, m_target));
 		ProcessChild(); return false;
 	}
 

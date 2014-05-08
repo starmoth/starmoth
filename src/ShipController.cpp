@@ -80,7 +80,7 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 {
 	vector3d v;
 	matrix4x4d m;
-
+	
 	if (m_ship->GetFlightState() == Ship::FLYING) {
 		switch (m_flightControlState) {
 		case FlightControlState::CONTROL_FIXSPEED:
@@ -91,15 +91,6 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 				v += m_setSpeedTarget->GetVelocityRelTo(m_ship->GetFrame());
 			}
 			m_ship->AIMatchVel(v);
-			break;
-		case FlightControlState::CONTROL_FIXHEADING_FORWARD:
-		case FlightControlState::CONTROL_FIXHEADING_BACKWARD:
-			PollControls(timeStep, true);
-			if (IsAnyAngularThrusterKeyDown()) break;
-			v = m_ship->GetVelocity().NormalizedSafe();
-			if (m_flightControlState == FlightControlState::CONTROL_FIXHEADING_BACKWARD)
-				v = -v;
-			m_ship->AIFaceDirection(v);
 			break;
 		case FlightControlState::CONTROL_MANUAL:
 			PollControls(timeStep, false);
@@ -113,6 +104,51 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 			if (m_ship->GetFrame()->IsRotFrame()) SetFlightControlState(FlightControlState::CONTROL_FIXSPEED);
 			else SetFlightControlState(FlightControlState::CONTROL_MANUAL);
 			m_setSpeed = 0.0;
+			break;
+
+		case FlightControlState::CONTROL_SLICE:
+			PollControls(timeStep, true);
+			if (m_ship->GetLaunchLockTimeout() <= 0.0f) {
+				if (m_ship->GetSliceDriveState() == SliceDriveState::DRIVE_READY) {
+					// READY
+					// Ship.cpp will start the transit drive
+				} else if (m_ship->GetSliceDriveState() == SliceDriveState::DRIVE_START) {
+					// START
+					// Ship.cpp will engage the transit drive to ON state
+				} else if (m_ship->GetSliceDriveState() == SliceDriveState::DRIVE_ON) {
+					m_setSpeed = SLICE_DRIVE_2_SPEED;
+					/*if ((altitude < 0.0 || altitude > SLICE_GRAVITY_RANGE_2)) {
+						m_setSpeed = SLICE_DRIVE_2_SPEED;
+					} else if(altitude < 0.0 || altitude > SLICE_GRAVITY_RANGE_1) {
+						m_setSpeed = SLICE_DRIVE_1_SPEED;
+						if(m_ship->GetVelocity().Length() > m_setSpeed) {
+							m_ship->SetVelocity(-m_ship->GetOrient().VectorZ() * m_setSpeed);
+						}
+					} else {
+						m_ship->DisengageSliceDrive();
+						SetFlightControlState(FlightControlState::CONTROL_MANUAL);
+					}*/
+
+					v = -m_ship->GetOrient().VectorZ() * m_setSpeed;
+					if (m_setSpeedTarget) {
+						v += m_setSpeedTarget->GetVelocityRelTo(m_ship->GetFrame());
+					}
+					m_ship->AIMatchVel(v);
+
+					// No thrust if ship is at max transit speed, otherwise due to thrust limiter jitter will occur
+					double current_velocity = current_velocity = m_ship->GetVelocity().Length();
+					if(current_velocity >= m_setSpeed || current_velocity <= -m_setSpeed) {
+						v = vector3d(0.0, 0.0, 0.0);
+						m_ship->SetVelocity(-m_ship->GetOrient().VectorZ() * m_setSpeed);
+					}
+					//TransitTunnelingTest(timeStep);
+					//TransitStationCatch(timeStep);
+				} else if(m_ship->GetSliceDriveState() == SliceDriveState::DRIVE_STOP) {
+					// STOP
+				} else if(m_ship->GetSliceDriveState() == SliceDriveState::DRIVE_OFF) {
+					// OFF
+				}
+			}
 			break;
 		default: assert(0); break;
 		}
@@ -285,23 +321,39 @@ bool PlayerShipController::IsAnyLinearThrusterKeyDown()
 	);
 }
 
-void PlayerShipController::SetFlightControlState(FlightControlState s)
+void PlayerShipController::SetFlightControlState(const FlightControlState s)
 {
 	if (m_flightControlState != s) {
+		// finalizer
+		switch(m_flightControlState) {
+		case FlightControlState::CONTROL_SLICE:
+				m_ship->DisengageSliceDrive();
+				break;
+		}
+		// new state
 		m_flightControlState = s;
 		m_ship->AIClearInstructions();
-		//set desired velocity to current actual
-		if (m_flightControlState == FlightControlState::CONTROL_FIXSPEED) {
-			// Speed is set to the projection of the velocity onto the target.
+		switch(m_flightControlState) {
+			case FlightControlState::CONTROL_MANUAL: {
+				//set desired velocity to current actual
+				// Speed is set to the projection of the velocity onto the target.
+				vector3d shipVel = m_setSpeedTarget ?
+					// Ship's velocity with respect to the target, in current frame's coordinates
+					-m_setSpeedTarget->GetVelocityRelTo(m_ship) :
+					// Ship's velocity with respect to current frame
+					m_ship->GetVelocity();
+				// A change from Manual to Set Speed never sets a negative speed.
+				m_setSpeed = std::max(shipVel.Dot(-m_ship->GetOrient().VectorZ()), 0.0);
+				break;
+			}
 
-			vector3d shipVel = m_setSpeedTarget ?
-				// Ship's velocity with respect to the target, in current frame's coordinates
-				-m_setSpeedTarget->GetVelocityRelTo(m_ship) :
-				// Ship's velocity with respect to current frame
-				m_ship->GetVelocity();
-
-			// A change from Manual to Set Speed never sets a negative speed.
-			m_setSpeed = std::max(shipVel.Dot(-m_ship->GetOrient().VectorZ()), 0.0);
+			case FlightControlState::CONTROL_SLICE:
+				m_ship->EngageSliceDrive();
+				// Set transit speed to default, limit will be raised in update function based on altitude
+				m_setSpeed = SLICE_START_SPEED;
+				// Give it some juice to hit transit speed faster
+				//m_ship->SetJuice(80.0);
+				break;
 		}
 		//XXX global stuff
 		Pi::onPlayerChangeFlightControlState.emit();
