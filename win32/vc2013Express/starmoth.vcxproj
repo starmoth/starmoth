@@ -240,6 +240,7 @@
     <ClCompile Include="..\..\src\ShipCockpit.cpp" />
     <ClCompile Include="..\..\src\ShipController.cpp" />
     <ClCompile Include="..\..\src\ShipType.cpp" />
+    <ClCompile Include="..\..\src\Slice.cpp" />
     <ClCompile Include="..\..\src\Space.cpp" />
     <ClCompile Include="..\..\src\SpaceStation.cpp" />
     <ClCompile Include="..\..\src\SpaceStationType.cpp" />
@@ -341,6 +342,7 @@
     <ClInclude Include="..\..\src\ShipCockpit.h" />
     <ClInclude Include="..\..\src\ShipController.h" />
     <ClInclude Include="..\..\src\ShipType.h" />
+    <ClInclude Include="..\..\src\Slice.h" />
     <ClInclude Include="..\..\src\SmartPtr.h" />
     <ClInclude Include="..\..\src\Space.h" />
     <ClInclude Include="..\..\src\SpaceStation.h" />

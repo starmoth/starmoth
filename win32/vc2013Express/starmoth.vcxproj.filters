@@ -261,6 +261,9 @@
     <ClCompile Include="..\..\src\BaseSphere.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Slice.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Aabb.h">
@@ -564,6 +567,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\matrix3x3.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Slice.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

@@ -8,6 +8,7 @@
 #include "Player.h"
 #include "ShipAICmd.h"
 #include "ShipController.h"
+#include "Slice.h"
 #include "Sfx.h"
 #include "galaxy/Sector.h"
 #include "galaxy/GalaxyCache.h"
@@ -68,7 +69,7 @@ void Ship::Load(Serializer::Reader &rd, Space *space)
 	m_wheelTransition = rd.Int32();
 	m_wheelState = rd.Float();
 	m_launchLockTimeout = rd.Float();
-	m_sliceDriveState = static_cast<SliceDriveState>(rd.Int32());
+	m_sliceDriveState = static_cast<Slice::DriveState>(rd.Int32());
 	m_sliceDriveStartTimeout = rd.Float();
 	m_testLanded = rd.Bool();
 	m_flightState = static_cast<FlightState>(rd.Int32());
@@ -163,7 +164,7 @@ Ship::Ship(const std::string &shipId): DynamicBody(),
 {
 	m_flightState = FLYING;
 	Properties().Set("flightState", EnumStrings::GetString("ShipFlightState", m_flightState));
-	m_sliceDriveState = SliceDriveState::DRIVE_OFF;
+	m_sliceDriveState = Slice::DriveState::DRIVE_OFF;
 
 	m_testLanded = false;
 	m_launchLockTimeout = 0;
@@ -577,39 +578,39 @@ void Ship::StaticUpdate(const float timeStep)
 	}
 
 	//play start transit drive
-	if (GetSliceDriveState() == SliceDriveState::DRIVE_READY && IsType(Object::PLAYER)) {
-		SetSliceDriveState(SliceDriveState::DRIVE_START);
+	if (GetSliceDriveState() == Slice::DriveState::DRIVE_READY && IsType(Object::PLAYER)) {
+		SetSliceDriveState(Slice::DriveState::DRIVE_START);
 		m_sliceDriveStartTimeout = 2.0f;	// XXX - hack, need to read from a config or wait for some timeout event like audio of drive warming up etc.
 	}
-	if(GetSliceDriveState() == SliceDriveState::DRIVE_START && IsType(Object::PLAYER)) {
+	if(GetSliceDriveState() == Slice::DriveState::DRIVE_START && IsType(Object::PLAYER)) {
 		if(m_sliceDriveStartTimeout > 0.0f) {
 			m_sliceDriveStartTimeout -= timeStep;
 		} else {
 			m_sliceDriveStartTimeout = 0.0f;
-			SetSliceDriveState(SliceDriveState::DRIVE_ON);
+			SetSliceDriveState(Slice::DriveState::DRIVE_ON);
 		}
 	}
 	//play stop transit drive
-	if (GetSliceDriveState() == SliceDriveState::DRIVE_STOP && IsType(Object::PLAYER) ) {
-		SetSliceDriveState(SliceDriveState::DRIVE_FINISHED);
+	if (GetSliceDriveState() == Slice::DriveState::DRIVE_STOP && IsType(Object::PLAYER) ) {
+		SetSliceDriveState(Slice::DriveState::DRIVE_FINISHED);
 	}
 }
 
 void Ship::EngageSliceDrive()
 {
-	if(GetSliceDriveState() == SliceDriveState::DRIVE_OFF && IsType(Object::PLAYER)) {
-		SetSliceDriveState(SliceDriveState::DRIVE_READY);
+	if(GetSliceDriveState() == Slice::DriveState::DRIVE_OFF && IsType(Object::PLAYER)) {
+		SetSliceDriveState(Slice::DriveState::DRIVE_READY);
 	}
 }
 
 void Ship::DisengageSliceDrive()
 {
-	if(GetSliceDriveState() != SliceDriveState::DRIVE_OFF && IsType(Object::PLAYER)) {
+	if(GetSliceDriveState() != Slice::DriveState::DRIVE_OFF && IsType(Object::PLAYER)) {
 		// Transit interrupted
 		//float interrupt_velocity = GetMaxManeuverSpeed();
 		float interrupt_velocity = 1000.0;
 		SetVelocity(GetOrient()*vector3d(0, 0, -interrupt_velocity));
-		SetSliceDriveState(SliceDriveState::DRIVE_OFF);
+		SetSliceDriveState(Slice::DriveState::DRIVE_OFF);
 	}
 }
 

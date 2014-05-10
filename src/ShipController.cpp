@@ -8,6 +8,7 @@
 #include "Pi.h"
 #include "Player.h"
 #include "Ship.h"
+#include "Slice.h"
 #include "Space.h"
 #include "WorldView.h"
 #include "OS.h"
@@ -109,25 +110,37 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 		case FlightControlState::CONTROL_SLICE:
 			PollControls(timeStep, true);
 			if (m_ship->GetLaunchLockTimeout() <= 0.0f) {
-				if (m_ship->GetSliceDriveState() == SliceDriveState::DRIVE_READY) {
+				if (m_ship->GetSliceDriveState() == Slice::DriveState::DRIVE_READY) {
 					// READY
 					// Ship.cpp will start the transit drive
-				} else if (m_ship->GetSliceDriveState() == SliceDriveState::DRIVE_START) {
+				} else if (m_ship->GetSliceDriveState() == Slice::DriveState::DRIVE_START) {
 					// START
 					// Ship.cpp will engage the transit drive to ON state
-				} else if (m_ship->GetSliceDriveState() == SliceDriveState::DRIVE_ON) {
-					m_setSpeed = SLICE_DRIVE_2_SPEED;
-					/*if ((altitude < 0.0 || altitude > SLICE_GRAVITY_RANGE_2)) {
-						m_setSpeed = SLICE_DRIVE_2_SPEED;
-					} else if(altitude < 0.0 || altitude > SLICE_GRAVITY_RANGE_1) {
-						m_setSpeed = SLICE_DRIVE_1_SPEED;
-						if(m_ship->GetVelocity().Length() > m_setSpeed) {
-							m_ship->SetVelocity(-m_ship->GetOrient().VectorZ() * m_setSpeed);
+				} else if (m_ship->GetSliceDriveState() == Slice::DriveState::DRIVE_ON) {
+					double distanceFromBody = -1.0;
+					const Frame* frame = m_ship->GetFrame();
+					vector3d ship_position = m_ship->GetPositionRelTo(frame);
+					vector3d body_position = frame->GetBody()->GetPosition();
+					vector3d ship_to_planet = body_position - ship_position;
+					distanceFromBody = ship_to_planet.Length() - frame->GetBody()->GetPhysRadius();
+
+					Slice::RSPVector rsp;
+					Slice::BodyMinRanges(rsp);
+					bool DisengageSliceDrive = true;
+					for ( auto &it : rsp ) {
+						if ((distanceFromBody < 0.0 || distanceFromBody > it.first)) {
+							m_setSpeed = it.second;
+							if(m_ship->GetVelocity().Length() != m_setSpeed) {
+								m_ship->SetVelocity(-m_ship->GetOrient().VectorZ() * m_setSpeed);
+							}
+							DisengageSliceDrive = false;
+							break;
 						}
-					} else {
+					}
+					if (DisengageSliceDrive) {
 						m_ship->DisengageSliceDrive();
 						SetFlightControlState(FlightControlState::CONTROL_MANUAL);
-					}*/
+					}
 
 					v = -m_ship->GetOrient().VectorZ() * m_setSpeed;
 					if (m_setSpeedTarget) {
@@ -143,9 +156,9 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 					}
 					//TransitTunnelingTest(timeStep);
 					//TransitStationCatch(timeStep);
-				} else if(m_ship->GetSliceDriveState() == SliceDriveState::DRIVE_STOP) {
+				} else if(m_ship->GetSliceDriveState() == Slice::DriveState::DRIVE_STOP) {
 					// STOP
-				} else if(m_ship->GetSliceDriveState() == SliceDriveState::DRIVE_OFF) {
+				} else if(m_ship->GetSliceDriveState() == Slice::DriveState::DRIVE_OFF) {
 					// OFF
 				}
 			}
@@ -350,9 +363,7 @@ void PlayerShipController::SetFlightControlState(const FlightControlState s)
 			case FlightControlState::CONTROL_SLICE:
 				m_ship->EngageSliceDrive();
 				// Set transit speed to default, limit will be raised in update function based on altitude
-				m_setSpeed = SLICE_START_SPEED;
-				// Give it some juice to hit transit speed faster
-				//m_ship->SetJuice(80.0);
+				m_setSpeed = Slice::EngageDriveMinSpeed();
 				break;
 		}
 		//XXX global stuff

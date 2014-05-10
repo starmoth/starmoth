@@ -4,6 +4,7 @@
 #include "libs.h"
 #include "Ship.h"
 #include "ShipAICmd.h"
+#include "Slice.h"
 #include "Pi.h"
 #include "Player.h"
 #include "perlin.h"
@@ -272,18 +273,18 @@ extern double calc_ivel(double dist, double vel, double acc);
 // Fly to vicinity of body
 AICmdFlyTo::AICmdFlyTo(Ship *ship, Body *target) : AICommand(ship, CMD_FLYTO)
 {
-	m_frame = 0; m_state = -6; m_lockhead = true; m_endvel = 0; m_tangent = false;
+	m_frame = nullptr; m_state = -6; m_lockhead = true; m_endvel = 0; m_tangent = false;
 	if (!target->IsType(Object::TERRAINBODY)) m_dist = VICINITY_MIN;
 	else m_dist = VICINITY_MUL*MaxEffectRad(target, ship);
 
 	if (target->IsType(Object::SPACESTATION) && static_cast<SpaceStation*>(target)->IsGroundStation()) {
-		m_posoff = target->GetPosition() + 15000.0 * target->GetOrient().VectorY();
+		m_posoff = target->GetPosition() + VICINITY_MIN * target->GetOrient().VectorY();
 //		m_posoff += 500.0 * target->GetOrient().VectorX();
 		m_targframe = target->GetFrame(); m_target = 0;
 	}
 	else { m_target = target; m_targframe = 0; }
 
-	if (ship->GetPositionRelTo(target).Length() <= 15000.0) m_targframe = 0;
+	if (ship->GetPositionRelTo(target).Length() <= VICINITY_MIN) m_targframe = nullptr;
 }
 
 // Specified pos, endvel should be > 0
@@ -298,6 +299,20 @@ AICmdFlyTo::AICmdFlyTo(Ship *ship, Frame *targframe, const vector3d &posoff, dou
 	m_lockhead(true),
 	m_frame(nullptr)
 {
+}
+
+AICmdFlyTo::~AICmdFlyTo()
+{
+	if(m_ship && m_ship->IsType(Object::PLAYER) && m_ship->GetSliceDriveState() != Slice::DriveState::DRIVE_OFF) {
+		// Transit interrupted
+		const float interrupt_velocity = Slice::EngageDriveMinSpeed();
+		//float interrupt_velocity = 1000.0;
+		const double s = m_ship->GetVelocity().Length();
+		if(s > interrupt_velocity) {
+			m_ship->SetVelocity(m_ship->GetOrient()*vector3d(0, 0, -interrupt_velocity));
+		}
+		m_ship->SetSliceDriveState(Slice::DriveState::DRIVE_OFF);
+	}
 }
 
 bool AICmdFlyTo::TimeStepUpdate()
@@ -712,7 +727,7 @@ AICmdTransitAround::AICmdTransitAround(Ship *ship, Body *obstructor) : AICommand
 
 AICmdTransitAround::~AICmdTransitAround()
 {
-	if(m_ship && m_ship->GetSliceDriveState() != SliceDriveState::DRIVE_OFF) {
+	if(m_ship && m_ship->GetSliceDriveState() != Slice::DriveState::DRIVE_OFF) {
 		m_ship->EngageSliceDrive();
 		if(m_ship->GetVelocity().Length() > 700.0f) {
 			m_ship->SetVelocity(m_ship->GetVelocity().Normalized() * 10000.0);
@@ -723,9 +738,20 @@ AICmdTransitAround::~AICmdTransitAround()
 bool AICmdTransitAround::TimeStepUpdate()
 {
 	if (!ProcessChild()) return false;
+
+	Slice::RSPVector rsp;
+	Slice::BodyMinRanges(rsp);
+	// find min range
+	double MinRange = DBL_MAX;
+	double MinSpeed = DBL_MAX;
+	for ( auto &it : rsp ) {
+		MinRange = std::min(MinRange, it.first);
+		MinSpeed = std::min(MinSpeed, it.second);
+	}
+
 	const double time_step = Pi::game->GetTimeStep();
-	const double transit_low = std::max<double>(SLICE_GRAVITY_RANGE_1 + (m_obstructor->GetPhysRadius() * 0.0019), SLICE_GRAVITY_RANGE_1);
-	const double transit_high = std::max<double>(SLICE_GRAVITY_RANGE_1 + (m_obstructor->GetPhysRadius() * 0.0059), SLICE_GRAVITY_RANGE_1 + 25000.0);
+	const double transit_low = std::max<double>(MinRange + (m_obstructor->GetPhysRadius() * 0.0019), MinRange);
+	const double transit_high = std::max<double>(MinRange + (m_obstructor->GetPhysRadius() * 0.0059), MinRange + 25000.0);
 	const double transit_altitude = transit_low + ((transit_high - transit_low) / 2);
 	const double altitude_correction_speed = 10000.0;
 	const vector3d ship_to_obstructor = m_obstructor->GetPositionRelTo(m_ship->GetFrame()) - m_ship->GetPosition();
@@ -744,7 +770,6 @@ bool AICmdTransitAround::TimeStepUpdate()
 	const double th = transit_altitude + 6000.0;
 	const double tl = transit_altitude - 6000.0;
 	if(m_state != AITA_TRANSIT && m_obstructor->IsType(Object::TERRAINBODY)) {
-		//m_obstructor->GetSystemBody()->
 		const Frame* frame = m_ship->GetFrame();
 		const vector3d pos = (frame == m_ship->GetFrame() ? m_ship->GetPosition() : m_ship->GetPositionRelTo(frame));
 		
@@ -789,12 +814,9 @@ bool AICmdTransitAround::TimeStepUpdate()
 	m_state = AITA_TRANSIT;
 
 	// 3: Engage transit after 2 seconds to give sound effects enough time to play
-	if(m_ship->GetSliceDriveState() == SliceDriveState::DRIVE_OFF) {
+	if(m_ship->GetSliceDriveState() == Slice::DriveState::DRIVE_OFF) {
 		m_ship->EngageSliceDrive();
 	}
-
-	// 4: follow flight tangent at Transit speed
-	//m_ship->SetJuice(std::max<double>(80.0, m_ship->GetVelocity().Length() * 0.008));
 
 	//smooth transit around when nearing target.
 	double factor = 1.0;
@@ -802,10 +824,10 @@ bool AICmdTransitAround::TimeStepUpdate()
 
 	//dispose of heat if needed (emergency)
 	if (m_ship->GetHullTemperature() > 0.1) {
-		m_ship->AIMatchVel(velocity_vector * SLICE_DRIVE_1_SPEED * 0.01);
+		m_ship->AIMatchVel(velocity_vector * MinSpeed * 0.01);
 	}
 	else {
-		m_ship->AIMatchVel(velocity_vector * SLICE_DRIVE_1_SPEED * factor);
+		m_ship->AIMatchVel(velocity_vector * MinSpeed * factor);
 	}
 
 	m_ship->AIFaceDirection(velocity_vector);
