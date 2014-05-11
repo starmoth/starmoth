@@ -85,6 +85,7 @@ noinst_HEADERS = \
 	ShipCockpit.h \
 	ShipController.h \
 	ShipType.h \
+	Slice.h \
 	Space.h \
 	SpaceStation.h \
 	SpaceStationType.h \
@@ -170,6 +171,7 @@ pioneer_SOURCES	= \
 	ShipCockpit.cpp \
 	ShipController.cpp \
 	ShipType.cpp \
+	Slice.cpp \
 	Space.cpp \
 	SpaceStation.cpp \
 	SpaceStationType.cpp \
