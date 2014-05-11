@@ -26,6 +26,10 @@ namespace Slice {
 	typedef std::vector<RangeSpeedPair> RSPVector;
 	void BodyMinRanges(RSPVector &out);
 
+	// quick accessors
+	double MaxSliceSpeed();
+	double MaxRangeSpeed();
+
 	double EngageDriveMinSpeed();	// relative or absolute?
 };
 

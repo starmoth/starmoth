@@ -16,6 +16,10 @@ namespace Slice {
 		out.push_back( std::make_pair(SLICE_GRAVITY_RANGE_2, SLICE_DRIVE_2_SPEED) );
 		out.push_back( std::make_pair(SLICE_GRAVITY_RANGE_1, SLICE_DRIVE_1_SPEED) );
 	}
+	
+	// quick accessors
+	double MaxSliceSpeed() { return SLICE_DRIVE_2_SPEED; }
+	double MaxRangeSpeed() { return SLICE_GRAVITY_RANGE_2; }
 
 	double EngageDriveMinSpeed() {	// relative or absolute?
 		return SLICE_START_SPEED;
