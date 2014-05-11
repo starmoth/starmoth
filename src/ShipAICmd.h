@@ -111,6 +111,7 @@ public:
 	virtual bool TimeStepUpdate();
 	AICmdFlyTo(Ship *ship, Frame *targframe, const vector3d &posoff, double endvel, bool tangent);
 	AICmdFlyTo(Ship *ship, Body *target);
+	~AICmdFlyTo();
 
 	virtual void GetStatusText(char *str) {
 		if (m_child) m_child->GetStatusText(str);
@@ -151,6 +152,8 @@ public:
 	}
 
 private:
+	bool HandleSliceDrive(bool &bHandledOut);
+
 	Body *m_target;		// target for vicinity. Either this or targframe is 0
 	double m_dist;		// vicinity distance
 	Frame *m_targframe;	// target frame for waypoint
