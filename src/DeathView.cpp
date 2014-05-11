@@ -4,7 +4,6 @@
 #include "DeathView.h"
 #include "Pi.h"
 #include "Player.h"
-#include "ShipCpanel.h"
 #include "graphics/Graphics.h"
 
 DeathView::DeathView(): View()
@@ -31,11 +30,6 @@ void DeathView::Init()
 	m_cameraContext->SetFrame(Pi::player->GetFrame());
 	m_cameraContext->SetPosition(Pi::player->GetInterpPosition() + vector3d(0, 0, m_cameraDist));
 	m_cameraContext->SetOrient(matrix3x3d::Identity());
-}
-
-void DeathView::OnSwitchTo()
-{
-	Pi::cpan->HideAll();
 }
 
 void DeathView::Update()

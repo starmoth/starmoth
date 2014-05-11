@@ -3,7 +3,6 @@
 
 #include "Pi.h"
 #include "libs.h"
-#include "AmbientSounds.h"
 #include "CityOnPlanet.h"
 #include "DeathView.h"
 #include "FaceGenManager.h"
@@ -26,10 +25,7 @@
 #include "SectorView.h"
 #include "Serializer.h"
 #include "Sfx.h"
-#include "ShipCpanel.h"
 #include "ShipType.h"
-#include "Sound.h"
-#include "SoundMusic.h"
 #include "Space.h"
 #include "SpaceStation.h"
 #include "Star.h"
@@ -71,14 +67,11 @@ Player *Pi::player;
 View *Pi::currentView;
 WorldView *Pi::worldView;
 DeathView *Pi::deathView;
-UIView *Pi::spaceStationView;
-UIView *Pi::infoView;
 SectorView *Pi::sectorView;
 GalacticView *Pi::galacticView;
 UIView *Pi::settingsView;
 SystemView *Pi::systemView;
 SystemInfoView *Pi::systemInfoView;
-ShipCpanel *Pi::cpan;
 Game *Pi::game;
 Random Pi::rng;
 float Pi::frameTime;
@@ -115,8 +108,8 @@ Graphics::RenderState *Pi::quadRenderState = nullptr;
 ObjectViewerView *Pi::objectViewerView;
 #endif
 
-Sound::MusicPlayer Pi::musicPlayer;
-std::unique_ptr<JobQueue> Pi::jobQueue;
+std::unique_ptr<AsyncJobQueue> Pi::asyncJobQueue;
+std::unique_ptr<SyncJobQueue> Pi::syncJobQueue;
 
 // XXX enabling this breaks UI gauge rendering. see #2627
 #define USE_RTT 0
@@ -341,8 +334,9 @@ void Pi::Init(const std::map<std::string,std::string> &options, bool no_gui)
 	const int numCores = OS::GetNumCores();
 	assert(numCores > 0);
 	if (numThreads == 0) numThreads = std::max(Uint32(numCores) - 1, 1U);
-	jobQueue.reset(new JobQueue(numThreads));
+	asyncJobQueue.reset(new AsyncJobQueue(numThreads));
 	Output("started %d worker threads\n", numThreads);
+	syncJobQueue.reset(new SyncJobQueue);
 
 	Pi::ui.Reset(new UI::Context(Pi::renderer, Graphics::GetScreenWidth(), Graphics::GetScreenHeight()));
 
@@ -396,20 +390,9 @@ void Pi::Init(const std::map<std::string,std::string> &options, bool no_gui)
 	draw_progress(gauge, label, 0.8f);
 
 	NavLights::Init(Pi::renderer);
-	Sfx::Init(Pi::renderer);
 	draw_progress(gauge, label, 0.9f);
 
-	if (!no_gui && !config->Int("DisableSound")) {
-		Sound::Init();
-		Sound::SetMasterVolume(config->Float("MasterVolume"));
-		Sound::SetSfxVolume(config->Float("SfxVolume"));
-		GetMusicPlayer().SetVolume(config->Float("MusicVolume"));
-
-		Sound::Pause(0);
-		if (config->Int("MasterMuted")) Sound::Pause(1);
-		if (config->Int("SfxMuted")) Sound::SetSfxVolume(0.f);
-		if (config->Int("MusicMuted")) GetMusicPlayer().SetEnabled(false);
-	}
+	Sfx::Init(Pi::renderer);
 	draw_progress(gauge, label, 1.0f);
 
 	OS::NotifyLoadEnd();
@@ -531,7 +514,6 @@ void Pi::Quit()
 	NavLights::Uninit();
 	Shields::Uninit();
 	Sfx::Uninit();
-	Sound::Uninit();
 	CityOnPlanet::Uninit();
 	BaseSphere::Uninit();
 	Galaxy::Uninit();
@@ -542,22 +524,23 @@ void Pi::Quit()
 	delete Pi::modelCache;
 	delete Pi::renderer;
 	delete Pi::config;
-	StarSystemCache::ShrinkCache(SystemPath(), true);
+	StarSystem::attic.ClearCache();
 	SDL_Quit();
 	FileSystem::Uninit();
-	jobQueue.reset();
+	asyncJobQueue.reset();
+	syncJobQueue.reset();
 	exit(0);
 }
 
 void Pi::FlushCaches()
 {
-	StarSystemCache::ShrinkCache(SystemPath(), true);
+	StarSystem::attic.OutputCacheStatistics();
+	StarSystem::cache = StarSystem::attic.NewSlaveCache();
+	StarSystem::attic.ClearCache();
+	Sector::cache.OutputCacheStatistics();
 	Sector::cache.ClearCache();
-}
-
-void Pi::BoinkNoise()
-{
-	Sound::PlaySfx("Click", 0.3f, 0.3f, false);
+	// XXX Ideally the cache would now be empty, but we still have Faction::m_homesector :(
+	// assert(Sector::cache.IsEmpty());
 }
 
 void Pi::SetView(View *v)
@@ -612,6 +595,7 @@ void Pi::HandleEvents()
 					}
 					break;
 				}
+
 				// special keys. LCTRL+turd
 				if ((KeyState(SDLK_LCTRL) || (KeyState(SDLK_RCTRL)))) {
 					switch (event.key.keysym.sym) {
@@ -620,6 +604,20 @@ void Pi::HandleEvents()
 								Pi::EndGame();
 							Pi::Quit();
 							break;
+
+						// XXX - this hack to be replaced by proper keyboard input handling!
+						case SDLK_0:	// TIMEACCEL_PAUSED,
+						case SDLK_1:	// TIMEACCEL_1X,
+						case SDLK_2:	// TIMEACCEL_10X,
+						case SDLK_3:	// TIMEACCEL_100X,
+						case SDLK_4:	// TIMEACCEL_1000X,
+						case SDLK_5:	// TIMEACCEL_10000X,
+							if (Pi::game) {
+								const Game::TimeAccel ta = static_cast<Game::TimeAccel>(event.key.keysym.sym - SDLK_0);
+								Pi::game->RequestTimeAccel( ta );
+							}
+							break;
+
 						case SDLK_PRINTSCREEN: // print
 						case SDLK_KP_MULTIPLY: // screen
 						{
@@ -672,6 +670,61 @@ void Pi::HandleEvents()
 						}
 						default:
 							break; // This does nothing but it stops the compiler warnings
+					}
+				} else {
+					// XXX - this hack to be replaced by proper keyboard input handling!
+					switch (event.key.keysym.sym) {
+						case SDLK_F1: {
+							if (Pi::GetView() == Pi::worldView) {
+								switch(Pi::worldView->GetCamType()) {
+								case WorldView::CamType::CAM_INTERNAL:	Pi::worldView->SetCamType(WorldView::CamType::CAM_EXTERNAL);	break;
+								case WorldView::CamType::CAM_EXTERNAL:	Pi::worldView->SetCamType(WorldView::CamType::CAM_SIDEREAL);	break;
+								case WorldView::CamType::CAM_SIDEREAL:	Pi::worldView->SetCamType(WorldView::CamType::CAM_INTERNAL);	break;
+								};
+							}
+							break;
+						}
+
+						case SDLK_F4: {
+							if (Pi::GetView() == Pi::worldView) {
+								Pi::worldView->ShowTargetActions();
+							}
+							break;
+						}
+
+						case SDLK_F5: {
+							if (Pi::game && Pi::game->GetPlayer() ) {
+								PlayerShipController *psc = Pi::game->GetPlayer()->GetPlayerController();
+								if (psc) {
+									FlightControlState fcs = psc->GetFlightControlState();
+									switch(fcs) {
+									case FlightControlState::CONTROL_MANUAL:
+										psc->SetFlightControlState(FlightControlState::CONTROL_FIXSPEED);
+										break;
+									case FlightControlState::CONTROL_FIXSPEED:
+										if (psc->GetNavTarget())
+											psc->SetFlightControlState(FlightControlState::CONTROL_AUTOPILOT);
+										else
+											psc->SetFlightControlState(FlightControlState::CONTROL_MANUAL);
+										break;
+									case FlightControlState::CONTROL_AUTOPILOT:
+										psc->SetFlightControlState(FlightControlState::CONTROL_MANUAL);
+										break;
+									default:
+										break;
+									};
+								}
+							}
+							break;
+						}
+
+						case SDLK_F6:
+							if (FlightControlState::CONTROL_SLICE != Pi::player->GetPlayerController()->GetFlightControlState()) {
+								Pi::player->GetPlayerController()->SetFlightControlState(FlightControlState::CONTROL_SLICE);
+							} else {
+								Pi::player->GetPlayerController()->SetFlightControlState(FlightControlState::CONTROL_MANUAL);
+							}
+							break;
 					}
 				}
 				Pi::keyState[event.key.keysym.sym] = true;
@@ -770,8 +823,6 @@ void Pi::InitGame()
 		std::fill(state.hats.begin(), state.hats.end(), 0);
 		std::fill(state.axes.begin(), state.axes.end(), 0.f);
 	}
-
-	if (!config->Int("DisableSound")) AmbientSounds::Init();
 }
 
 static void OnPlayerDockOrUndock()
@@ -784,7 +835,6 @@ void Pi::StartGame()
 {
 	Pi::player->onDock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
 	Pi::player->onUndock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
-	cpan->ShowAll();
 	DrawGUI = true;
 	SetView(worldView);
 }
@@ -855,12 +905,6 @@ void Pi::Start()
 void Pi::EndGame()
 {
 	Pi::SetMouseGrab(false);
-
-	Pi::musicPlayer.Stop();
-	Sound::DestroyAllEvents();
-
-	if (!config->Int("DisableSound")) AmbientSounds::Uninit();
-	Sound::DestroyAllEvents();
 
 	assert(game);
 	delete game;
@@ -982,7 +1026,7 @@ void Pi::MainLoop()
 		} else if (game && game->IsNormalSpace()) {
 			if (config->Int("DisableScreenshotInfo")==0) {
 				const RefCountedPtr<StarSystem> sys = game->GetSpace()->GetStarSystem();
-				const SystemPath sp = sys->GetPath();
+				const SystemPath sp = sys->GetSystemPath();
 				std::ostringstream pathStr;
 
 				// fill in pathStr from sp values and sys->GetName()
@@ -1028,18 +1072,9 @@ void Pi::MainLoop()
 		if (Pi::game->UpdateTimeAccel())
 			accumulator = 0; // fix for huge pauses 10000x -> 1x
 
-		if (!Pi::player->IsDead()) {
-			// XXX should this really be limited to while the player is alive?
-			// this is something we need not do every turn...
-			if (!config->Int("DisableSound")) AmbientSounds::Update();
-			if( !Pi::game->IsHyperspace() ) {
-				StarSystemCache::ShrinkCache( Pi::game->GetSpace()->GetStarSystem()->GetPath() );
-			}
-		}
-		cpan->Update();
-		musicPlayer.Update();
-
-		jobQueue->FinishJobs();
+		syncJobQueue->RunJobs(SYNC_JOBS_PER_LOOP);
+		asyncJobQueue->FinishJobs();
+		syncJobQueue->FinishJobs();
 
 #if WITH_DEVKEYS
 		if (Pi::showDebugInfo && SDL_GetTicks() - last_stats > 1000) {

@@ -24,6 +24,7 @@ class HyperspaceCloud;
 class AICommand;
 class ShipController;
 namespace Graphics { class Renderer; }
+namespace Slice { enum class DriveState; }
 
 struct HeatGradientParameters_t {
 	matrix3x3f heatingMatrix;
@@ -106,7 +107,15 @@ public:
 	};
 
 	FlightState GetFlightState() const { return m_flightState; }
-	void SetFlightState(FlightState s);
+	void SetFlightState(const FlightState s);
+
+	Slice::DriveState GetSliceDriveState() const { return m_sliceDriveState; }
+	void SetSliceDriveState(const Slice::DriveState &driveState) { 
+		m_sliceDriveState = driveState; 
+	}
+	void EngageSliceDrive();
+	void DisengageSliceDrive();
+
 	float GetWheelState() const { return m_wheelState; }
 	int GetWheelTransition() const { return m_wheelTransition; }
 
@@ -122,7 +131,6 @@ public:
 		HYPERJUMP_NO_DRIVE,
 		HYPERJUMP_INITIATED,
 		HYPERJUMP_DRIVE_ACTIVE,
-		HYPERJUMP_OUT_OF_RANGE,
 		HYPERJUMP_SAFETY_LOCKOUT
 	};
 
@@ -223,6 +231,8 @@ public:
 
 	double GetLandingPosOffset() const { return m_landingMinOffset; }
 
+	float GetLaunchLockTimeout() const { return m_launchLockTimeout; }
+
 protected:
 	virtual void Save(Serializer::Writer &wr, Space *space);
 	virtual void Load(Serializer::Reader &rd, Space *space);
@@ -239,7 +249,6 @@ protected:
 	ShipController *m_controller;
 
 private:
-	void DoThrusterSounds() const;
 	void FireWeapon(int num);
 	void Init();
 	bool IsFiringLasers();
@@ -255,8 +264,10 @@ private:
 	SceneGraph::ModelSkin m_skin;
 
 	FlightState m_flightState;
+	Slice::DriveState m_sliceDriveState;
 	bool m_testLanded;
 	float m_launchLockTimeout;
+	float m_sliceDriveStartTimeout;
 	float m_wheelState;
 	int m_wheelTransition;
 

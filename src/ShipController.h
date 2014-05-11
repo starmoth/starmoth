@@ -13,12 +13,11 @@
 class Ship;
 class Space;
 
-enum FlightControlState {
+enum class FlightControlState {
 	CONTROL_MANUAL,
 	CONTROL_FIXSPEED,
-	CONTROL_FIXHEADING_FORWARD,
-	CONTROL_FIXHEADING_BACKWARD,
 	CONTROL_AUTOPILOT,
+	CONTROL_SLICE,
 
 	CONTROL_STATE_COUNT
 };
@@ -39,7 +38,7 @@ public:
 	virtual void Load(Serializer::Reader &rd) { }
 	virtual void PostLoadFixup(Space *) { }
 	virtual void StaticUpdate(float timeStep);
-	virtual void SetFlightControlState(FlightControlState s) { }
+	virtual void SetFlightControlState(const FlightControlState s) { }
 	Ship *m_ship;
 };
 
@@ -61,7 +60,7 @@ public:
 	FlightControlState GetFlightControlState() const { return m_flightControlState; }
 	vector3d GetMouseDir() const { return m_mouseDir; }
 	void SetMouseForRearView(bool enable) { m_invertMouse = enable; }
-	void SetFlightControlState(FlightControlState s);
+	void SetFlightControlState(const FlightControlState s);
 	float GetLowThrustPower() const { return m_lowThrustPower; }
 	void SetLowThrustPower(float power);
 

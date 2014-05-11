@@ -20,8 +20,6 @@ public:
 	Player(const std::string &shipId);
 	Player() {}; //default constructor used before Load
 	virtual void SetDockedWith(SpaceStation *, int port);
-	virtual bool OnDamage(Object *attacker, float kgDamage, const CollisionContact& contactData);
-	virtual bool SetWheelState(bool down); // returns success of state change, NOT state itself
 	virtual void NotifyRemoved(const Body* const removedBody);
 
 	PlayerShipController *GetPlayerController() const;
@@ -29,11 +27,6 @@ public:
 	Body *GetNavTarget() const;
 	Body *GetSetSpeedTarget() const;
 	void SetNavTarget(Body* const target, bool setSpeedTo = false);
-
-	virtual Ship::HyperjumpStatus InitiateHyperjumpTo(const SystemPath &dest, int warmup_time, double duration);
-	virtual void AbortHyperjump();
-	virtual Ship::HyperjumpStatus StartHyperspaceCountdown(const SystemPath &dest);
-	virtual void ResetHyperspaceCountdown();
 
 	// XXX cockpit is here for now because it has a physics component
 	void InitCockpit();

@@ -22,7 +22,6 @@ class ModelCache;
 class Player;
 class SectorView;
 class Ship;
-class ShipCpanel;
 class SpaceStation;
 class StarSystem;
 class SystemInfoView;
@@ -33,7 +32,6 @@ class WorldView;
 class SDLGraphics;
 namespace Graphics { class Renderer; }
 namespace SceneGraph { class Model; }
-namespace Sound { class MusicPlayer; }
 namespace UI { class Context; }
 
 #if WITH_OBJECTVIEWER
@@ -88,7 +86,6 @@ public:
 	}
 	static void SetMouseGrab(bool on);
 	static void FlushCaches();
-	static void BoinkNoise();
 	static float CalcHyperspaceRangeMax(int hyperclass, int total_mass_in_tonnes);
 	static float CalcHyperspaceRange(int hyperclass, float total_mass_in_tonnes, int fuel);
 	static float CalcHyperspaceDuration(int hyperclass, int total_mass_in_tonnes, float dist);
@@ -136,10 +133,6 @@ public:
 	static SystemView *systemView;
 	static WorldView *worldView;
 	static DeathView *deathView;
-	static UIView *spaceStationView;
-	static UIView *infoView;
-	static ShipCpanel *cpan;
-	static Sound::MusicPlayer &GetMusicPlayer() { return musicPlayer; }
 	static Graphics::Renderer *renderer; // blargh
 	static ModelCache *modelCache;
 	static Intro *intro;
@@ -154,7 +147,8 @@ public:
 	static struct DetailLevel detail;
 	static GameConfig *config;
 
-	static JobQueue *Jobs() { return jobQueue.get();}
+	static JobQueue *GetAsyncJobQueue() { return asyncJobQueue.get();}
+	static JobQueue *GetSyncJobQueue() { return syncJobQueue.get();}
 
 	static bool DrawGUI;
 
@@ -162,7 +156,9 @@ private:
 	static void HandleEvents();
 	static void InitJoysticks();
 
-	static std::unique_ptr<JobQueue> jobQueue;
+	static const Uint32 SYNC_JOBS_PER_LOOP = 1;
+	static std::unique_ptr<AsyncJobQueue> asyncJobQueue;
+	static std::unique_ptr<SyncJobQueue> syncJobQueue;
 
 	static bool menuDone;
 
@@ -195,7 +191,6 @@ private:
 		std::vector<float> axes;
 	};
 	static std::map<SDL_JoystickID,JoystickState> joysticks;
-	static Sound::MusicPlayer musicPlayer;
 
 	static bool navTunnelDisplayed;
 	static bool speedLinesDisplayed;

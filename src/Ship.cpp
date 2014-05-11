@@ -8,10 +8,10 @@
 #include "Player.h"
 #include "ShipAICmd.h"
 #include "ShipController.h"
-#include "Sound.h"
+#include "Slice.h"
 #include "Sfx.h"
 #include "galaxy/Sector.h"
-#include "galaxy/SectorCache.h"
+#include "galaxy/GalaxyCache.h"
 #include "Frame.h"
 #include "WorldView.h"
 #include "HyperspaceCloud.h"
@@ -35,8 +35,10 @@ void Ship::Save(Serializer::Writer &wr, Space *space)
 	wr.Int32(m_wheelTransition);
 	wr.Float(m_wheelState);
 	wr.Float(m_launchLockTimeout);
+	wr.Int32(Uint32(m_sliceDriveState));
+	wr.Float(m_sliceDriveStartTimeout);
 	wr.Bool(m_testLanded);
-	wr.Int32(int(m_flightState));
+	wr.Int32(Uint32(m_flightState));
 
 	// XXX make sure all hyperspace attrs and the cloud get saved
 	m_hyperspace.dest.Serialize(wr);
@@ -67,6 +69,8 @@ void Ship::Load(Serializer::Reader &rd, Space *space)
 	m_wheelTransition = rd.Int32();
 	m_wheelState = rd.Float();
 	m_launchLockTimeout = rd.Float();
+	m_sliceDriveState = static_cast<Slice::DriveState>(rd.Int32());
+	m_sliceDriveStartTimeout = rd.Float();
 	m_testLanded = rd.Bool();
 	m_flightState = static_cast<FlightState>(rd.Int32());
 	Properties().Set("flightState", EnumStrings::GetString("ShipFlightState", m_flightState));
@@ -160,9 +164,11 @@ Ship::Ship(const std::string &shipId): DynamicBody(),
 {
 	m_flightState = FLYING;
 	Properties().Set("flightState", EnumStrings::GetString("ShipFlightState", m_flightState));
+	m_sliceDriveState = Slice::DriveState::DRIVE_OFF;
 
 	m_testLanded = false;
 	m_launchLockTimeout = 0;
+	m_sliceDriveStartTimeout = 0.0f;
 	m_wheelTransition = 0;
 	m_wheelState = 0;
 	m_dockedWith = 0;
@@ -214,10 +220,8 @@ void Ship::SetPercentHull(float p)
 
 bool Ship::OnDamage(Object *attacker, float kgDamage, const CollisionContact& contactData)
 {
-	if (m_invulnerable) {
-		Sound::BodyMakeNoise(this, "Hull_hit_Small", 0.5f);
+	if (m_invulnerable)
 		return true;
-	}
 
 	if (!IsDead()) {
 		float dam = kgDamage*0.001f;
@@ -230,11 +234,6 @@ bool Ship::OnDamage(Object *attacker, float kgDamage, const CollisionContact& co
 		} else {
 			if (Pi::rng.Double() < kgDamage)
 				Sfx::Add(this, Sfx::TYPE_DAMAGE);
-
-			if (dam < 0.01 * float(GetShipType()->hullMass))
-				Sound::BodyMakeNoise(this, "Hull_hit_Small", 1.0f);
-			else
-				Sound::BodyMakeNoise(this, "Hull_Hit_Medium", 1.0f);
 		}
 	}
 
@@ -271,7 +270,6 @@ void Ship::Explode()
 	Pi::game->GetSpace()->KillBody(this);
 	if (this->GetFrame() == Pi::player->GetFrame()) {
 		Sfx::AddExplosion(this, Sfx::TYPE_EXPLOSION);
-		Sound::BodyMakeNoise(this, "Explosion_1", 1.0f);
 	}
 	ClearThrusterState();
 }
@@ -320,7 +318,7 @@ Ship::HyperjumpStatus Ship::GetHyperspaceDetails(const SystemPath &src, const Sy
 {
 	assert(dest.HasValidSystem());
 
-	outDurationSecs = 0.0;
+	outDurationSecs = 5.0f;
 
 	if (src.IsSameSystem(dest))
 		return HYPERJUMP_CURRENT_SYSTEM;
@@ -334,7 +332,7 @@ Ship::HyperjumpStatus Ship::GetHyperspaceDetails(const SystemPath &dest, double 
 		outDurationSecs = 0.0;
 		return HYPERJUMP_DRIVE_ACTIVE;
 	}
-	return GetHyperspaceDetails(Pi::game->GetSpace()->GetStarSystem()->GetPath(), dest, outDurationSecs);
+	return GetHyperspaceDetails(Pi::game->GetSpace()->GetStarSystem()->GetSystemPath(), dest, outDurationSecs);
 }
 
 Ship::HyperjumpStatus Ship::CheckHyperjumpCapability() const {
@@ -363,7 +361,7 @@ Ship::HyperjumpStatus Ship::InitiateHyperjumpTo(const SystemPath &dest, int warm
 	if (!dest.HasValidSystem() || GetFlightState() != FLYING || warmup_time < 1)
 		return HYPERJUMP_SAFETY_LOCKOUT;
 	StarSystem *s = Pi::game->GetSpace()->GetStarSystem().Get();
-	if (s && s->GetPath().IsSameSystem(dest))
+	if (s && s->GetSystemPath().IsSameSystem(dest))
 		return HYPERJUMP_CURRENT_SYSTEM;
 
 	m_hyperspace.dest = dest;
@@ -400,7 +398,7 @@ void Ship::ResetHyperspaceCountdown()
 	m_hyperspace.now = false;
 }
 
-void Ship::SetFlightState(Ship::FlightState newState)
+void Ship::SetFlightState(const FlightState newState)
 {
 	if (m_flightState == newState) return;
 	if (IsHyperspaceActive() && (newState != FLYING))
@@ -468,7 +466,6 @@ void Ship::TestLanded()
 				SetAngVelocity(vector3d(0, 0, 0));
 				ClearThrusterState();
 				SetFlightState(LANDED);
-				Sound::BodyMakeNoise(this, "Rough_Landing", 1.0f);
 			}
 		}
 	}
@@ -502,9 +499,8 @@ void Ship::TimeStepUpdate(const float timeStep)
 	// If docked, station is responsible for updating position/orient of ship
 	// but we call this crap anyway and hope it doesn't do anything bad
 
-	vector3d maxThrust = GetMaxThrust(m_thrusters);
-	vector3d thrust = vector3d(maxThrust.x*m_thrusters.x, maxThrust.y*m_thrusters.y,
-		maxThrust.z*m_thrusters.z);
+	const vector3d maxThrust = GetMaxThrust(m_thrusters);
+	const vector3d thrust = vector3d(maxThrust.x*m_thrusters.x, maxThrust.y*m_thrusters.y, maxThrust.z*m_thrusters.z);
 	AddRelForce(thrust);
 	AddRelTorque(GetShipType()->angThrust * m_angThrusters);
 
@@ -516,40 +512,6 @@ void Ship::TimeStepUpdate(const float timeStep)
 	m_navLights->SetEnabled(m_wheelState > 0.01f);
 	m_navLights->Update(timeStep);
 	if (m_sensors.get()) m_sensors->Update(timeStep);
-}
-
-void Ship::DoThrusterSounds() const
-{
-	// XXX any ship being the current camera body should emit sounds
-	// also, ship sounds could be split to internal and external sounds
-
-	// XXX sound logic could be part of a bigger class (ship internal sounds)
-	/* Ship engine noise. less loud inside */
-	float v_env = (Pi::worldView->GetCameraController()->IsExternal() ? 1.0f : 0.5f) * Sound::GetSfxVolume();
-	static Sound::Event sndev;
-	float volBoth = 0.0f;
-	volBoth += 0.5f*fabs(GetThrusterState().y);
-	volBoth += 0.5f*fabs(GetThrusterState().z);
-
-	float targetVol[2] = { volBoth, volBoth };
-	if (GetThrusterState().x > 0.0)
-		targetVol[0] += 0.5f*float(GetThrusterState().x);
-	else targetVol[1] += -0.5f*float(GetThrusterState().x);
-
-	targetVol[0] = v_env * Clamp(targetVol[0], 0.0f, 1.0f);
-	targetVol[1] = v_env * Clamp(targetVol[1], 0.0f, 1.0f);
-	float dv_dt[2] = { 4.0f, 4.0f };
-	if (!sndev.VolumeAnimate(targetVol, dv_dt)) {
-		sndev.Play("Thruster_large", 0.0f, 0.0f, Sound::OP_REPEAT);
-		sndev.VolumeAnimate(targetVol, dv_dt);
-	}
-	float angthrust = 0.1f * v_env * float(GetAngThrusterState().Length());
-
-	static Sound::Event angThrustSnd;
-	if (!angThrustSnd.VolumeAnimate(angthrust, angthrust, 5.0f, 5.0f)) {
-		angThrustSnd.Play("Thruster_Small", 0.0f, 0.0f, Sound::OP_REPEAT);
-		angThrustSnd.VolumeAnimate(angthrust, angthrust, 5.0f, 5.0f);
-	}
 }
 
 // for timestep changes, to stop autopilot overshoot
@@ -575,9 +537,6 @@ double Ship::GetHullTemperature() const
 
 void Ship::StaticUpdate(const float timeStep)
 {
-	// do player sounds before dead check, so they also turn off
-	if (IsType(Object::PLAYER)) DoThrusterSounds();
-
 	if (IsDead()) return;
 
 	if (m_controller) m_controller->StaticUpdate(timeStep);
@@ -616,6 +575,42 @@ void Ship::StaticUpdate(const float timeStep)
 			m_hyperspace.now = true;
 			SetFlightState(JUMPING);
 		}
+	}
+
+	//play start transit drive
+	if (GetSliceDriveState() == Slice::DriveState::DRIVE_READY && IsType(Object::PLAYER)) {
+		SetSliceDriveState(Slice::DriveState::DRIVE_START);
+		m_sliceDriveStartTimeout = 2.0f;	// XXX - hack, need to read from a config or wait for some timeout event like audio of drive warming up etc.
+	}
+	if(GetSliceDriveState() == Slice::DriveState::DRIVE_START && IsType(Object::PLAYER)) {
+		if(m_sliceDriveStartTimeout > 0.0f) {
+			m_sliceDriveStartTimeout -= timeStep;
+		} else {
+			m_sliceDriveStartTimeout = 0.0f;
+			SetSliceDriveState(Slice::DriveState::DRIVE_ON);
+		}
+	}
+	//play stop transit drive
+	if (GetSliceDriveState() == Slice::DriveState::DRIVE_STOP && IsType(Object::PLAYER) ) {
+		SetSliceDriveState(Slice::DriveState::DRIVE_FINISHED);
+	}
+}
+
+void Ship::EngageSliceDrive()
+{
+	if(GetSliceDriveState() == Slice::DriveState::DRIVE_OFF && IsType(Object::PLAYER)) {
+		SetSliceDriveState(Slice::DriveState::DRIVE_READY);
+	}
+}
+
+void Ship::DisengageSliceDrive()
+{
+	if(GetSliceDriveState() != Slice::DriveState::DRIVE_OFF && IsType(Object::PLAYER)) {
+		// Transit interrupted
+		//float interrupt_velocity = GetMaxManeuverSpeed();
+		float interrupt_velocity = 1000.0;
+		SetVelocity(GetOrient()*vector3d(0, 0, -interrupt_velocity));
+		SetSliceDriveState(Slice::DriveState::DRIVE_OFF);
 	}
 }
 
@@ -681,6 +676,8 @@ void Ship::EnterHyperspace() {
 		return;
 	}
 
+	m_hyperspace.duration = 5.0f;
+
 	SetFlightState(Ship::HYPERSPACE);
 
 	// virtual call, do class-specific things
@@ -688,7 +685,6 @@ void Ship::EnterHyperspace() {
 }
 
 void Ship::OnEnterHyperspace() {
-	Sound::BodyMakeNoise(this, "Hyperdrive_Jump", 1.f);
 	m_hyperspaceCloud = new HyperspaceCloud(this, Pi::game->GetTime() + m_hyperspace.duration, false);
 	m_hyperspaceCloud->SetFrame(GetFrame());
 	m_hyperspaceCloud->SetPosition(GetPosition());

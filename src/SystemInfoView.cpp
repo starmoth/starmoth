@@ -5,7 +5,6 @@
 #include "galaxy/Sector.h"
 #include "SectorView.h"
 #include "SystemInfoView.h"
-#include "ShipCpanel.h"
 #include "Player.h"
 #include "Space.h"
 #include "galaxy/SystemPath.h"
@@ -30,7 +29,7 @@ void SystemInfoView::OnBodySelected(SystemBody *b)
 
 	SystemPath path = m_system->GetPathOf(b);
 	RefCountedPtr<StarSystem> currentSys = Pi::game->GetSpace()->GetStarSystem();
-	bool isCurrentSystem = (currentSys && currentSys->GetPath() == m_system->GetPath());
+	bool isCurrentSystem = (currentSys && currentSys->GetSystemPath() == m_system->GetSystemPath());
 
 	if (path == m_selectedBodyPath) {
 		if (isCurrentSystem) {
@@ -203,7 +202,7 @@ void SystemInfoView::SystemChanged(const SystemPath &path)
 	if (!path.HasValidSystem())
 		return;
 
-	m_system = StarSystemCache::GetCached(path);
+	m_system = StarSystem::cache->GetCached(path);
 
 	m_sbodyInfoTab = new Gui::Fixed(float(Gui::Screen::GetWidth()), float(Gui::Screen::GetHeight()-100));
 
@@ -308,14 +307,14 @@ void SystemInfoView::Draw3D()
 
 SystemInfoView::RefreshType SystemInfoView::NeedsRefresh()
 {
-	if (!m_system || !Pi::sectorView->GetSelected().IsSameSystem(m_system->GetPath()))
+	if (!m_system || !Pi::sectorView->GetSelected().IsSameSystem(m_system->GetSystemPath()))
 		return REFRESH_ALL;
 
 	if (m_system->GetUnexplored())
 		return REFRESH_NONE; // Nothing can be selected and we reset in SystemChanged
 
 	RefCountedPtr<StarSystem> currentSys = Pi::game->GetSpace()->GetStarSystem();
-	if (!currentSys || currentSys->GetPath() != m_system->GetPath()) {
+	if (!currentSys || currentSys->GetSystemPath() != m_system->GetSystemPath()) {
 		// We are not currently in the selected system
 		if (Pi::sectorView->GetSelected() != m_selectedBodyPath)
 			return REFRESH_SELECTED;
@@ -379,7 +378,7 @@ void SystemInfoView::UpdateIconSelections()
 		bodyIcon.second->SetSelected(false);
 
 		RefCountedPtr<StarSystem> currentSys = Pi::game->GetSpace()->GetStarSystem();
-		if (currentSys && currentSys->GetPath() == m_system->GetPath()) {
+		if (currentSys && currentSys->GetSystemPath() == m_system->GetSystemPath()) {
 			//navtarget can be only set in current system
 			if (Body* navtarget = Pi::player->GetNavTarget()) {
 				const SystemPath& navpath = navtarget->GetSystemBody()->GetPath();
@@ -391,7 +390,7 @@ void SystemInfoView::UpdateIconSelections()
 			}
 		} else {
 			SystemPath selected = Pi::sectorView->GetSelected();
-			if (selected.IsSameSystem(m_system->GetPath()) && !selected.IsSystemPath()) {
+			if (selected.IsSameSystem(m_system->GetSystemPath()) && !selected.IsSystemPath()) {
 				if (bodyIcon.first == selected.bodyIndex) {
 					bodyIcon.second->SetSelectColor(Color(64, 96, 255, 255));
 					bodyIcon.second->SetSelected(true);

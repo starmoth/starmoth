@@ -16,7 +16,6 @@ AM_CXXFLAGS += $(STD_CXXFLAGS) $(WARN_CXXFLAGS)
 bin_PROGRAMS = pioneer
 noinst_HEADERS = \
 	Aabb.h \
-	AmbientSounds.h \
 	AnimationCurves.h \
 	Background.h \
 	BaseSphere.h \
@@ -85,10 +84,8 @@ noinst_HEADERS = \
 	ShipAICmd.h \
 	ShipCockpit.h \
 	ShipController.h \
-	ShipCpanel.h \
 	ShipType.h \
-	Sound.h \
-	SoundMusic.h \
+	Slice.h \
 	Space.h \
 	SpaceStation.h \
 	SpaceStationType.h \
@@ -115,7 +112,6 @@ noinst_HEADERS = \
 	enum_table.h
 
 pioneer_SOURCES	= \
-	AmbientSounds.cpp \
 	Background.cpp \
 	BaseSphere.cpp \
 	Body.cpp \
@@ -174,10 +170,8 @@ pioneer_SOURCES	= \
 	ShipAICmd.cpp \
 	ShipCockpit.cpp \
 	ShipController.cpp \
-	ShipCpanel.cpp \
 	ShipType.cpp \
-	Sound.cpp \
-	SoundMusic.cpp \
+	Slice.cpp \
 	Space.cpp \
 	SpaceStation.cpp \
 	SpaceStationType.cpp \

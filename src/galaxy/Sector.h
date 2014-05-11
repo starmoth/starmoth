@@ -7,7 +7,7 @@
 #include "libs.h"
 #include "galaxy/SystemPath.h"
 #include "galaxy/StarSystem.h"
-#include "SectorCache.h"
+#include "GalaxyCache.h"
 #include "RefCounted.h"
 #include <string>
 #include <vector>
@@ -15,7 +15,7 @@
 class Faction;
 
 class Sector : public RefCounted {
-	friend class SectorCache;
+	friend class GalaxyObjectCache<Sector, SystemPath::LessSectorOnly>;
 
 public:
 	// lightyears
@@ -69,12 +69,12 @@ private:
 	Sector& operator=(const Sector&); // non-assignable
 
 	int sx, sy, sz;
-	bool m_factionsAssigned;
+	SectorCache* m_cache;
 
-	Sector(const SystemPath& path); // Only SectorCache(Job) are allowed to create sectors
+	Sector(const SystemPath& path, SectorCache* cache); // Only SectorCache(Job) are allowed to create sectors
+	void SetCache(SectorCache* cache) { assert(!m_cache); m_cache = cache; }
 	const std::string GenName(System &sys, int si, Random &rand);
 	// sets appropriate factions for all systems in the sector
-	void AssignFactions();
 };
 
 #endif /* _SECTOR_H */

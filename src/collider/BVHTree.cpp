@@ -8,18 +8,17 @@
 
 const int MAX_SPLITPOS_RETRIES = 15;
 
-BVHTree::BVHTree(int numObjs, const objPtr_t *objPtrs, const Aabb *objAabbs)
+BVHTree::BVHTree(const int numObjs, const objPtr_t *objPtrs, const Aabb *objAabbs)
+: m_objPtrAllocPos(0)
+, m_objPtrAllocMax(numObjs)
+, m_nodeAllocPos(0)
+, m_nodeAllocMax(numObjs*2 + 1)
 {
 	std::vector<int> activeObjIdxs(numObjs);
 	for (int i=0; i<numObjs; i++) activeObjIdxs[i] = i;
 
 	m_objPtrAlloc = new objPtr_t[numObjs];
-	m_objPtrAllocPos = 0;
-	m_objPtrAllocMax = numObjs;
-
 	m_bvhNodes = new BVHNode[numObjs*2 + 1];
-	m_nodeAllocPos = 0;
-	m_nodeAllocMax = numObjs*2 + 1;
 
 	m_root = AllocNode();
 	BuildNode(m_root, objPtrs, objAabbs, activeObjIdxs);

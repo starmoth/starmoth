@@ -11,7 +11,6 @@ GameConfig::GameConfig(const std::map<std::string,std::string> &override_)
 	std::map<std::string, std::string> &map = m_map[""];
 	map["Lang"] = "en";
 	map["DisableEclipse"] = "0";
-	map["DisableSound"] = "0";
 	map["StartFullscreen"] = "0";
 	map["ScrWidth"] = "800";
 	map["ScrHeight"] = "600";
@@ -22,11 +21,6 @@ GameConfig::GameConfig(const std::map<std::string,std::string> &override_)
 	map["InvertMouseY"] = "0";
 	map["FOVVertical"] = "65";
 	map["DisplayNavTunnel"] = "0";
-	map["MasterVolume"] = "0.8";
-	map["MusicVolume"] = "0.8";
-	map["MasterMuted"] = "0";
-	map["SfxMuted"] = "0";
-	map["MusicMuted"] = "0";
 	map["SectorViewXRotation"] = "-10.0";
 	map["SectorViewZRotation"] = "0";
 	map["SectorViewZoom"] = "2.0";

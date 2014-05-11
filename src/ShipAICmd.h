@@ -10,17 +10,19 @@
 #include "Pi.h"
 #include "Game.h"
 
+const double NO_TRANSIT_RANGE = 100000.0;
+
 class AICommand {
 public:
 	// This enum is solely to make the serialization work
-	enum CmdName { CMD_NONE, CMD_DOCK, CMD_FLYTO, CMD_FLYAROUND, CMD_KAMIKAZE, CMD_HOLDPOSITION, CMD_FORMATION };
+	enum CmdName { CMD_NONE, CMD_DOCK, CMD_FLYTO, CMD_FLYAROUND, CMD_KAMIKAZE, CMD_HOLDPOSITION, CMD_FORMATION, CMD_TRANSITAROUND };
 
 	AICommand(Ship *ship, CmdName name) {
 	   	m_ship = ship; m_cmdName = name;
 		m_child = 0;
 		m_ship->AIMessage(Ship::AIERROR_NONE);
 	}
-	virtual ~AICommand() { if (m_child) delete m_child; }
+	virtual ~AICommand() {}
 
 	virtual bool TimeStepUpdate() = 0;
 	bool ProcessChild();				// returns false if child is active
@@ -41,7 +43,7 @@ public:
 protected:
 	CmdName m_cmdName;
 	Ship *m_ship;
-	AICommand *m_child;
+	std::unique_ptr<AICommand> m_child;
 
 	int m_shipIndex; // deserialisation
 };
@@ -109,6 +111,7 @@ public:
 	virtual bool TimeStepUpdate();
 	AICmdFlyTo(Ship *ship, Frame *targframe, const vector3d &posoff, double endvel, bool tangent);
 	AICmdFlyTo(Ship *ship, Body *target);
+	~AICmdFlyTo();
 
 	virtual void GetStatusText(char *str) {
 		if (m_child) m_child->GetStatusText(str);
@@ -118,7 +121,7 @@ public:
 			m_targframe->GetLabel().c_str(), m_posoff.Length()/1000.0, m_endvel/1000.0, m_state);
 	}
 	virtual void Save(Serializer::Writer &wr) {
-		if(m_child) { delete m_child; m_child = 0; }
+		m_child.reset();
 		AICommand::Save(wr);
 		wr.Int32(Pi::game->GetSpace()->GetIndexForBody(m_target));
 		wr.Double(m_dist);
@@ -149,6 +152,8 @@ public:
 	}
 
 private:
+	bool HandleSliceDrive(bool &bHandledOut);
+
 	Body *m_target;		// target for vicinity. Either this or targframe is 0
 	double m_dist;		// vicinity distance
 	Frame *m_targframe;	// target frame for waypoint
@@ -176,7 +181,7 @@ public:
 			m_alt/1000.0, m_vel/1000.0, m_targmode);
 	}
 	virtual void Save(Serializer::Writer &wr) {
-		if (m_child) { delete m_child; m_child = 0; }
+		m_child.reset();
 		AICommand::Save(wr);
 		wr.Int32(Pi::game->GetSpace()->GetIndexForBody(m_obstructor));
 		wr.Double(m_vel); wr.Double(m_alt); wr.Int32(m_targmode);
@@ -205,6 +210,59 @@ private:
 	double m_alt, m_vel;
 	int m_targmode;			// 0 targpos termination, 1 infinite, 2+ orbital termination
 	vector3d m_targpos;		// target position in ship space
+};
+
+class AICmdTransitAround : public AICommand 
+{
+public:
+	AICmdTransitAround(Ship *ship, Body *obstructor);
+	virtual ~AICmdTransitAround();
+
+	virtual bool TimeStepUpdate();
+
+	virtual void GetStatusText(char *str) {
+		if(m_child) {
+			m_child->GetStatusText(str);
+		} else {
+			snprintf(str, 255, "TransitAround: alt %1fkm, state %s", m_alt/1000.0, (m_state == AITA_ALTITUDE? "Altitude Correction" : (m_state == AITA_TRANSIT? "Transit Engaged" : "Transit Ready")));
+		}
+	}
+
+	virtual void Save(Serializer::Writer &wr) {
+		m_child.reset();
+		AICommand::Save(wr);
+		wr.Int32(Pi::game->GetSpace()->GetIndexForBody(m_obstructor));
+		wr.Float(m_warmUpTime);
+	}
+	AICmdTransitAround(Serializer::Reader &rd) : AICommand(rd, CMD_TRANSITAROUND) {
+		m_obstructorIndex = rd.Int32();
+		m_warmUpTime = rd.Float();
+	}
+	virtual void PostLoadFixup(Space *space) {
+		AICommand::PostLoadFixup(space);
+		m_obstructor = space->GetBodyByIndex(m_obstructorIndex);
+	}
+	virtual void OnDeleted(const Body *body) {
+		AICommand::OnDeleted(body);
+	}
+
+	void SetTargPos(const vector3d &target_position) { 
+		m_targetPosition = target_position; 
+	}
+
+	enum AITransitAroundState {
+		AITA_READY,
+		AITA_ALTITUDE,
+		AITA_TRANSIT
+	};
+
+private:
+	Body *m_obstructor;				// Body of obstructor (planet->GetBody)
+	vector3d m_targetPosition;		// Target location in ship coordinates
+	int m_obstructorIndex;			// Used for serialization
+	double m_alt;					// Actual altitude
+	AITransitAroundState m_state;	// TransitAround state, for display
+	float m_warmUpTime;				// Transit startup time (gives sound a chance to play)
 };
 
 class AICmdKamikaze : public AICommand {
@@ -255,7 +313,7 @@ public:
 			m_target->GetLabel().c_str(), m_posoff.Length()/1000.0);
 	}
 	virtual void Save(Serializer::Writer &wr) {
-		if(m_child) { delete m_child; m_child = 0; }
+		m_child.reset();
 		AICommand::Save(wr);
 		wr.Int32(Pi::game->GetSpace()->GetIndexForBody(m_target));
 		wr.Vector3d(m_posoff);

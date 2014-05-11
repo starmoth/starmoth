@@ -8,7 +8,6 @@
 #include "SpaceStation.h"
 #include "HyperspaceCloud.h"
 #include "Pi.h"
-#include "ShipCpanel.h"
 #include "Sfx.h"
 #include "MathUtil.h"
 #include "SectorView.h"
@@ -196,10 +195,6 @@ void Game::Serialize(Serializer::Writer &wr)
 
 	// views. must be saved in init order
 	section = Serializer::Writer();
-	Pi::cpan->Save(section);
-	wr.WrSection("ShipCpanel", section.GetData());
-
-	section = Serializer::Writer();
 	Pi::sectorView->Save(section);
 	wr.WrSection("SectorView", section.GetData());
 
@@ -332,7 +327,7 @@ void Game::SwitchToHyperspace()
 {
 	PROFILE_SCOPED()
 	// remember where we came from so we can properly place the player on exit
-	m_hyperspaceSource = m_space->GetStarSystem()->GetPath();
+	m_hyperspaceSource = m_space->GetStarSystem()->GetSystemPath();
 	m_hyperspaceDest =  m_player->GetHyperspaceDest();
 
 	// find all the departure clouds, convert them to arrival clouds and store
@@ -580,20 +575,16 @@ void Game::CreateViews()
 	Pi::game = this;
 	Pi::player = m_player.get();
 
-	Pi::cpan = new ShipCpanel(Pi::renderer);
 	Pi::sectorView = new SectorView();
 	Pi::worldView = new WorldView();
 	Pi::galacticView = new GalacticView();
 	Pi::systemView = new SystemView();
 	Pi::systemInfoView = new SystemInfoView();
-	Pi::spaceStationView = new UIView("StationView");
-	Pi::infoView = new UIView("InfoView");
 	Pi::deathView = new DeathView();
 	Pi::settingsView = new UIView("SettingsInGame");
 
 	// view manager will handle setting this probably
 	Pi::galacticView->SetRenderer(Pi::renderer);
-	Pi::infoView->SetRenderer(Pi::renderer);
 	Pi::sectorView->SetRenderer(Pi::renderer);
 	Pi::systemInfoView->SetRenderer(Pi::renderer);
 	Pi::systemView->SetRenderer(Pi::renderer);
@@ -615,10 +606,7 @@ void Game::LoadViews(Serializer::Reader &rd)
 	Pi::game = this;
 	Pi::player = m_player.get();
 
-	Serializer::Reader section = rd.RdSection("ShipCpanel");
-	Pi::cpan = new ShipCpanel(section, Pi::renderer);
-
-	section = rd.RdSection("SectorView");
+	Serializer::Reader section = rd.RdSection("SectorView");
 	Pi::sectorView = new SectorView(section);
 
 	section = rd.RdSection("WorldView");
@@ -627,8 +615,6 @@ void Game::LoadViews(Serializer::Reader &rd)
 	Pi::galacticView = new GalacticView();
 	Pi::systemView = new SystemView();
 	Pi::systemInfoView = new SystemInfoView();
-	Pi::spaceStationView = new UIView("StationView");
-	Pi::infoView = new UIView("InfoView");
 	Pi::deathView = new DeathView();
 	Pi::settingsView = new UIView("SettingsInGame");
 
@@ -638,7 +624,6 @@ void Game::LoadViews(Serializer::Reader &rd)
 #endif
 
 	Pi::galacticView->SetRenderer(Pi::renderer);
-	Pi::infoView->SetRenderer(Pi::renderer);
 	Pi::sectorView->SetRenderer(Pi::renderer);
 	Pi::systemInfoView->SetRenderer(Pi::renderer);
 	Pi::systemView->SetRenderer(Pi::renderer);
@@ -656,26 +641,20 @@ void Game::DestroyViews()
 
 	delete Pi::settingsView;
 	delete Pi::deathView;
-	delete Pi::infoView;
-	delete Pi::spaceStationView;
 	delete Pi::systemInfoView;
 	delete Pi::systemView;
 	delete Pi::galacticView;
 	delete Pi::worldView;
 	delete Pi::sectorView;
-	delete Pi::cpan;
 
 	Pi::objectViewerView = 0;
 	Pi::settingsView = 0;
 	Pi::deathView = 0;
-	Pi::infoView = 0;
-	Pi::spaceStationView = 0;
 	Pi::systemInfoView = 0;
 	Pi::systemView = 0;
 	Pi::galacticView = 0;
 	Pi::worldView = 0;
 	Pi::sectorView = 0;
-	Pi::cpan = 0;
 }
 
 Game *Game::LoadGame(const std::string &filename)

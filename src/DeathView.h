@@ -20,7 +20,7 @@ public:
 	virtual void Draw3D();
 
 protected:
-	virtual void OnSwitchTo();
+	virtual void OnSwitchTo() {}
 
 private:
 	RefCountedPtr<CameraContext> m_cameraContext;
