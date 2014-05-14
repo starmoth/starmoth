@@ -7,6 +7,8 @@ in vec3 lightDir;
 
 uniform Scene scene;
 
+out vec4 frag_color;
+
 void main(void)
 {
 	float len = dot(uv, uv);
@@ -14,6 +16,6 @@ void main(void)
 		discard;
 	vec3 normal = vec3(uv.x, uv.y, sqrt(1.0 - len));
 	float diff = dot(normal, lightDir);
-	gl_FragColor = color * diff + scene.ambient;
+	frag_color = color * diff + scene.ambient;
 	SetFragDepth();
 }

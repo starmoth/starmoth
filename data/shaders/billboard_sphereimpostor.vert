@@ -9,6 +9,6 @@ void main(void)
 {
 	gl_Position = logarithmicTransform();
 	color = a_color;
-	uv = a_texCoord0.xy * 2.0 - 1.0; //recenter to -1,1 range
+	uv = a_uv0.xy * 2.0 - 1.0; //recenter to -1,1 range
 	lightDir = normalize(-a_vertex.xyz);
 }

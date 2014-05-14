@@ -24,7 +24,7 @@ void main(void)
 	vertexColor = a_color;
 #endif
 #ifdef TEXTURE0
-	texCoord0 = a_texCoord0.xy;
+	texCoord0 = a_uv0.xy;
 #endif
 #if (NUM_LIGHTS > 0)
 	eyePos = vec3(uViewMatrix * a_vertex);

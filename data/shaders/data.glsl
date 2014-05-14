@@ -5,7 +5,7 @@ uniform mat4 uProjectionMatrix;
 uniform mat4 uViewMatrix;
 uniform mat4 uViewMatrixInverse;
 uniform mat4 uViewProjectionMatrix;
-uniform mat4 uNormalMatrix;
+uniform mat3 uNormalMatrix;
 
 //Light uniform parameters
 struct Light {
@@ -14,22 +14,9 @@ struct Light {
 	vec4 specular;
 	vec4 position;
 };
-
-uniform Light uLight0;
-uniform Light uLight1;
-uniform Light uLight2;
-uniform Light uLight3;
+uniform Light uLightSource[4];
 
 in vec4 a_vertex;
 in vec3 a_normal;
 in vec4 a_color;
-in vec4 a_uv0;
-
-in vec2 a_texCoord0;
-in vec2 a_texCoord1;
-in vec2 a_texCoord2;
-in vec2 a_texCoord3;
-in vec2 a_texCoord4;
-in vec2 a_texCoord5;
-in vec2 a_texCoord6;
-in vec2 a_texCoord7;
+in vec2 a_uv0;

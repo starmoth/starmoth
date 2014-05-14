@@ -27,19 +27,21 @@ in vec3 normal;
 uniform Scene scene;
 uniform Material material;
 
+out vec4 frag_color;
+
 #if (NUM_LIGHTS > 0)
 //ambient, diffuse, specular
 //would be a good idea to make specular optional
 void ads(in int lightNum, in vec3 pos, in vec3 n, inout vec4 light, inout vec4 specular)
 {
-	vec3 s = normalize(vec3(gl_LightSource[lightNum].position)); //directional light
+	vec3 s = normalize(vec3(uLightSource[lightNum].position)); //directional light
 	vec3 v = normalize(vec3(-pos));
 	vec3 h = normalize(v + s);
-	light += gl_LightSource[lightNum].diffuse * material.diffuse * max(dot(s, n), 0.0);
+	light += uLightSource[lightNum].diffuse * material.diffuse * max(dot(s, n), 0.0);
 #ifdef MAP_SPECULAR
-	specular += texture2D(texture1, texCoord0) * material.specular * gl_LightSource[lightNum].diffuse * pow(max(dot(h, n), 0.0), material.shininess);
+	specular += texture2D(texture1, texCoord0) * material.specular * uLightSource[lightNum].diffuse * pow(max(dot(h, n), 0.0), material.shininess);
 #else
-	specular += material.specular * gl_LightSource[lightNum].diffuse * pow(max(dot(h, n), 0.0), material.shininess);
+	specular += material.specular * uLightSource[lightNum].diffuse * pow(max(dot(h, n), 0.0), material.shininess);
 #endif
 	specular.a = 0.0;
 	light.a = 1.0;
@@ -99,18 +101,18 @@ void main(void)
 			float dphNn = clamp(dot(heatingDir, normal), 0.0, 1.0);
 			float heatDot = heatingAmount * (dphNn * dphNn * dphNn);
 			vec4 heatColour = texture2D(heatGradient, vec2(heatDot, 0.5)); //heat gradient blend
-			gl_FragColor = color * light + specular;
-			gl_FragColor.rgb = gl_FragColor.rgb + heatColour.rgb;
+			frag_color = color * light + specular;
+			frag_color.rgb = frag_color.rgb + heatColour.rgb;
 		}
 		else
 		{
-			gl_FragColor = color * light + specular;
+			frag_color = color * light + specular;
 		}
 	#else
-		gl_FragColor = color * light + specular;
+		frag_color = color * light + specular;
 	#endif // HEAT_COLOURING
 #else
-	gl_FragColor = color;
+	frag_color = color;
 #endif
 	SetFragDepth();
 }

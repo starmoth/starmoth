@@ -3,6 +3,8 @@
 
 uniform sampler2D texture0;
 
+out vec4 frag_color;
+
 void main(void)
 {
 	// Bits of ring in shadow!
@@ -10,13 +12,13 @@ void main(void)
 	vec4 texCol = texture2D(texture0, gl_TexCoord[0].st);
 
 	for (int i=0; i<NUM_LIGHTS; ++i) {
-		float l = findSphereEyeRayEntryDistance(-vec3(gl_TexCoord[1]), vec3(uViewMatrixInverse * gl_LightSource[i].position), 1.0);
+		float l = findSphereEyeRayEntryDistance(-vec3(gl_TexCoord[1]), vec3(uViewMatrixInverse * uLightSource[i].position), 1.0);
 		if (l <= 0.0) {
-			col = col + texCol*gl_LightSource[i].diffuse;
+			col = col + texCol*uLightSource[i].diffuse;
 		}
 	}
 	col.a = texCol.a;
-	gl_FragColor = col;
+	frag_color = col;
 
 	SetFragDepth();
 }
