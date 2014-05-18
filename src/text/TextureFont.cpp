@@ -458,9 +458,8 @@ TextureFont::Glyph TextureFont::BakeGlyph(Uint32 chr)
 
 		FT_Done_Glyph(strokeGlyph);
 	}
-
-	else {
-
+	else 
+	{
 		//don't run off atlas borders
 		m_atlasVIncrement = std::max(m_atlasVIncrement, bmGlyph->bitmap.rows);
 		if (m_atlasU + bmGlyph->bitmap.width >= ATLAS_SIZE) {

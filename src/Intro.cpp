@@ -94,22 +94,15 @@ void Intro::Draw(float _time)
 
 	float duration = _time-m_startTime;
 
-	// zoom in
-	if (duration < ZOOM_IN_END)
+	if (duration < ZOOM_IN_END) { // zoom in
 		m_dist = Clamp(Easing::Quad::EaseOut(duration, m_zoomBegin, m_zoomEnd-m_zoomBegin, 2.0f), m_zoomBegin, m_zoomEnd);
-
-	// wait
-	else if (duration < WAIT_END) {
+	} else if (duration < WAIT_END) { // wait
 		m_dist = m_zoomEnd;
-	}
-
-	// zoom out
-	else if (duration < ZOOM_OUT_END)
+	} else if (duration < ZOOM_OUT_END) { // zoom out
 		m_dist = Clamp(Easing::Quad::EaseIn(duration-WAIT_END, m_zoomEnd, m_zoomBegin-m_zoomEnd, 2.0f), m_zoomBegin, m_zoomEnd);
-
-	// done
-	else
+	} else { // done
 		m_needReset = true;
+	}
 
 	Graphics::Renderer::StateTicket ticket(m_renderer);
 
