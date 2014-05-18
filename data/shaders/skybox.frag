@@ -10,5 +10,5 @@ out vec4 frag_color;
 
 void main( void )
 {
-    frag_color = vec4(textureCube( texture0, v_texCoord.xyz ).xyz * v_skyboxFactor, 1.0);
+    frag_color = vec4(textureCube( texture0, v_texCoord ).xyz * v_skyboxFactor, 1.0);
 }

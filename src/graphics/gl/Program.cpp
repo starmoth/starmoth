@@ -217,10 +217,10 @@ void Program::InitShaderLocations()
 	for( int i=0 ; i<5 ; i++ ) {
 		snprintf(cLight, 64, "uLight[%d]", i);
 		const std::string strLight( cLight );
-		lights[i].ambient.Init( (strLight + "ambient").c_str(), m_program );
-		lights[i].diffuse.Init( (strLight + "diffuse").c_str(), m_program );
-		lights[i].specular.Init( (strLight + "specular").c_str(), m_program );
-		lights[i].position.Init( (strLight + "position").c_str(), m_program );
+		lights[i].ambient.Init( (strLight + ".ambient").c_str(), m_program );
+		lights[i].diffuse.Init( (strLight + ".diffuse").c_str(), m_program );
+		lights[i].specular.Init( (strLight + ".specular").c_str(), m_program );
+		lights[i].position.Init( (strLight + ".position").c_str(), m_program );
 	}
 
 	invLogZfarPlus1.Init("invLogZfarPlus1", m_program);

@@ -95,29 +95,20 @@ RendererGL::RendererGL(WindowSDL *window, const Graphics::Settings &vs)
 
 	//XXX bunch of fixed function states here!
 	glCullFace(GL_BACK);
-	CheckRenderErrors();
 	glFrontFace(GL_CCW);
-	CheckRenderErrors();
 	glEnable(GL_CULL_FACE);
-	CheckRenderErrors();
 	glEnable(GL_DEPTH_TEST);
-	CheckRenderErrors();
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	CheckRenderErrors();
 	glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-	CheckRenderErrors();
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-	CheckRenderErrors();
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-	CheckRenderErrors();
 
 	SetMatrixMode(MatrixMode::MODELVIEW);
-	CheckRenderErrors();
 
 	m_modelViewStack.push(matrix4x4f::Identity());
 	m_projectionStack.push(matrix4x4f::Identity());
 
-	SetClearColor(Color4f(0.f));
+	SetClearColor(Color4f(0.f, 0.f, 0.f, 0.f));
 	SetViewport(0, 0, m_width, m_height);
 
 	if (vs.enableDebugMessages)
@@ -129,8 +120,6 @@ RendererGL::RendererGL(WindowSDL *window, const Graphics::Settings &vs)
 	desc.vertexColors = true;
 	vtxColorProg = new PiGL::MultiProgram(desc);
 	m_programs.push_back(std::make_pair(desc, vtxColorProg));
-
-	CheckRenderErrors();
 }
 
 RendererGL::~RendererGL()
@@ -152,13 +141,11 @@ bool RendererGL::BeginFrame()
 	PROFILE_SCOPED()
 	glClearColor(0,0,0,0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	CheckRenderErrors();
 	return true;
 }
 
 bool RendererGL::EndFrame()
 {
-	CheckRenderErrors();
 	return true;
 }
 
@@ -234,7 +221,6 @@ bool RendererGL::ClearDepthBuffer()
 bool RendererGL::SetClearColor(const Color4f &c)
 {
 	glClearColor(c.r, c.g, c.b, c.a);
-	CheckRenderErrors();
 	return true;
 }
 
@@ -393,7 +379,6 @@ void RendererGL::SetProgramShaderTransforms(PiGL::Program *p)
 	p->uViewMatrixInverse.Set( mv.Inverse() );
 	p->uViewProjectionMatrix.Set( ViewProjection );
 	p->uNormalMatrix.Set( NormalMatrix );
-	CheckRenderErrors();
 }
 
 bool RendererGL::DrawLines(int count, const vector3f *v, const Color *c, RenderState* state, LineType t)
@@ -564,7 +549,6 @@ bool RendererGL::DrawBuffer(VertexBuffer* vb, RenderState* state, Material* mat,
 	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
-	CheckRenderErrors();
 
 	return true;
 }
@@ -590,7 +574,6 @@ bool RendererGL::DrawBufferIndexed(VertexBuffer *vb, IndexBuffer *ib, RenderStat
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
-	CheckRenderErrors();
 
 	return true;
 }
