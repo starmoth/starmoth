@@ -356,7 +356,7 @@ Container::Container(Graphics::Renderer *renderer, Random &rand)
 , m_milkyWay(renderer)
 , m_starField(renderer, rand)
 , m_universeBox(renderer)
-, m_drawFlags( DRAW_SKYBOX | DRAW_STARS )
+, m_drawFlags( DRAW_SKYBOX /*| DRAW_STARS*/ )
 {
 	Graphics::RenderStateDesc rsd;
 	rsd.depthTest  = false;
