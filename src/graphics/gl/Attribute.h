@@ -17,6 +17,8 @@ namespace Graphics {
 			Attribute();
 			void Init(const char *name, GLuint program);
 
+			GLint Location() const { return m_location; }
+
 		private:
 			GLint m_location;
 		};

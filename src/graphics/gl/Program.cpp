@@ -7,10 +7,9 @@
 #include "StringF.h"
 #include "OS.h"
 #include "graphics/Graphics.h"
+#include "graphics/GLDebug.h"
 
 namespace Graphics {
-
-extern void CheckRenderErrors();
 
 namespace PiGL {
 
@@ -190,10 +189,11 @@ void Program::LoadShaders(const std::string &name, const std::string &defines)
 	m_program = glCreateProgram();
 	glAttachShader(m_program, vs.shader);
 	glAttachShader(m_program, fs.shader);
+
+	glBindFragDataLocation(m_program, 0, "frag_color");
 	glLinkProgram(m_program);
 
 	check_glsl_errors(name.c_str(), m_program);
-	CheckRenderErrors();
 
 	//shaders may now be deleted by Shader destructor
 }
@@ -212,6 +212,17 @@ void Program::InitShaderLocations()
 	uViewProjectionMatrix.Init("uViewProjectionMatrix", m_program);
 	uNormalMatrix.Init("uNormalMatrix", m_program);
 
+	//Light uniform parameters
+	char cLight[64];
+	for( int i=0 ; i<5 ; i++ ) {
+		snprintf(cLight, 64, "uLight[%d]", i);
+		const std::string strLight( cLight );
+		lights[i].ambient.Init( (strLight + "ambient").c_str(), m_program );
+		lights[i].diffuse.Init( (strLight + "diffuse").c_str(), m_program );
+		lights[i].specular.Init( (strLight + "specular").c_str(), m_program );
+		lights[i].position.Init( (strLight + "position").c_str(), m_program );
+	}
+
 	invLogZfarPlus1.Init("invLogZfarPlus1", m_program);
 	diffuse.Init("material.diffuse", m_program);
 	emission.Init("material.emission", m_program);
@@ -228,7 +239,6 @@ void Program::InitShaderLocations()
 	heatingNormal.Init("heatingNormal", m_program);
 	heatingAmount.Init("heatingAmount", m_program);
 	sceneAmbient.Init("scene.ambient", m_program);
-	CheckRenderErrors();
 }
 
 } // PiGL

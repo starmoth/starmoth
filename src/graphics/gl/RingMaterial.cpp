@@ -4,6 +4,7 @@
 #include "RingMaterial.h"
 #include "StringF.h"
 #include "graphics/Graphics.h"
+#include "graphics/Light.h"
 #include "glRenderer.h"
 #include "graphics/gl/glTexture.h"
 
@@ -26,6 +27,15 @@ void RingMaterial::Apply()
 	assert(this->texture0);
 	static_cast<TextureGL*>(texture0)->Bind();
 	m_program->texture0.Set(0);
+
+	//Light uniform parameters
+	const std::vector<Light>& lights = m_renderer->GetLights();
+	for( Uint32 i=0 ; i<lights.size() && i<MAX_NUM_LIGHTS ; i++ ) {
+		const Light& Light = lights[i];
+		m_program->lights[i].diffuse.Set( Light.GetDiffuse() );
+		m_program->lights[i].specular.Set( Light.GetSpecular() );
+		m_program->lights[i].position.Set( Light.GetPosition() );
+	}
 }
 
 void RingMaterial::Unapply()

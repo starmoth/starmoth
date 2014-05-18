@@ -107,17 +107,66 @@ static inline vector2f scaled(const vector2f &v)
 	return v * (1.0f / SKIN_SIZE);
 }
 
+#pragma pack(push, 4)
+struct SkinVert {
+	vector3f pos;
+	vector2f uv;
+};
+
+struct SkinPosOnlyVert {
+	vector3f pos;
+};
+#pragma pack(pop)
+
+Graphics::VertexBuffer* CreatePosUVVB(const Uint32 numVertices, Graphics::Material *mat, Graphics::Renderer *renderer)
+{
+	//create buffer and upload data
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[1].semantic = Graphics::ATTRIB_UV0;
+	vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_FLOAT2;
+	vbd.numVertices = numVertices;
+	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+	mat->SetupVertexBufferDesc( vbd );
+
+	return renderer->CreateVertexBuffer(vbd);
+}
+
+Graphics::VertexBuffer* CreatePosVB(const Uint32 numVertices, Graphics::Material *mat, Graphics::Renderer *renderer)
+{
+	//create buffer and upload data
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.numVertices = numVertices;
+	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+	mat->SetupVertexBufferDesc( vbd );
+
+	return renderer->CreateVertexBuffer(vbd);
+}
+
 void Skin::DrawRectElement(const RectElement &element, const Point &pos, const Point &size, Graphics::BlendMode blendMode) const
 {
 	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_UV0);
-
+	
 	va.Add(vector3f(pos.x,        pos.y,        0.0f), scaled(vector2f(element.pos.x,                element.pos.y)));
 	va.Add(vector3f(pos.x,        pos.y+size.y, 0.0f), scaled(vector2f(element.pos.x,                element.pos.y+element.size.y)));
 	va.Add(vector3f(pos.x+size.x, pos.y,        0.0f), scaled(vector2f(element.pos.x+element.size.x, element.pos.y)));
 	va.Add(vector3f(pos.x+size.x, pos.y+size.y, 0.0f), scaled(vector2f(element.pos.x+element.size.x, element.pos.y+element.size.y)));
 
+	std::unique_ptr<Graphics::VertexBuffer> vertexBuffer( CreatePosUVVB(va.GetNumVerts(), m_textureMaterial.Get(), m_renderer) );
+	SkinVert* vtxPtr = vertexBuffer->Map<SkinVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(vertexBuffer->GetDesc().stride == sizeof(SkinVert));
+	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= va.position[i];
+		vtxPtr[i].uv	= va.uv0[i];
+	}
+	vertexBuffer->Unmap();
+
 	m_textureMaterial->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, m_opacity*Color::WHITE.a);
-	m_renderer->DrawTriangles(&va, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
+	m_renderer->DrawBuffer(vertexBuffer.get(), GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
 }
 
 void Skin::DrawBorderedRectElement(const BorderedRectElement &element, const Point &pos, const Point &size, Graphics::BlendMode blendMode) const
@@ -162,8 +211,18 @@ void Skin::DrawBorderedRectElement(const BorderedRectElement &element, const Poi
 	va.Add(vector3f(pos.x+size.x,       pos.y+size.y-height, 0.0f), scaled(vector2f(element.pos.x+element.size.x,       element.pos.y+element.size.y-height)));
 	va.Add(vector3f(pos.x+size.x,       pos.y+size.y,        0.0f), scaled(vector2f(element.pos.x+element.size.x,       element.pos.y+element.size.y)));
 
+	Graphics::VertexBuffer* vertexBuffer( CreatePosUVVB(va.GetNumVerts(), m_textureMaterial.Get(), m_renderer) );
+	SkinVert* vtxPtr = vertexBuffer->Map<SkinVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(vertexBuffer->GetDesc().stride == sizeof(SkinVert));
+	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= va.position[i];
+		vtxPtr[i].uv	= va.uv0[i];
+	}
+	vertexBuffer->Unmap();
+
 	m_textureMaterial->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, m_opacity*Color::WHITE.a);
-	m_renderer->DrawTriangles(&va, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
+	m_renderer->DrawBuffer(vertexBuffer, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
 }
 
 void Skin::DrawVerticalEdgedRectElement(const EdgedRectElement &element, const Point &pos, const Point &size, Graphics::BlendMode blendMode) const
@@ -181,8 +240,18 @@ void Skin::DrawVerticalEdgedRectElement(const EdgedRectElement &element, const P
 	va.Add(vector3f(pos.x+size.x, pos.y+size.y,        0.0f), scaled(vector2f(element.pos.x+element.size.x, element.pos.y+element.size.y)));
 	va.Add(vector3f(pos.x,        pos.y+size.y,        0.0f), scaled(vector2f(element.pos.x,                element.pos.y+element.size.y)));
 
+	Graphics::VertexBuffer* vertexBuffer( CreatePosUVVB(va.GetNumVerts(), m_textureMaterial.Get(), m_renderer) );
+	SkinVert* vtxPtr = vertexBuffer->Map<SkinVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(vertexBuffer->GetDesc().stride == sizeof(SkinVert));
+	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= va.position[i];
+		vtxPtr[i].uv	= va.uv0[i];
+	}
+	vertexBuffer->Unmap();
+
 	m_textureMaterial->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, m_opacity*Color::WHITE.a);
-	m_renderer->DrawTriangles(&va, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
+	m_renderer->DrawBuffer(vertexBuffer, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
 }
 
 void Skin::DrawHorizontalEdgedRectElement(const EdgedRectElement &element, const Point &pos, const Point &size, Graphics::BlendMode blendMode) const
@@ -200,8 +269,18 @@ void Skin::DrawHorizontalEdgedRectElement(const EdgedRectElement &element, const
 	va.Add(vector3f(pos.x+size.x,       pos.y,        0.0f), scaled(vector2f(element.pos.x+element.size.x,       element.pos.y)));
 	va.Add(vector3f(pos.x+size.x,       pos.y+size.y, 0.0f), scaled(vector2f(element.pos.x+element.size.x,       element.pos.y+element.size.y)));
 
+	Graphics::VertexBuffer* vertexBuffer( CreatePosUVVB(va.GetNumVerts(), m_textureMaterial.Get(), m_renderer) );
+	SkinVert* vtxPtr = vertexBuffer->Map<SkinVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(vertexBuffer->GetDesc().stride == sizeof(SkinVert));
+	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= va.position[i];
+		vtxPtr[i].uv	= va.uv0[i];
+	}
+	vertexBuffer->Unmap();
+
 	m_textureMaterial->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, m_opacity*Color::WHITE.a);
-	m_renderer->DrawTriangles(&va, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
+	m_renderer->DrawBuffer(vertexBuffer, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
 }
 
 void Skin::DrawRectColor(const Color &col, const Point &pos, const Point &size) const
@@ -212,9 +291,18 @@ void Skin::DrawRectColor(const Color &col, const Point &pos, const Point &size) 
 	va.Add(vector3f(pos.x,        pos.y+size.y, 0.0f));
 	va.Add(vector3f(pos.x+size.x, pos.y,        0.0f));
 	va.Add(vector3f(pos.x+size.x, pos.y+size.y, 0.0f));
+	
+	Graphics::VertexBuffer* vertexBuffer( CreatePosVB(va.GetNumVerts(), m_textureMaterial.Get(), m_renderer) );
+	SkinPosOnlyVert* vtxPtr = vertexBuffer->Map<SkinPosOnlyVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(vertexBuffer->GetDesc().stride == sizeof(SkinPosOnlyVert));
+	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= va.position[i];
+	}
+	vertexBuffer->Unmap();
 
 	m_colorMaterial->diffuse = Color(col.r, col.g, col.b, m_opacity*col.a);
-	m_renderer->DrawTriangles(&va, GetAlphaBlendState(), m_colorMaterial.Get(), Graphics::TRIANGLE_STRIP);
+	m_renderer->DrawBuffer(vertexBuffer, GetAlphaBlendState(), m_colorMaterial.Get(), Graphics::TRIANGLE_STRIP);
 }
 
 static size_t SplitSpec(const std::string &spec, std::vector<int> &output)

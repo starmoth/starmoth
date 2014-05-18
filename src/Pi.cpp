@@ -212,6 +212,18 @@ static void draw_progress(UI::Gauge *gauge, UI::Label *label, float progress)
 	Pi::renderer->SwapBuffers();
 }
 
+static void draw_hackThing(UI::Gauge *gauge, UI::Label *label, float progress)
+{
+	gauge->SetValue(progress);
+	static std::string msgToAndy("A b c d e f g h i j k l m n o p q r s t u v w x y z");
+	label->SetText(msgToAndy);
+
+	Pi::renderer->ClearScreen();
+	Pi::ui->Update();
+	Pi::ui->Draw();
+	Pi::renderer->SwapBuffers();
+}
+
 SceneGraph::Model *Pi::FindModel(const std::string &name, bool allowPlaceholder)
 {
 	SceneGraph::Model *m = 0;

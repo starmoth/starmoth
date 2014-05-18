@@ -2,6 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "MultiMaterial.h"
+//#include "graphics/Light.h"
 #include "graphics/Material.h"
 #include "graphics/gl/glTexture.h"
 #include "graphics/Graphics.h"
@@ -80,6 +81,15 @@ void MultiMaterial::Apply()
 	MultiProgram *p = static_cast<MultiProgram*>(m_program);
 
 	p->diffuse.Set(this->diffuse);
+
+	//Light uniform parameters
+	const std::vector<Light>& lights = m_renderer->GetLights();
+	for( Uint32 i=0 ; i<lights.size() && i<MAX_NUM_LIGHTS ; i++ ) {
+		const Light& Light = lights[i];
+		p->lights[i].diffuse.Set( Light.GetDiffuse() );
+		p->lights[i].specular.Set( Light.GetSpecular() );
+		p->lights[i].position.Set( Light.GetPosition() );
+	}
 
 	p->texture0.Set(this->texture0, 0);
 	p->texture1.Set(this->texture1, 1);

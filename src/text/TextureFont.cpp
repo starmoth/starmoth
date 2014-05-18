@@ -6,6 +6,7 @@
 #include "libs.h"
 #include "graphics/Renderer.h"
 #include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 #include "TextSupport.h"
 #include "utils.h"
 #include <algorithm>
@@ -18,7 +19,15 @@ namespace Text {
 
 int TextureFont::s_glyphCount = 0;
 
-void TextureFont::AddGlyphGeometry(Graphics::VertexArray *va, const Glyph &glyph, float x, float y, const Color &c)
+#pragma pack(push, 4)
+struct GlyphVert {
+	vector3f pos;
+	Color4ub col;
+	vector2f uv;
+};
+#pragma pack(pop)
+
+void TextureFont::AddGlyphGeometry(const Uint32 vtxidx, const Glyph &glyph, float x, float y, const Color &c)
 {
 	const float offX = x + float(glyph.offX);
 	const float offY = y + GetHeight() - float(glyph.offY);
@@ -35,26 +44,31 @@ void TextureFont::AddGlyphGeometry(Graphics::VertexArray *va, const Glyph &glyph
 	const vector2f t2(offU+glyph.texWidth, offV                );
 	const vector2f t3(offU+glyph.texWidth, offV+glyph.texHeight);
 
-	va->Add(p0, c, t0);
-	va->Add(p1, c, t1);
-	va->Add(p2, c, t2);
-
-	va->Add(p2, c, t2);
-	va->Add(p1, c, t1);
-	va->Add(p3, c, t3);
+	GlyphVert* vtxPtr = m_vertexBuffer->Map<GlyphVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(m_vertexBuffer->GetDesc().stride == sizeof(GlyphVert));
+	{
+		const Uint32 offset = (vtxidx * 6);
+		vtxPtr[0 + offset].pos = p0;		vtxPtr[0 + offset].col = Color4ub(c);		vtxPtr[0 + offset].uv = t0;
+		vtxPtr[1 + offset].pos = p1;		vtxPtr[1 + offset].col = Color4ub(c);		vtxPtr[1 + offset].uv = t1;
+		vtxPtr[2 + offset].pos = p2;		vtxPtr[2 + offset].col = Color4ub(c);		vtxPtr[2 + offset].uv = t2;
+		vtxPtr[3 + offset].pos = p2;		vtxPtr[3 + offset].col = Color4ub(c);		vtxPtr[3 + offset].uv = t2;
+		vtxPtr[4 + offset].pos = p1;		vtxPtr[4 + offset].col = Color4ub(c);		vtxPtr[4 + offset].uv = t1;
+		vtxPtr[5 + offset].pos = p3;		vtxPtr[5 + offset].col = Color4ub(c);		vtxPtr[5 + offset].uv = t3;
+	}
+	m_vertexBuffer->Unmap();
 
 	s_glyphCount++;
 }
 
-void TextureFont::MeasureString(const char *str, float &w, float &h)
+void TextureFont::MeasureString(const std::string &str, float &w, float &h)
 {
 	w = h = 0.0f;
 
 	float line_width = 0.0f;
 
 	int i = 0;
-	while (str[i]) {
-		if (str[i] == '\n') {
+	for (auto &ch : str) {
+		if (ch == '\n') {
 			if (line_width > w) w = line_width;
 			line_width = 0.0f;
 			h += GetHeight();
@@ -63,7 +77,7 @@ void TextureFont::MeasureString(const char *str, float &w, float &h)
 
 		else {
 			Uint32 chr;
-			int n = utf8_decode_char(&chr, &str[i]);
+			int n = utf8_decode_char(&chr, &ch);
 			assert(n);
 			i += n;
 
@@ -71,9 +85,9 @@ void TextureFont::MeasureString(const char *str, float &w, float &h)
 
 			line_width += glyph.advX;
 
-			if (str[i]) {
+			if (ch) {
 				Uint32 chr2;
-				n = utf8_decode_char(&chr2, &str[i]);
+				n = utf8_decode_char(&chr2, &ch);
 				assert(n);
 				line_width += GetKern(glyph, GetGlyph(chr2));
 			}
@@ -84,9 +98,9 @@ void TextureFont::MeasureString(const char *str, float &w, float &h)
 	h += GetHeight() + GetDescender();
 }
 
-void TextureFont::MeasureCharacterPos(const char *str, int charIndex, float &charX, float &charY)
+void TextureFont::MeasureCharacterPos(const std::string &str, int charIndex, float &charX, float &charY)
 {
-	assert(str && (charIndex >= 0));
+	assert(charIndex >= 0);
 
 	float x = 0.0f, y = GetHeight();
 	int i = 0;
@@ -118,9 +132,9 @@ void TextureFont::MeasureCharacterPos(const char *str, int charIndex, float &cha
 	charY = y;
 }
 
-int TextureFont::PickCharacter(const char *str, float mouseX, float mouseY)
+int TextureFont::PickCharacter(const std::string &str, float mouseX, float mouseY)
 {
-	assert(str && mouseX >= 0.0f && mouseY >= 0.0f);
+	assert(mouseX >= 0.0f && mouseY >= 0.0f);
 
 	// at the point of the mouse in-box test, the vars have the following values:
 	// i1: the index of the character being tested
@@ -169,10 +183,24 @@ int TextureFont::PickCharacter(const char *str, float mouseX, float mouseY)
 	return i2;
 }
 
-void TextureFont::RenderString(const char *str, float x, float y, const Color &color)
+void TextureFont::RenderString(const std::string &str, float x, float y, const Color &color)
 {
 	PROFILE_SCOPED()
-	m_vertices.Clear();
+
+	if(str.empty()) return;
+
+	//create buffer and upload data
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+	vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
+	vbd.attrib[2].semantic = Graphics::ATTRIB_UV0;
+	vbd.attrib[2].format   = Graphics::ATTRIB_FORMAT_FLOAT2;
+	vbd.numVertices = str.size() * 6;	// 2 tringles per character, 3 vertices per triangle = 6 vertices per character
+	vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;	// we could be updating this per-frame
+	m_mat->SetupVertexBufferDesc( vbd );
+	m_vertexBuffer.reset( m_renderer->CreateVertexBuffer(vbd) );
 
 	float alpha_f = color.a / 255.0f;
 	const Color premult_color = Color(color.r * alpha_f, color.g * alpha_f, color.b * alpha_f, color.a);
@@ -180,26 +208,24 @@ void TextureFont::RenderString(const char *str, float x, float y, const Color &c
 	float px = x;
 	float py = y;
 
-	int i = 0;
-	while (str[i]) {
-		if (str[i] == '\n') {
+	Uint32 i = 0;
+	for (const auto &ch : str) {
+		if (ch == '\n') {
 			px = x;
 			py += GetHeight();
-			i++;
 		}
 
 		else {
 			Uint32 chr;
-			int n = utf8_decode_char(&chr, &str[i]);
+			int n = utf8_decode_char(&chr, &ch);
 			assert(n);
-			i += n;
 
 			const Glyph &glyph = GetGlyph(chr);
-			AddGlyphGeometry(&m_vertices, glyph, roundf(px), py, premult_color);
+			AddGlyphGeometry(i++, glyph, roundf(px), py, premult_color);
 
-			if (str[i]) {
+			if (ch) {
 				Uint32 chr2;
-				n = utf8_decode_char(&chr2, &str[i]);
+				n = utf8_decode_char(&chr2, &ch);
 				assert(n);
 
 				px += GetKern(glyph, GetGlyph(chr2));
@@ -209,13 +235,27 @@ void TextureFont::RenderString(const char *str, float x, float y, const Color &c
 		}
 	}
 
-	m_renderer->DrawTriangles(&m_vertices, m_renderState, m_mat.get());
+	m_renderer->DrawBuffer(m_vertexBuffer.get(), m_renderState, m_mat.get());
 }
 
-Color TextureFont::RenderMarkup(const char *str, float x, float y, const Color &color)
+Color TextureFont::RenderMarkup(const std::string &str, float x, float y, const Color &color)
 {
 	PROFILE_SCOPED()
-	m_vertices.Clear();
+
+	if(str.empty()) return Color::BLACK;
+
+	//create buffer and upload data
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+	vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
+	vbd.attrib[2].semantic = Graphics::ATTRIB_UV0;
+	vbd.attrib[2].format   = Graphics::ATTRIB_FORMAT_FLOAT2;
+	vbd.numVertices = str.size() * 6;	// 2 tringles per character, 3 vertices per triangle = 6 vertices per character
+	vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;	// we could be updating this per-frame
+	m_mat->SetupVertexBufferDesc( vbd );
+	m_vertexBuffer.reset( m_renderer->CreateVertexBuffer(vbd) );
 
 	float px = x;
 	float py = y;
@@ -225,10 +265,11 @@ Color TextureFont::RenderMarkup(const char *str, float x, float y, const Color &
 	Color premult_c = Color(c.r * alpha_f, c.g * alpha_f, c.b * alpha_f, c.a);
 
 	int i = 0;
-	while (str[i]) {
-		if (str[i] == '#') {
+	Uint32 idx = 0;
+	for (auto &ch : str) {
+		if (ch == '#') {
 			int hexcol;
-			if (sscanf(str+i, "#%3x", &hexcol)==1) {
+			if (sscanf((&str[0])+i, "#%3x", &hexcol)==1) {
 				c.r = float((hexcol&0xf00)>>4);
 				c.g = float((hexcol&0xf0));
 				c.b = float((hexcol&0xf)<<4);
@@ -241,7 +282,7 @@ Color TextureFont::RenderMarkup(const char *str, float x, float y, const Color &
 			}
 		}
 
-		if (str[i] == '\n') {
+		if (ch == '\n') {
 			px = x;
 			py += GetHeight();
 			i++;
@@ -249,17 +290,17 @@ Color TextureFont::RenderMarkup(const char *str, float x, float y, const Color &
 
 		else {
 			Uint32 chr;
-			int n = utf8_decode_char(&chr, &str[i]);
+			int n = utf8_decode_char(&chr, &ch);
 			assert(n);
 			i += n;
 
 			const Glyph &glyph = GetGlyph(chr);
-			AddGlyphGeometry(&m_vertices, glyph, roundf(px), py, premult_c);
+			AddGlyphGeometry(idx++, glyph, roundf(px), py, premult_c);
 
 			// XXX kerning doesn't skip markup
-			if (str[i]) {
+			if (ch) {
 				Uint32 chr2;
-				n = utf8_decode_char(&chr2, &str[i]);
+				n = utf8_decode_char(&chr2, &ch);
 				assert(n);
 
 				px += GetKern(glyph, GetGlyph(chr2));
@@ -269,7 +310,7 @@ Color TextureFont::RenderMarkup(const char *str, float x, float y, const Color &
 		}
 	}
 
-	m_renderer->DrawTriangles(&m_vertices, m_renderState, m_mat.get());
+	m_renderer->DrawBuffer(m_vertexBuffer.get(), m_renderState, m_mat.get());
 	return c;
 }
 
@@ -469,7 +510,6 @@ TextureFont::TextureFont(const FontConfig &config, Graphics::Renderer *renderer,
 	, m_scale(scale)
 	, m_ftLib(nullptr)
 	, m_stroker(nullptr)
-	, m_vertices(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE | Graphics::ATTRIB_UV0)
 	, m_atlasU(0)
 	, m_atlasV(0)
 	, m_atlasVIncrement(0)
@@ -501,6 +541,7 @@ TextureFont::TextureFont(const FontConfig &config, Graphics::Renderer *renderer,
 	m_renderState = m_renderer->CreateRenderState(rsd);
 
 	Graphics::MaterialDescriptor desc;
+	desc.effect = Graphics::EFFECT_UI;
 	desc.vertexColors = true; //to allow per-character colors
 	desc.textures = 1;
 	m_mat.reset(m_renderer->CreateMaterial(desc));

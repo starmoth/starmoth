@@ -92,9 +92,7 @@ TextureGL::TextureGL(const TextureDescriptor &descriptor, const bool useCompress
 	switch (m_target) {
 		case GL_TEXTURE_2D:
 			if (!IsCompressed(descriptor.format)) {
-				if (descriptor.generateMipmaps)
-					glTexParameteri(m_target, GL_GENERATE_MIPMAP, GL_TRUE);
-				else
+				if (!descriptor.generateMipmaps)
 					glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL, 0);
 				CheckRenderErrors();
 
@@ -103,6 +101,9 @@ TextureGL::TextureGL(const TextureDescriptor &descriptor, const bool useCompress
 					descriptor.dataSize.x, descriptor.dataSize.y, 0,
 					GLImageFormat(descriptor.format),
 					GLImageType(descriptor.format), 0);
+				CheckRenderErrors();
+				if (descriptor.generateMipmaps)
+					glGenerateMipmap(m_target);
 				CheckRenderErrors();
 			} else {
 				const GLint oglFormatMinSize = GetMinSize(descriptor.format);
@@ -129,8 +130,6 @@ TextureGL::TextureGL(const TextureDescriptor &descriptor, const bool useCompress
 		case GL_TEXTURE_CUBE_MAP:
 			if(!IsCompressed(descriptor.format)) {
 				if(descriptor.generateMipmaps)
-					glTexParameteri(m_target, GL_GENERATE_MIPMAP, GL_TRUE);
-				else
 					glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL, 0);
 				CheckRenderErrors();
 
@@ -164,6 +163,9 @@ TextureGL::TextureGL(const TextureDescriptor &descriptor, const bool useCompress
 					descriptor.dataSize.x, descriptor.dataSize.y, 0,
 					GLImageFormat(descriptor.format),
 					GLImageType(descriptor.format), 0);
+				CheckRenderErrors();
+				if (descriptor.generateMipmaps)
+					glGenerateMipmap(m_target);
 				CheckRenderErrors();
 			} else {
 				const GLint oglFormatMinSize = GetMinSize(descriptor.format);
@@ -273,6 +275,9 @@ void TextureGL::Update(const void *data, const vector2f &pos, const vector2f &da
 			assert(0);
 	}
 
+	if (GetDescriptor().generateMipmaps)
+		glGenerateMipmap(m_target);
+
 	glBindTexture(m_target, 0);
 }
 
@@ -325,6 +330,9 @@ void TextureGL::Update(const TextureCubeData &data, const vector2f &dataSize, Te
 		default:
 			assert(0);
 	}
+	
+	if (GetDescriptor().generateMipmaps)
+		glGenerateMipmap(m_target);
 
 	glBindTexture(m_target, 0);
 }

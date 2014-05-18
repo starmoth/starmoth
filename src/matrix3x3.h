@@ -128,6 +128,26 @@ class matrix3x3 {
 		m[6] = cell[2]; m[7] = cell[5]; m[8] = cell[8];
 		return m;
 	}
+	matrix3x3 Inverse() const {
+		// computes the inverse of a matrix m
+		/*const T det = m(0, 0) * (m(1, 1) * m(2, 2) - m(2, 1) * m(1, 2)) -
+					  m(0, 1) * (m(1, 0) * m(2, 2) - m(1, 2) * m(2, 0)) +
+					  m(0, 2) * (m(1, 0) * m(2, 1) - m(1, 1) * m(2, 0));
+
+		const T invdet = 1 / det;*/
+
+		matrix3x3 minv; // inverse of matrix m
+		/*minv(0, 0) = (m(1, 1) * m(2, 2) - m(2, 1) * m(1, 2)) * invdet;
+		minv(0, 1) = (m(0, 2) * m(2, 1) - m(0, 1) * m(2, 2)) * invdet;
+		minv(0, 2) = (m(0, 1) * m(1, 2) - m(0, 2) * m(1, 1)) * invdet;
+		minv(1, 0) = (m(1, 2) * m(2, 0) - m(1, 0) * m(2, 2)) * invdet;
+		minv(1, 1) = (m(0, 0) * m(2, 2) - m(0, 2) * m(2, 0)) * invdet;
+		minv(1, 2) = (m(1, 0) * m(0, 2) - m(0, 0) * m(1, 2)) * invdet;
+		minv(2, 0) = (m(1, 0) * m(2, 1) - m(2, 0) * m(1, 1)) * invdet;
+		minv(2, 1) = (m(2, 0) * m(0, 1) - m(0, 0) * m(2, 1)) * invdet;
+		minv(2, 2) = (m(0, 0) * m(1, 1) - m(1, 0) * m(0, 1)) * invdet;*/
+		return minv;
+	}
 	void Renormalize() {
 		vector3<T> x = VectorX().Normalized();
 		vector3<T> y = VectorZ().Cross(x).Normalized();

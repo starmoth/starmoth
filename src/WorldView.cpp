@@ -1015,7 +1015,7 @@ void WorldView::Draw()
 	// don't draw crosshairs etc in hyperspace
 	if (Pi::player->GetFlightState() == Ship::HYPERSPACE) return;
 
-	glPushAttrib(GL_CURRENT_BIT | GL_LINE_BIT);
+	//glPushAttrib(GL_CURRENT_BIT | GL_LINE_BIT);
 	glLineWidth(2.0f);
 
 	Color white(255, 255, 255, 204);
@@ -1052,7 +1052,7 @@ void WorldView::Draw()
 		}
 	}
 
-	glPopAttrib();
+	//glPopAttrib();
 }
 
 void WorldView::DrawCrosshair(float px, float py, float sz, const Color &c)

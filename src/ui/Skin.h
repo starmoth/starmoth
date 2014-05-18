@@ -9,6 +9,7 @@
 #include "graphics/Renderer.h"
 #include "graphics/Material.h"
 #include "graphics/RenderState.h"
+#include "graphics/VertexBuffer.h"
 #include "Point.h"
 
 #include <SDL_stdinc.h>
@@ -219,6 +220,7 @@ private:
 	RefCountedPtr<Graphics::Texture> m_texture;
 	RefCountedPtr<Graphics::Material> m_textureMaterial;
 	RefCountedPtr<Graphics::Material> m_colorMaterial;
+	//static std::vector<Graphics::VertexBuffer*> s_vertexBuffersToDelete;
 
 	float m_opacity;
 

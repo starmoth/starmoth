@@ -32,6 +32,9 @@ namespace Graphics {
 			virtual void Apply();
 			virtual void Unapply();
 			virtual void SetProgram(Program *p) { m_program = p; }
+			virtual Program* GetProgram() const { return m_program; }
+
+			virtual void SetupVertexBufferDesc( VertexBufferDesc& ) const;
 
 		protected:
 			friend class Graphics::RendererGL;

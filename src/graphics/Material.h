@@ -19,12 +19,14 @@ namespace Graphics {
 
 class Texture;
 class RendererGL;
+struct VertexBufferDesc;
 
 // Shorthand for unique effects
 // The other descriptor parameters may or may not have effect,
 // depends on the effect
 enum EffectType {
 	EFFECT_DEFAULT,
+	EFFECT_UI,
 	EFFECT_STARFIELD,
 	EFFECT_PLANETRING,
 	EFFECT_GEOSPHERE_TERRAIN,
@@ -89,6 +91,8 @@ public:
 
 	virtual void Apply() { }
 	virtual void Unapply() { }
+
+	virtual void SetupVertexBufferDesc( VertexBufferDesc& ) const = 0;
 
 	void *specialParameter0; //this can be whatever. Bit of a hack.
 

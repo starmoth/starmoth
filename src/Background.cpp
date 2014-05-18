@@ -62,7 +62,6 @@ struct StarVert {
 
 struct SkyboxVert {
 	vector3f pos;
-	vector2f uv;
 };
 #pragma pack(pop)
 
@@ -90,50 +89,50 @@ void UniverseBox::Init()
 	}
 
 	// Create skybox geometry
-	std::unique_ptr<Graphics::VertexArray> box(new VertexArray(ATTRIB_POSITION | ATTRIB_UV0, 36));
+	std::unique_ptr<Graphics::VertexArray> box(new VertexArray(ATTRIB_POSITION, 36));
 	const float vp = 1000.0f;
 	// Top +Y
-	box->Add(vector3f(-vp,  vp,  vp), vector2f(0.0f, 0.0f));
-	box->Add(vector3f(-vp,  vp, -vp), vector2f(0.0f, 1.0f));
-	box->Add(vector3f( vp,  vp,  vp), vector2f(1.0f, 0.0f));
-	box->Add(vector3f( vp,  vp,  vp), vector2f(1.0f, 0.0f));
-	box->Add(vector3f(-vp,  vp, -vp), vector2f(0.0f, 1.0f));
-	box->Add(vector3f( vp,  vp, -vp), vector2f(1.0f, 1.0f));
+	box->Add(vector3f(-vp,  vp,  vp));
+	box->Add(vector3f(-vp,  vp, -vp));
+	box->Add(vector3f( vp,  vp,  vp));
+	box->Add(vector3f( vp,  vp,  vp));
+	box->Add(vector3f(-vp,  vp, -vp));
+	box->Add(vector3f( vp,  vp, -vp));
 	// Bottom -Y
-	box->Add(vector3f(-vp, -vp, -vp), vector2f(0.0f, 0.0f));
-	box->Add(vector3f(-vp, -vp,  vp), vector2f(0.0f, 1.0f));
-	box->Add(vector3f( vp, -vp, -vp), vector2f(1.0f, 0.0f));
-	box->Add(vector3f( vp, -vp, -vp), vector2f(1.0f, 0.0f));
-	box->Add(vector3f(-vp, -vp,  vp), vector2f(0.0f, 1.0f));
-	box->Add(vector3f( vp, -vp,  vp), vector2f(1.0f, 1.0f));
+	box->Add(vector3f(-vp, -vp, -vp));
+	box->Add(vector3f(-vp, -vp,  vp));
+	box->Add(vector3f( vp, -vp, -vp));
+	box->Add(vector3f( vp, -vp, -vp));
+	box->Add(vector3f(-vp, -vp,  vp));
+	box->Add(vector3f( vp, -vp,  vp));
 	// Front -Z
-	box->Add(vector3f(-vp,  vp, -vp), vector2f(0.0f, 0.0f));
-	box->Add(vector3f(-vp, -vp, -vp), vector2f(0.0f, 1.0f));
-	box->Add(vector3f( vp,  vp, -vp), vector2f(1.0f, 0.0f));
-	box->Add(vector3f( vp,  vp, -vp), vector2f(1.0f, 0.0f));
-	box->Add(vector3f(-vp, -vp, -vp), vector2f(0.0f, 1.0f));
-	box->Add(vector3f( vp, -vp, -vp), vector2f(1.0f, 1.0f));
+	box->Add(vector3f(-vp,  vp, -vp));
+	box->Add(vector3f(-vp, -vp, -vp));
+	box->Add(vector3f( vp,  vp, -vp));
+	box->Add(vector3f( vp,  vp, -vp));
+	box->Add(vector3f(-vp, -vp, -vp));
+	box->Add(vector3f( vp, -vp, -vp));
 	// Back +Z
-	box->Add(vector3f( vp,  vp,  vp), vector2f(0.0f, 0.0f));
-	box->Add(vector3f( vp, -vp,  vp), vector2f(0.0f, 1.0f));
-	box->Add(vector3f(-vp,  vp,  vp), vector2f(1.0f, 0.0f));
-	box->Add(vector3f(-vp,  vp,  vp), vector2f(1.0f, 0.0f));
-	box->Add(vector3f( vp, -vp,  vp), vector2f(0.0f, 1.0f));
-	box->Add(vector3f(-vp, -vp,  vp), vector2f(1.0f, 1.0f));
+	box->Add(vector3f( vp,  vp,  vp));
+	box->Add(vector3f( vp, -vp,  vp));
+	box->Add(vector3f(-vp,  vp,  vp));
+	box->Add(vector3f(-vp,  vp,  vp));
+	box->Add(vector3f( vp, -vp,  vp));
+	box->Add(vector3f(-vp, -vp,  vp));
 	// Right +X
-	box->Add(vector3f( vp,  vp, -vp), vector2f(0.0f, 0.0f));
-	box->Add(vector3f( vp, -vp, -vp), vector2f(0.0f, 1.0f));
-	box->Add(vector3f( vp,  vp,  vp), vector2f(1.0f, 0.0f));
-	box->Add(vector3f( vp,  vp,  vp), vector2f(1.0f, 0.0f));
-	box->Add(vector3f( vp, -vp, -vp), vector2f(0.0f, 1.0f));
-	box->Add(vector3f( vp, -vp,  vp), vector2f(1.0f, 1.0f));
+	box->Add(vector3f( vp,  vp, -vp));
+	box->Add(vector3f( vp, -vp, -vp));
+	box->Add(vector3f( vp,  vp,  vp));
+	box->Add(vector3f( vp,  vp,  vp));
+	box->Add(vector3f( vp, -vp, -vp));
+	box->Add(vector3f( vp, -vp,  vp));
 	// Left -X
-	box->Add(vector3f(-vp,  vp,  vp), vector2f(0.0f, 0.0f));
-	box->Add(vector3f(-vp, -vp,  vp), vector2f(0.0f, 1.0f));
-	box->Add(vector3f(-vp,  vp, -vp), vector2f(1.0f, 0.0f));
-	box->Add(vector3f(-vp,  vp, -vp), vector2f(1.0f, 0.0f));
-	box->Add(vector3f(-vp, -vp,  vp), vector2f(0.0f, 1.0f));
-	box->Add(vector3f(-vp, -vp, -vp), vector2f(1.0f, 1.0f));
+	box->Add(vector3f(-vp,  vp,  vp));
+	box->Add(vector3f(-vp, -vp,  vp));
+	box->Add(vector3f(-vp,  vp, -vp));
+	box->Add(vector3f(-vp,  vp, -vp));
+	box->Add(vector3f(-vp, -vp,  vp));
+	box->Add(vector3f(-vp, -vp, -vp));
 
 	Graphics::MaterialDescriptor desc;
 	desc.effect = EFFECT_SKYBOX;
@@ -144,10 +143,9 @@ void UniverseBox::Init()
 	Graphics::VertexBufferDesc vbd;
 	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
 	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
-	vbd.attrib[1].semantic = Graphics::ATTRIB_UV0;
-	vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_FLOAT2;
 	vbd.numVertices = box->GetNumVerts();
 	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+	m_material->SetupVertexBufferDesc( vbd );
 
 	m_vertexBuffer.reset(m_renderer->CreateVertexBuffer(vbd));
 
@@ -155,7 +153,6 @@ void UniverseBox::Init()
 	assert(m_vertexBuffer->GetDesc().stride == sizeof(SkyboxVert));
 	for (Uint32 i = 0; i < box->GetNumVerts(); i++) {
 		vtxPtr[i].pos = box->position[i];
-		vtxPtr[i].uv = box->uv0[i];
 	}
 	m_vertexBuffer->Unmap();
 
@@ -213,6 +210,7 @@ void Starfield::Fill(Random &rand)
 	vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
 	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
 	vbd.numVertices = BG_STAR_MAX;
+	m_material->SetupVertexBufferDesc( vbd );
 	m_vertexBuffer.reset(m_renderer->CreateVertexBuffer(vbd));
 
 	assert(sizeof(StarVert) == 16);
@@ -327,6 +325,7 @@ MilkyWay::MilkyWay(Graphics::Renderer *renderer)
 	vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
 	vbd.numVertices = bottom->GetNumVerts() + top->GetNumVerts();
 	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+	m_material->SetupVertexBufferDesc( vbd );
 
 	//two strips in one buffer, but seems to work ok without degenerate triangles
 	m_vertexBuffer.reset(renderer->CreateVertexBuffer(vbd));

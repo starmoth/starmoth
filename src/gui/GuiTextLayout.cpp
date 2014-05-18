@@ -137,10 +137,11 @@ void TextLayout::_RenderRaw(float maxWidth, const Color &color) const
 		float px = 0;
 		for (int j=0; j<num; j++) {
 			if ((*wpos).word) {
+				const std::string word( (*wpos).word );
 				if (m_colourMarkup == ColourMarkupUse)
-					c = m_font->RenderMarkup((*wpos).word, round(px), round(py), c);
+					c = m_font->RenderMarkup(word, round(px), round(py), c);
 				else
-					m_font->RenderString((*wpos).word, round(px), round(py), c);
+					m_font->RenderString(word, round(px), round(py), c);
 			}
 			px += (*wpos).advx + _spaceWidth;
 			++wpos;

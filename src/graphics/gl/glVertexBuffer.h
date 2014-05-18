@@ -10,10 +10,8 @@ namespace Graphics { namespace PiGL {
 class GLBufferBase {
 public:
 	GLuint GetBuffer() const { return m_buffer; }
-	GLuint GetVAO() const { return m_vao; }
 
 protected:
-	GLuint m_vao;
 	GLuint m_buffer;
 };
 
@@ -24,10 +22,13 @@ public:
 
 	virtual void Unmap() override;
 
+	GLuint GetVAO() const { return m_vao; }
+
 protected:
 	virtual Uint8 *MapInternal(BufferMapMode) override;
 
 private:
+	GLuint m_vao;
 	Uint8 *m_data;
 };
 

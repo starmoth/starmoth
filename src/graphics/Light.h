@@ -9,6 +9,8 @@
 
 namespace Graphics {
 
+static const Uint32 MAX_NUM_LIGHTS = 5U;
+
 class Light
 {
 public:

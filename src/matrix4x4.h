@@ -354,7 +354,7 @@ class matrix4x4 {
 		m[14] = z;
 		return m;
 	}
-	matrix4x4 InverseOf () const {
+	matrix4x4 Inverse () const {
 		matrix4x4 m;
 		// this only works for matrices containing only rotation and transform
 		m[0] = cell[0]; m[1] = cell[4]; m[2] = cell[8];

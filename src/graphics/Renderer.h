@@ -66,7 +66,7 @@ public:
 	virtual bool ClearScreen() { return false; }
 	//clear depth buffer
 	virtual bool ClearDepthBuffer() { return false; }
-	virtual bool SetClearColor(const Color &c) { return false; }
+	virtual bool SetClearColor(const Color4f &c) { return false; }
 
 	virtual bool SetViewport(int x, int y, int width, int height) { return false; }
 
@@ -83,6 +83,7 @@ public:
 	virtual bool SetWireFrameMode(bool enabled) { return false; }
 
 	virtual bool SetLights(int numlights, const Light *l) { return false; }
+	const std::vector<Light>& GetLights() const { return m_lights; }
 	virtual bool SetAmbientColor(const Color &c) { return false; }
 	const Color &GetAmbientColor() const { return m_ambient; }
 
@@ -101,8 +102,8 @@ public:
 	//high amount of textured quads for particles etc
 	virtual bool DrawPointSprites(int count, const vector3f *positions, RenderState *rs, Material *material, float size) { return false; }
 	//complex unchanging geometry that is worthwhile to store in VBOs etc.
-	virtual bool DrawBuffer(VertexBuffer*, RenderState*, Material*, PrimitiveType type=TRIANGLES) { return false; }
-	virtual bool DrawBufferIndexed(VertexBuffer*, IndexBuffer*, RenderState*, Material*, PrimitiveType=TRIANGLES) { return false; }
+	virtual bool DrawBuffer(VertexBuffer*, RenderState*, Material*, const PrimitiveType type=TRIANGLES) { return false; }
+	virtual bool DrawBufferIndexed(VertexBuffer*, IndexBuffer*, RenderState*, Material*, const PrimitiveType=TRIANGLES) { return false; }
 
 	//creates a unique material based on the descriptor. It will not be deleted automatically.
 	virtual Material *CreateMaterial(const MaterialDescriptor &descriptor) = 0;
@@ -175,6 +176,7 @@ protected:
 	int m_width;
 	int m_height;
 	Color m_ambient;
+	std::vector<Light> m_lights;
 
 	virtual void PushState() = 0;
 	virtual void PopState() = 0;

@@ -21,6 +21,15 @@ namespace Graphics {
 			virtual void Apply() override {
 				PiGL::Material::Apply();
 				m_program->sceneAmbient.Set(m_renderer->GetAmbientColor());
+
+				//Light uniform parameters
+				const std::vector<Light>& lights = m_renderer->GetLights();
+				for( Uint32 i=0 ; i<lights.size() && i<MAX_NUM_LIGHTS ; i++ ) {
+					const Light& Light = lights[i];
+					m_program->lights[i].diffuse.Set( Light.GetDiffuse() );
+					m_program->lights[i].specular.Set( Light.GetSpecular() );
+					m_program->lights[i].position.Set( Light.GetPosition() );
+				}
 			}
 		};
 	}

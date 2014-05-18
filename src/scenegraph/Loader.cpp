@@ -480,6 +480,7 @@ void Loader::ConvertAiMeshes(std::vector<RefCountedPtr<StaticGeometry> > &geoms,
 		vbd.stride = sizeof(ModelVtx);
 		vbd.numVertices = mesh->mNumVertices;
 		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+		mat->SetupVertexBufferDesc( vbd );
 
 		RefCountedPtr<Graphics::VertexBuffer> vb(m_renderer->CreateVertexBuffer(vbd));
 

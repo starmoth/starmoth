@@ -33,6 +33,7 @@ namespace PiGL {
 	class RingMaterial;
 	class FresnelColourMaterial;
 	class ShieldMaterial;
+	class UIMaterial;
 }
 
 class RendererGL : public Renderer
@@ -53,7 +54,7 @@ public:
 
 	virtual bool ClearScreen();
 	virtual bool ClearDepthBuffer();
-	virtual bool SetClearColor(const Color &c);
+	virtual bool SetClearColor(const Color4f &c);
 
 	virtual bool SetViewport(int x, int y, int width, int height);
 
@@ -76,8 +77,8 @@ public:
 	virtual bool DrawPoints(int count, const vector3f *points, const Color *colors, RenderState*, float pointSize=1.f) override;
 	virtual bool DrawTriangles(const VertexArray *vertices, RenderState *state, Material *material, PrimitiveType type=TRIANGLES) override;
 	virtual bool DrawPointSprites(int count, const vector3f *positions, RenderState *rs, Material *material, float size) override;
-	virtual bool DrawBuffer(VertexBuffer*, RenderState*, Material*, PrimitiveType) override;
-	virtual bool DrawBufferIndexed(VertexBuffer*, IndexBuffer*, RenderState*, Material*, PrimitiveType) override;
+	virtual bool DrawBuffer(VertexBuffer*, RenderState*, Material*, const PrimitiveType) override;
+	virtual bool DrawBufferIndexed(VertexBuffer*, IndexBuffer*, RenderState*, Material*, const PrimitiveType) override;
 
 	virtual Material *CreateMaterial(const MaterialDescriptor &descriptor) override;
 	virtual Texture *CreateTexture(const TextureDescriptor &descriptor) override;
@@ -112,6 +113,7 @@ protected:
 	//figure out states from a vertex array and enable them
 	//also sets vertex pointers
 	void EnableClientStates(const VertexArray*, const Material *);
+	void EnableVertexAttributes(const VertexBuffer*);
 	int m_numLights;
 	int m_numDirLights;
 	float m_minZNear;
@@ -120,8 +122,12 @@ protected:
 	matrix4x4f& GetCurrentTransform() { return m_currentTransform; }
 	matrix4x4f m_currentTransform;
 
+	void SetMaterialShaderTransforms(Material *);
+	void SetProgramShaderTransforms(PiGL::Program *);
+
 	PiGL::Program* GetOrCreateProgram(PiGL::Material*);
 	friend class PiGL::Material;
+	friend class PiGL::UIMaterial;
 	friend class PiGL::GasGiantSurfaceMaterial;
 	friend class PiGL::GeoSphereSurfaceMaterial;
 	friend class PiGL::GeoSphereSkyMaterial;

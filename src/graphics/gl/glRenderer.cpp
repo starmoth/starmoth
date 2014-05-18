@@ -9,6 +9,7 @@
 #include "StringF.h"
 #include "graphics/Texture.h"
 #include "graphics/gl/glTexture.h"
+#include "graphics/gl/glMaterial.h"
 #include "graphics/VertexArray.h"
 #include "graphics/GLDebug.h"
 #include "GasGiantMaterial.h"
@@ -25,6 +26,7 @@
 #include "ShieldMaterial.h"
 #include "SkyboxMaterial.h"
 #include "SphereImpostorMaterial.h"
+#include "UIMaterial.h"
 
 #include <stddef.h> //for offsetof
 #include <ostream>
@@ -55,7 +57,7 @@ static std::string glerr_to_string(GLenum err)
 		return stringf("Unknown error 0x0%0{x}", err);
 	}
 }
-#pragma optimize( "", off )
+
 void CheckRenderErrors()
 {
 	GLenum err = glGetError();
@@ -106,6 +108,8 @@ RendererGL::RendererGL(WindowSDL *window, const Graphics::Settings &vs)
 	CheckRenderErrors();
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 	CheckRenderErrors();
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+	CheckRenderErrors();
 
 	SetMatrixMode(MatrixMode::MODELVIEW);
 	CheckRenderErrors();
@@ -113,7 +117,7 @@ RendererGL::RendererGL(WindowSDL *window, const Graphics::Settings &vs)
 	m_modelViewStack.push(matrix4x4f::Identity());
 	m_projectionStack.push(matrix4x4f::Identity());
 
-	SetClearColor(Color(0.f));
+	SetClearColor(Color4f(0.f));
 	SetViewport(0, 0, m_width, m_height);
 
 	if (vs.enableDebugMessages)
@@ -227,7 +231,7 @@ bool RendererGL::ClearDepthBuffer()
 	return true;
 }
 
-bool RendererGL::SetClearColor(const Color &c)
+bool RendererGL::SetClearColor(const Color4f &c)
 {
 	glClearColor(c.r, c.g, c.b, c.a);
 	CheckRenderErrors();
@@ -313,6 +317,7 @@ bool RendererGL::SetWireFrameMode(bool enabled)
 
 bool RendererGL::SetLights(int numlights, const Light *lights)
 {
+	m_lights.clear();
 	if (numlights < 1) return false;
 
 	// XXX move lighting out to shaders
@@ -327,8 +332,9 @@ bool RendererGL::SetLights(int numlights, const Light *lights)
 
 	for (int i=0; i < numlights; i++) {
 		const Light &l = lights[i];
+		m_lights.push_back( l );
 		// directional lights have w of 0
-		const float pos[] = {
+		/*const float pos[] = {
 			l.GetPosition().x,
 			l.GetPosition().y,
 			l.GetPosition().z,
@@ -337,7 +343,7 @@ bool RendererGL::SetLights(int numlights, const Light *lights)
 		glLightfv(GL_LIGHT0+i, GL_POSITION, pos);
 		glLightfv(GL_LIGHT0+i, GL_DIFFUSE, l.GetDiffuse().ToColor4f());
 		glLightfv(GL_LIGHT0+i, GL_SPECULAR, l.GetSpecular().ToColor4f());
-		glEnable(GL_LIGHT0+i);
+		glEnable(GL_LIGHT0+i);*/
 
 		if (l.GetType() == Light::LIGHT_DIRECTIONAL)
 			m_numDirLights++;
@@ -367,6 +373,29 @@ bool RendererGL::SetScissor(bool enabled, const vector2f &pos, const vector2f &s
 	return true;
 }
 
+void RendererGL::SetMaterialShaderTransforms(Material *m)
+{
+	PiGL::Program* p = (static_cast<const PiGL::Material*>(m))->GetProgram();
+	SetProgramShaderTransforms( p );
+}
+
+void RendererGL::SetProgramShaderTransforms(PiGL::Program *p)
+{
+	const matrix4x4f& mv = m_modelViewStack.top();
+	const matrix4x4f& proj = m_projectionStack.top();
+	const matrix4x4f ViewProjection = proj * mv;
+	matrix3x3f orient;
+	mv.SaveTo3x3Matrix( &orient[0] );
+	const matrix3x3f NormalMatrix = orient.Inverse().Transpose();
+
+	p->uProjectionMatrix.Set( proj );
+	p->uViewMatrix.Set( mv );
+	p->uViewMatrixInverse.Set( mv.Inverse() );
+	p->uViewProjectionMatrix.Set( ViewProjection );
+	p->uNormalMatrix.Set( NormalMatrix );
+	CheckRenderErrors();
+}
+
 bool RendererGL::DrawLines(int count, const vector3f *v, const Color *c, RenderState* state, LineType t)
 {
 	PROFILE_SCOPED()
@@ -376,6 +405,8 @@ bool RendererGL::DrawLines(int count, const vector3f *v, const Color *c, RenderS
 
 	vtxColorProg->Use();
 	vtxColorProg->invLogZfarPlus1.Set(m_invLogZfarPlus1);
+
+	SetProgramShaderTransforms( vtxColorProg );
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
@@ -400,6 +431,8 @@ bool RendererGL::DrawLines(int count, const vector3f *v, const Color &c, RenderS
 	flatColorProg->diffuse.Set(c);
 	flatColorProg->invLogZfarPlus1.Set(m_invLogZfarPlus1);
 
+	SetProgramShaderTransforms( flatColorProg );
+
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_FLOAT, sizeof(vector3f), v);
 	glDrawArrays(t, 0, count);
@@ -419,6 +452,8 @@ bool RendererGL::DrawLines2D(int count, const vector2f *v, const Color &c, Graph
 	flatColorProg->diffuse.Set(c);
 	flatColorProg->invLogZfarPlus1.Set(m_invLogZfarPlus1);
 
+	SetProgramShaderTransforms( flatColorProg );
+
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(2, GL_FLOAT, sizeof(vector2f), v);
 	glDrawArrays(t, 0, count);
@@ -434,6 +469,8 @@ bool RendererGL::DrawPoints(int count, const vector3f *points, const Color *colo
 
 	vtxColorProg->Use();
 	vtxColorProg->invLogZfarPlus1.Set(m_invLogZfarPlus1);
+
+	SetProgramShaderTransforms( vtxColorProg );
 
 	SetRenderState(state);
 
@@ -453,11 +490,15 @@ bool RendererGL::DrawPoints(int count, const vector3f *points, const Color *colo
 
 bool RendererGL::DrawTriangles(const VertexArray *v, RenderState *rs, Material *m, PrimitiveType t)
 {
-	if (!v || v->position.size() < 3) return false;
+	return true;
+	/*if (!v || v->position.size() < 3) return false;
 
 	SetRenderState(rs);
 
 	m->Apply();
+
+	SetMaterialShaderTransforms(m);
+
 	EnableClientStates(v, m);
 
 	glDrawArrays(t, 0, v->GetNumVerts());
@@ -465,7 +506,7 @@ bool RendererGL::DrawTriangles(const VertexArray *v, RenderState *rs, Material *
 	m->Unapply();
 	CheckRenderErrors();
 
-	return true;
+	return true;*/
 }
 
 bool RendererGL::DrawPointSprites(int count, const vector3f *positions, RenderState *rs, Material *material, float size)
@@ -476,7 +517,7 @@ bool RendererGL::DrawPointSprites(int count, const vector3f *positions, RenderSt
 
 	matrix4x4f rot(GetCurrentModelView());
 	rot.ClearToRotOnly();
-	rot = rot.InverseOf();
+	rot = rot.Inverse();
 
 	const float sz = 0.5f*size;
 	const vector3f rotv1 = rot * vector3f(sz, sz, 0.0f);
@@ -505,35 +546,49 @@ bool RendererGL::DrawPointSprites(int count, const vector3f *positions, RenderSt
 	return true;
 }
 
-bool RendererGL::DrawBuffer(VertexBuffer* vb, RenderState* state, Material* mat, PrimitiveType pt)
+bool RendererGL::DrawBuffer(VertexBuffer* vb, RenderState* state, Material* mat, const PrimitiveType pt)
 {
 	SetRenderState(state);
 	mat->Apply();
 
+	SetMaterialShaderTransforms(mat);
+
 	auto gvb = static_cast<PiGL::VertexBuffer*>(vb);
 
 	glBindVertexArray(gvb->GetVAO());
+	glBindBuffer(GL_ARRAY_BUFFER, gvb->GetBuffer());
+
+	EnableVertexAttributes(gvb);
 
 	glDrawArrays(pt, 0, gvb->GetVertexCount());
-
+	
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	CheckRenderErrors();
 
 	return true;
 }
 
-bool RendererGL::DrawBufferIndexed(VertexBuffer *vb, IndexBuffer *ib, RenderState *state, Material *mat, PrimitiveType pt)
+bool RendererGL::DrawBufferIndexed(VertexBuffer *vb, IndexBuffer *ib, RenderState *state, Material *mat, const PrimitiveType pt)
 {
 	SetRenderState(state);
 	mat->Apply();
+
+	SetMaterialShaderTransforms(mat);
 
 	auto gvb = static_cast<PiGL::VertexBuffer*>(vb);
 	auto gib = static_cast<PiGL::IndexBuffer*>(ib);
 
 	glBindVertexArray(gvb->GetVAO());
+	glBindBuffer(GL_ARRAY_BUFFER, gvb->GetBuffer());
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gib->GetBuffer());
+
+	EnableVertexAttributes(gvb);
 
 	glDrawElements(pt, ib->GetIndexCount(), GL_UNSIGNED_SHORT, 0);
-
+	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	CheckRenderErrors();
 
@@ -545,29 +600,50 @@ void RendererGL::EnableClientStates(const VertexArray *v, const Material *m)
 {
 	PROFILE_SCOPED();
 
-	if (!v) return;
+	/*if (!v) return;
 	assert(v->position.size() > 0); //would be strange
 
+	m->GetDescriptor().
+
 	// XXX could be 3D or 2D
-	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableVertexAttribArray(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_FLOAT, 0, reinterpret_cast<const GLvoid *>(&v->position[0]));
 
 	if (v->HasAttrib(ATTRIB_DIFFUSE)) {
 		assert(! v->diffuse.empty());
-		glEnableClientState(GL_COLOR_ARRAY);
+		glEnableVertexAttribArray(GL_COLOR_ARRAY);
 		glColorPointer(4, GL_UNSIGNED_BYTE, 0, reinterpret_cast<const GLvoid *>(&v->diffuse[0]));
 	}
 	if (v->HasAttrib(ATTRIB_NORMAL)) {
 		assert(! v->normal.empty());
-		glEnableClientState(GL_NORMAL_ARRAY);
+		glEnableVertexAttribArray(GL_NORMAL_ARRAY);
 		glNormalPointer(GL_FLOAT, 0, reinterpret_cast<const GLvoid *>(&v->normal[0]));
 	}
 	if (v->HasAttrib(ATTRIB_UV0)) {
 		assert(! v->uv0.empty());
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glEnableVertexAttribArray(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(2, GL_FLOAT, 0, reinterpret_cast<const GLvoid *>(&v->uv0[0]));
-	}
+	}*/
 	CheckRenderErrors();
+}
+
+void RendererGL::EnableVertexAttributes(const VertexBuffer* gvb)
+{
+	// Enable the Vertex attributes
+	for (Uint8 i = 0; i < MAX_ATTRIBS; i++) {
+		const auto& attr  = gvb->GetDesc().attrib[i];
+		switch (attr.semantic) {
+		case ATTRIB_POSITION:
+		case ATTRIB_NORMAL:
+		case ATTRIB_DIFFUSE:
+		case ATTRIB_UV0:
+			glEnableVertexAttribArray(attr.location);	// Enable the attribute at that location
+			break;
+		case ATTRIB_NONE:
+		default:
+			break;
+		}
+	}
 }
 
 Material *RendererGL::CreateMaterial(const MaterialDescriptor &d)
@@ -585,6 +661,9 @@ Material *RendererGL::CreateMaterial(const MaterialDescriptor &d)
 	// Create the material. It will be also used to create the shader,
 	// like a tiny factory
 	switch (desc.effect) {
+	case EFFECT_UI:
+		mat = new PiGL::UIMaterial();
+		break;
 	case EFFECT_PLANETRING:
 		mat = new PiGL::RingMaterial();
 		break;
@@ -739,13 +818,13 @@ void RendererGL::PushState()
 	SetMatrixMode(MatrixMode::MODELVIEW);
 	PushMatrix();
 	m_viewportStack.push( m_viewportStack.top() );
-	glPushAttrib(GL_ALL_ATTRIB_BITS & (~GL_POINT_BIT));
+	//glPushAttrib(GL_ALL_ATTRIB_BITS & (~GL_POINT_BIT));
 	CheckRenderErrors();
 }
 
 void RendererGL::PopState()
 {
-	glPopAttrib();
+	//glPopAttrib();
 	m_viewportStack.pop();
 	assert(!m_viewportStack.empty());
 	SetMatrixMode(MatrixMode::PROJECTION);
@@ -815,11 +894,11 @@ bool RendererGL::PrintDebugInfo(std::ostream &out)
 #define DUMP_GL_VALUE2(name) dump_opengl_value(out, #name, name, 2)
 
 	DUMP_GL_VALUE(GL_MAX_3D_TEXTURE_SIZE);
-	DUMP_GL_VALUE(GL_MAX_ATTRIB_STACK_DEPTH);
-	DUMP_GL_VALUE(GL_MAX_CLIENT_ATTRIB_STACK_DEPTH);
+	//DUMP_GL_VALUE(GL_MAX_ATTRIB_STACK_DEPTH);
+	//DUMP_GL_VALUE(GL_MAX_CLIENT_ATTRIB_STACK_DEPTH);
 	DUMP_GL_VALUE(GL_MAX_CLIP_PLANES);
 	DUMP_GL_VALUE(GL_MAX_COLOR_ATTACHMENTS_EXT);
-	DUMP_GL_VALUE(GL_MAX_COLOR_MATRIX_STACK_DEPTH);
+	//DUMP_GL_VALUE(GL_MAX_COLOR_MATRIX_STACK_DEPTH);
 	DUMP_GL_VALUE(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 	DUMP_GL_VALUE(GL_MAX_CUBE_MAP_TEXTURE_SIZE);
 	DUMP_GL_VALUE(GL_MAX_DRAW_BUFFERS);

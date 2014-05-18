@@ -307,7 +307,7 @@ void Screen::RenderString(const std::string &s, float xoff, float yoff, const Co
 	r->Translate(floor(x/Screen::fontScale[0])*Screen::fontScale[0], floor(y/Screen::fontScale[1])*Screen::fontScale[1], 0);
 	r->Scale(Screen::fontScale[0], Screen::fontScale[1], 1);
 
-	font->RenderString(s.c_str(), 0, 0, color);
+	font->RenderString(s, 0, 0, color);
 }
 
 void Screen::RenderMarkup(const std::string &s, const Color &color, Text::TextureFont *font)

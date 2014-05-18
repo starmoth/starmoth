@@ -57,6 +57,15 @@ namespace Graphics {
 
 			Uniform sceneAmbient;
 
+			//Light uniform parameters
+			struct UniformLight {
+				Uniform ambient;
+				Uniform diffuse;
+				Uniform specular;
+				Uniform position;
+			};
+			UniformLight lights[4];
+
 		protected:
 			static GLuint s_curProgram;
 

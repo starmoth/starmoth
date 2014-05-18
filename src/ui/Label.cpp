@@ -15,7 +15,7 @@ Label::Label(Context *context, const std::string &text) : Widget(context), m_tex
 Point Label::PreferredSize()
 {
 	vector2f textSize;
-	GetContext()->GetFont(GetFont())->MeasureString(m_text.c_str(), textSize.x, textSize.y);
+	GetContext()->GetFont(GetFont())->MeasureString(m_text, textSize.x, textSize.y);
 	m_preferredSize = Point(ceilf(textSize.x), ceilf(textSize.y));
 	return m_preferredSize;
 }
@@ -33,7 +33,7 @@ void Label::Draw()
 {
 	static const Color disabledColor(204, 204, 204, 255);
 	const Color color(IsDisabled() ? disabledColor : m_color);
-	GetContext()->GetFont(GetFont())->RenderString(m_text.c_str(), 0.0f, 0.0f, Color(color.r, color.g, color.b, color.a*GetContext()->GetOpacity()));
+	GetContext()->GetFont(GetFont())->RenderString(m_text, 0.0f, 0.0f, Color(color.r, color.g, color.b, color.a*GetContext()->GetOpacity()));
 }
 
 Label *Label::SetText(const std::string &text)
