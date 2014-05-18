@@ -139,6 +139,7 @@
     <ClCompile Include="..\..\..\src\graphics\gl\Program.cpp" />
     <ClCompile Include="..\..\..\src\graphics\gl\RingMaterial.cpp" />
     <ClCompile Include="..\..\..\src\graphics\gl\ShieldMaterial.cpp" />
+    <ClCompile Include="..\..\..\src\graphics\gl\UIMaterial.cpp" />
     <ClCompile Include="..\..\..\src\graphics\gl\Uniform.cpp" />
     <ClCompile Include="..\..\..\src\graphics\Graphics.cpp" />
     <ClCompile Include="..\..\..\src\graphics\Light.cpp" />
@@ -177,6 +178,7 @@
     <ClInclude Include="..\..\..\src\graphics\gl\SkyboxMaterial.h" />
     <ClInclude Include="..\..\..\src\graphics\gl\SphereImpostorMaterial.h" />
     <ClInclude Include="..\..\..\src\graphics\gl\StarfieldMaterial.h" />
+    <ClInclude Include="..\..\..\src\graphics\gl\UIMaterial.h" />
     <ClInclude Include="..\..\..\src\graphics\gl\Uniform.h" />
     <ClInclude Include="..\..\..\src\graphics\Graphics.h" />
     <ClInclude Include="..\..\..\src\graphics\Light.h" />

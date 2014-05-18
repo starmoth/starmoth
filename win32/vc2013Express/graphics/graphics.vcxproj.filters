@@ -60,6 +60,9 @@
     <ClCompile Include="..\..\..\src\graphics\gl\ShieldMaterial.cpp">
       <Filter>gl</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\src\graphics\gl\UIMaterial.cpp">
+      <Filter>gl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\graphics\Drawables.h" />
@@ -129,6 +132,9 @@
       <Filter>gl</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\src\graphics\gl\StarfieldMaterial.h">
+      <Filter>gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\graphics\gl\UIMaterial.h">
       <Filter>gl</Filter>
     </ClInclude>
   </ItemGroup>
