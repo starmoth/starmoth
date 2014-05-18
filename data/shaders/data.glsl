@@ -9,14 +9,24 @@ uniform mat3 uNormalMatrix;
 
 //Light uniform parameters
 struct Light {
-	vec4 ambient;
 	vec4 diffuse;
 	vec4 specular;
 	vec4 position;
 };
-uniform Light uLightSource[4];
+uniform Light uLight[4];
+
+struct MaterialParameters {
+	vec4 emission;
+	vec4 ambient;
+	vec4 diffuse;
+	vec4 specular;
+	float shininess;
+};
 
 in vec4 a_vertex;
 in vec3 a_normal;
 in vec4 a_color;
 in vec2 a_uv0;
+
+// nVidia complains if this isn't set even though I'm just using the regular "textureCube" sampler.
+#extension GL_NV_shadow_samplers_cube : enable

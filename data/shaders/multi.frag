@@ -34,14 +34,14 @@ out vec4 frag_color;
 //would be a good idea to make specular optional
 void ads(in int lightNum, in vec3 pos, in vec3 n, inout vec4 light, inout vec4 specular)
 {
-	vec3 s = normalize(vec3(uLightSource[lightNum].position)); //directional light
+	vec3 s = normalize(vec3(uLight[lightNum].position)); //directional light
 	vec3 v = normalize(vec3(-pos));
 	vec3 h = normalize(v + s);
-	light += uLightSource[lightNum].diffuse * material.diffuse * max(dot(s, n), 0.0);
+	light += uLight[lightNum].diffuse * material.diffuse * max(dot(s, n), 0.0);
 #ifdef MAP_SPECULAR
-	specular += texture2D(texture1, texCoord0) * material.specular * uLightSource[lightNum].diffuse * pow(max(dot(h, n), 0.0), material.shininess);
+	specular += texture2D(texture1, texCoord0) * material.specular * uLight[lightNum].diffuse * pow(max(dot(h, n), 0.0), material.shininess);
 #else
-	specular += material.specular * uLightSource[lightNum].diffuse * pow(max(dot(h, n), 0.0), material.shininess);
+	specular += material.specular * uLight[lightNum].diffuse * pow(max(dot(h, n), 0.0), material.shininess);
 #endif
 	specular.a = 0.0;
 	light.a = 1.0;

@@ -73,7 +73,7 @@ void main(void)
 	vec3 v = (eyepos - geosphereCenter)/geosphereScaledRadius;
 	float lenInvSq = 1.0/(dot(v,v));
 	for (int i=0; i<NUM_LIGHTS; ++i) {
-		vec3 lightDir = normalize(vec3(uLightSource[i].position));
+		vec3 lightDir = normalize(vec3(uLight[i].position));
 		float unshadowed = 1.0;
 #ifdef ECLIPSE
 		for (int j=0; j<shadows; j++) {
@@ -92,9 +92,9 @@ void main(void)
 		}
 #endif // ECLIPSE
 		unshadowed = clamp(unshadowed, 0.0, 1.0);
-		nDotVP  = max(0.0, dot(tnorm, normalize(vec3(uLightSource[i].position))));
-		nnDotVP = max(0.0, dot(tnorm, normalize(-vec3(uLightSource[i].position)))); //need backlight to increase horizon
-		diff += uLightSource[i].diffuse * unshadowed * 0.5*(nDotVP+0.5*clamp(1.0-nnDotVP*4.0,0.0,1.0) * INV_NUM_LIGHTS);
+		nDotVP  = max(0.0, dot(tnorm, normalize(vec3(uLight[i].position))));
+		nnDotVP = max(0.0, dot(tnorm, normalize(-vec3(uLight[i].position)))); //need backlight to increase horizon
+		diff += uLight[i].diffuse * unshadowed * 0.5*(nDotVP+0.5*clamp(1.0-nnDotVP*4.0,0.0,1.0) * INV_NUM_LIGHTS);
 	}
 
 	// when does the eye ray intersect atmosphere

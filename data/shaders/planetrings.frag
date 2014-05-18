@@ -12,9 +12,9 @@ void main(void)
 	vec4 texCol = texture2D(texture0, gl_TexCoord[0].st);
 
 	for (int i=0; i<NUM_LIGHTS; ++i) {
-		float l = findSphereEyeRayEntryDistance(-vec3(gl_TexCoord[1]), vec3(uViewMatrixInverse * uLightSource[i].position), 1.0);
+		float l = findSphereEyeRayEntryDistance(-vec3(gl_TexCoord[1]), vec3(uViewMatrixInverse * uLight[i].position), 1.0);
 		if (l <= 0.0) {
-			col = col + texCol*uLightSource[i].diffuse;
+			col = col + texCol*uLight[i].diffuse;
 		}
 	}
 	col.a = texCol.a;
