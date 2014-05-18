@@ -11,7 +11,7 @@ uniform mat3 uNormalMatrix;
 struct Light {
 	vec4 diffuse;
 	vec4 specular;
-	vec3 position;
+	vec4 position;
 };
 uniform Light uLight[4];
 

@@ -59,7 +59,6 @@ namespace Graphics {
 
 			//Light uniform parameters
 			struct UniformLight {
-				Uniform ambient;
 				Uniform diffuse;
 				Uniform specular;
 				Uniform position;

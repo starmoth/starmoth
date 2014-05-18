@@ -301,10 +301,11 @@ bool RendererGL::SetWireFrameMode(bool enabled)
 	return true;
 }
 
-bool RendererGL::SetLights(int numlights, const Light *lights)
+bool RendererGL::SetLights(const int numlights, const Light *lights)
 {
-	m_lights.clear();
 	if (numlights < 1) return false;
+
+	const int NumLights = std::min(numlights, int(TOTAL_NUM_LIGHTS));
 
 	// XXX move lighting out to shaders
 
@@ -313,30 +314,20 @@ bool RendererGL::SetLights(int numlights, const Light *lights)
 	Graphics::Renderer::MatrixTicket ticket(this, MatrixMode::MODELVIEW);
 	SetTransform(matrix4x4f::Identity());
 
-	m_numLights = numlights;
+	m_numLights = NumLights;
 	m_numDirLights = 0;
 
-	for (int i=0; i < numlights; i++) {
+	for (int i=0; i<NumLights; i++) {
 		const Light &l = lights[i];
-		m_lights.push_back( l );
-		// directional lights have w of 0
-		/*const float pos[] = {
-			l.GetPosition().x,
-			l.GetPosition().y,
-			l.GetPosition().z,
-			l.GetType() == Light::LIGHT_DIRECTIONAL ? 0.f : 1.f
-		};
-		glLightfv(GL_LIGHT0+i, GL_POSITION, pos);
-		glLightfv(GL_LIGHT0+i, GL_DIFFUSE, l.GetDiffuse().ToColor4f());
-		glLightfv(GL_LIGHT0+i, GL_SPECULAR, l.GetSpecular().ToColor4f());
-		glEnable(GL_LIGHT0+i);*/
+		m_lights[i].SetPosition( l.GetPosition() );
+		m_lights[i].SetDiffuse( l.GetDiffuse() );
+		m_lights[i].SetSpecular( l.GetSpecular() );
 
 		if (l.GetType() == Light::LIGHT_DIRECTIONAL)
 			m_numDirLights++;
 
-		assert(m_numDirLights < 5);
+		assert(m_numDirLights <= TOTAL_NUM_LIGHTS);
 	}
-	CheckRenderErrors();
 
 	return true;
 }

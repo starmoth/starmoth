@@ -9,7 +9,7 @@
 
 namespace Graphics {
 
-static const Uint32 MAX_NUM_LIGHTS = 5U;
+static const Uint32 TOTAL_NUM_LIGHTS = 4U;
 
 class Light
 {

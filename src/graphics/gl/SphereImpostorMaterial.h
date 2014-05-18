@@ -23,12 +23,11 @@ namespace Graphics {
 				m_program->sceneAmbient.Set(m_renderer->GetAmbientColor());
 
 				//Light uniform parameters
-				const std::vector<Light>& lights = m_renderer->GetLights();
-				for( Uint32 i=0 ; i<lights.size() && i<MAX_NUM_LIGHTS ; i++ ) {
-					const Light& Light = lights[i];
+				for( int i=0 ; i<m_renderer->GetNumLights() ; i++ ) {
+					const Light& Light = m_renderer->GetLight(i);
 					m_program->lights[i].diffuse.Set( Light.GetDiffuse() );
 					m_program->lights[i].specular.Set( Light.GetSpecular() );
-					m_program->lights[i].position.Set( Light.GetPosition() );
+					m_program->lights[i].position.Set( Light.GetPosition().x, Light.GetPosition().y, Light.GetPosition().z, (Light.GetType() == Light::LIGHT_DIRECTIONAL ? 0.f : 1.f));
 				}
 			}
 		};

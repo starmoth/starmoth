@@ -214,10 +214,9 @@ void Program::InitShaderLocations()
 
 	//Light uniform parameters
 	char cLight[64];
-	for( int i=0 ; i<5 ; i++ ) {
+	for( int i=0 ; i<=4 ; i++ ) {
 		snprintf(cLight, 64, "uLight[%d]", i);
 		const std::string strLight( cLight );
-		lights[i].ambient.Init( (strLight + ".ambient").c_str(), m_program );
 		lights[i].diffuse.Init( (strLight + ".diffuse").c_str(), m_program );
 		lights[i].specular.Init( (strLight + ".specular").c_str(), m_program );
 		lights[i].position.Init( (strLight + ".position").c_str(), m_program );

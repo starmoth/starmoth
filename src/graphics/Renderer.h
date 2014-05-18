@@ -7,6 +7,7 @@
 #include "WindowSDL.h"
 #include "libs.h"
 #include "graphics/Types.h"
+#include "graphics/Light.h"
 #include <map>
 #include <memory>
 
@@ -17,7 +18,6 @@ namespace Graphics {
  * It is also used to create render states, materials and vertex/index buffers.
  */
 
-class Light;
 class Material;
 class MaterialDescriptor;
 class RenderState;
@@ -82,8 +82,9 @@ public:
 
 	virtual bool SetWireFrameMode(bool enabled) { return false; }
 
-	virtual bool SetLights(int numlights, const Light *l) { return false; }
-	const std::vector<Light>& GetLights() const { return m_lights; }
+	virtual bool SetLights(const int numlights, const Light *l) { return false; }
+	const Light& GetLight(const int idx) const { assert(idx<=4); return m_lights[idx]; }
+	virtual int GetNumLights() const { return 0; }
 	virtual bool SetAmbientColor(const Color &c) { return false; }
 	const Color &GetAmbientColor() const { return m_ambient; }
 
@@ -176,7 +177,7 @@ protected:
 	int m_width;
 	int m_height;
 	Color m_ambient;
-	std::vector<Light> m_lights;
+	Light m_lights[4];
 
 	virtual void PushState() = 0;
 	virtual void PopState() = 0;

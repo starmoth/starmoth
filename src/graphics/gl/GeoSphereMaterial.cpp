@@ -88,12 +88,11 @@ void GeoSphereSurfaceMaterial::SetGSUniforms()
 	p->geosphereScale.Set(ap.scale);
 
 	//Light uniform parameters
-	const std::vector<Light>& lights = m_renderer->GetLights();
-	for( Uint32 i=0 ; i<lights.size() && i<MAX_NUM_LIGHTS ; i++ ) {
-		const Light& Light = lights[i];
+	for( int i=0 ; i<m_renderer->GetNumLights() ; i++ ) {
+		const Light& Light = m_renderer->GetLight(i);
 		p->lights[i].diffuse.Set( Light.GetDiffuse() );
 		p->lights[i].specular.Set( Light.GetSpecular() );
-		p->lights[i].position.Set( Light.GetPosition() );
+		p->lights[i].position.Set( Light.GetPosition().x, Light.GetPosition().y, Light.GetPosition().z, (Light.GetType() == Light::LIGHT_DIRECTIONAL ? 0.f : 1.f));
 	}
 
 	// we handle up to three shadows at a time
