@@ -92,7 +92,8 @@ void GeoSphereSurfaceMaterial::SetGSUniforms()
 		const Light& Light = m_renderer->GetLight(i);
 		p->lights[i].diffuse.Set( Light.GetDiffuse() );
 		p->lights[i].specular.Set( Light.GetSpecular() );
-		p->lights[i].position.Set( Light.GetPosition().x, Light.GetPosition().y, Light.GetPosition().z, (Light.GetType() == Light::LIGHT_DIRECTIONAL ? 0.f : 1.f));
+		const vector3f& pos = Light.GetPosition();
+		p->lights[i].position.Set( pos.x, pos.y, pos.z, (Light.GetType() == Light::LIGHT_DIRECTIONAL ? 0.f : 1.f));
 	}
 
 	// we handle up to three shadows at a time
