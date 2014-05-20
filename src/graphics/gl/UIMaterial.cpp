@@ -8,7 +8,6 @@
 #include "glRenderer.h"
 #include <sstream>
 #include "StringF.h"
-#include "Ship.h"
 
 namespace Graphics {
 namespace PiGL {

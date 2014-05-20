@@ -17,6 +17,13 @@
 #include "ModManager.h"
 #include <sstream>
 
+#pragma pack(push, 4)
+struct BackgroundVert {
+	vector3f pos;
+	Color diff;
+};
+#pragma pack(pop)
+
 //default options
 ModelViewer::Options::Options()
 : attachGuns(false)
@@ -159,6 +166,7 @@ void ModelViewer::Run(const std::string &modelName)
 	ModelViewer *viewer = new ModelViewer(renderer);
 	viewer->SetModel(modelName);
 	viewer->ResetCamera();
+	viewer->CreateBackground();
 	viewer->MainLoop();
 
 	//uninit components
@@ -396,13 +404,9 @@ void ModelViewer::CreateTestResources()
 	}
 }
 
-void ModelViewer::DrawBackground()
+void ModelViewer::CreateBackground()
 {
-	m_renderer->SetOrthographicProjection(0.f, 1.f, 0.f, 1.f, -1.f, 1.f);
-	m_renderer->SetTransform(matrix4x4f::Identity());
-
-	static Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE);
-	va.Clear();
+	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE);
 	const Color top = Color::BLACK;
 	const Color bottom = Color(77);
 	va.Add(vector3f(0.f, 0.f, 0.f), bottom);
@@ -413,7 +417,33 @@ void ModelViewer::DrawBackground()
 	va.Add(vector3f(1.f, 1.f, 0.f), top);
 	va.Add(vector3f(0.f, 1.f, 0.f), top);
 
-	m_renderer->DrawTriangles(&va, m_bgState, Graphics::vtxColorMaterial);
+	//create buffer and upload data
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+	vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
+	vbd.numVertices = va.GetNumVerts();
+	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+	Graphics::vtxColorMaterial->SetupVertexBufferDesc( vbd );
+
+	m_bgVB.reset( m_renderer->CreateVertexBuffer(vbd) );
+	BackgroundVert* vtxPtr = m_bgVB->Map<BackgroundVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(m_bgVB->GetDesc().stride == sizeof(BackgroundVert));
+	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= va.position[i];
+		vtxPtr[i].diff	= va.diffuse[i].ToColor4f();
+	}
+	m_bgVB->Unmap();
+}
+
+void ModelViewer::DrawBackground()
+{
+	m_renderer->SetOrthographicProjection(0.f, 1.f, 0.f, 1.f, -1.f, 1.f);
+	m_renderer->SetTransform(matrix4x4f::Identity());
+
+	m_renderer->DrawBuffer(m_bgVB.get(), m_bgState, Graphics::vtxColorMaterial);
 }
 
 //Draw grid and axes

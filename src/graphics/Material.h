@@ -26,6 +26,7 @@ struct VertexBufferDesc;
 // depends on the effect
 enum EffectType {
 	EFFECT_DEFAULT,
+	EFFECT_VTXCOLOR,
 	EFFECT_UI,
 	EFFECT_STARFIELD,
 	EFFECT_PLANETRING,

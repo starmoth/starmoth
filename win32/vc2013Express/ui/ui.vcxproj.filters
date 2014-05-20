@@ -230,5 +230,8 @@
     <ClInclude Include="..\..\..\src\ui\Animation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\ui\MousePointer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

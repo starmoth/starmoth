@@ -36,6 +36,7 @@ private:
 	void ClearLog();
 	void ClearModel();
 	void CreateTestResources();
+	void CreateBackground();
 	void DrawBackground();
 	void DrawGrid(const matrix4x4f &trans, float radius);
 	void DrawLog();
@@ -104,6 +105,7 @@ private:
 	std::string m_modelName;
 	RefCountedPtr<UI::Context> m_ui;
 	Graphics::RenderState *m_bgState;
+	std::unique_ptr<Graphics::VertexBuffer> m_bgVB;
 
 	//undecided on this input stuff
 	//updating the states of all inputs during PollEvents

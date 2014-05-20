@@ -368,6 +368,14 @@ class matrix4x4 {
 
 		return m;
 	}
+	matrix4x4 Transpose() const {
+		matrix4x4 m;
+		m[0] = cell[0];		m[1] = cell[4];		m[2] = cell[8];		m[3] = cell[12];
+		m[4] = cell[1];		m[5] = cell[5];		m[6] = cell[9];		m[7] = cell[13];
+		m[8] = cell[2];		m[9] = cell[6];		m[10] = cell[10];	m[11] = cell[14];
+		m[12] = cell[3];	m[13] = cell[7];	m[14] = cell[11];	m[15] = cell[15];
+		return m;
+	}
 	void Print () const {
 		for (int i=0; i<4; i++) {
 			printf ("%.12f %.12f %.12f %.12f\n", cell[i], cell[i+4], cell[i+8], cell[i+12]);
@@ -403,5 +411,18 @@ static inline void matrix4x4dtof(const matrix4x4d &in, matrix4x4f &out)
 	for (int i = 0; i < 16; i++) 
 		out[i] = float(in[i]);
 }
+
+namespace mat4x4
+{
+	static const matrix4x4f sIdentityf(matrix4x4f::Identity());
+	static inline const matrix4x4f& Identityf() {
+		return sIdentityf;
+	}
+
+	static const matrix4x4d sIdentityd(matrix4x4d::Identity());
+	static inline const matrix4x4d& Identityd() {
+		return sIdentityd;
+	}
+};
 
 #endif /* _MATRIX4X4_H */

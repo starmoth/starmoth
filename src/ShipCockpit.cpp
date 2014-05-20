@@ -18,7 +18,7 @@ ShipCockpit::ShipCockpit(const std::string &modelName) :
 	m_offset(0.f),
 	m_shipVel(0.f),
 	m_translate(0.0),
-	m_transform(matrix4x4d::Identity())
+	m_transform(mat4x4::Identityd())
 {
 	assert(!modelName.empty());
 	SetModel(modelName.c_str());
@@ -38,7 +38,7 @@ void ShipCockpit::Render(Graphics::Renderer *renderer, const Camera *camera, con
 
 void ShipCockpit::Update(float timeStep)
 {
-	m_transform = matrix4x4d::Identity();
+	m_transform = mat4x4::Identityd();
 	vector3d cur_dir = Pi::player->GetOrient().VectorZ().Normalized();
 	if(cur_dir.Dot(m_shipDir) < 1.0f) {
 		m_rotInterp = 0.0f;

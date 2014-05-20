@@ -27,6 +27,7 @@
 #include "SkyboxMaterial.h"
 #include "SphereImpostorMaterial.h"
 #include "UIMaterial.h"
+#include "VtxColorMaterial.h"
 
 #include <stddef.h> //for offsetof
 #include <ostream>
@@ -105,8 +106,8 @@ RendererGL::RendererGL(WindowSDL *window, const Graphics::Settings &vs)
 
 	SetMatrixMode(MatrixMode::MODELVIEW);
 
-	m_modelViewStack.push(matrix4x4f::Identity());
-	m_projectionStack.push(matrix4x4f::Identity());
+	m_modelViewStack.push(mat4x4::Identityf());
+	m_projectionStack.push(mat4x4::Identityf());
 
 	SetClearColor(Color4f(0.f, 0.f, 0.f, 0.f));
 	SetViewport(0, 0, m_width, m_height);
@@ -312,7 +313,7 @@ bool RendererGL::SetLights(const int numlights, const Light *lights)
 	//glLight depends on the current transform, but we have always
 	//relied on it being identity when setting lights.
 	Graphics::Renderer::MatrixTicket ticket(this, MatrixMode::MODELVIEW);
-	SetTransform(matrix4x4f::Identity());
+	SetTransform(mat4x4::Identityf());
 
 	m_numLights = NumLights;
 	m_numDirLights = 0;
@@ -361,9 +362,9 @@ void RendererGL::SetProgramShaderTransforms(PiGL::Program *p)
 	const matrix4x4f& mv = m_modelViewStack.top();
 	const matrix4x4f& proj = m_projectionStack.top();
 	const matrix4x4f ViewProjection = proj * mv;
-	matrix3x3f orient;
-	mv.SaveTo3x3Matrix( &orient[0] );
-	const matrix3x3f NormalMatrix = orient.Inverse().Transpose();
+	const matrix3x3f orient(mv.GetOrient());
+	const matrix4x4f NormalMatrix(orient.Inverse().Transpose());
+	//const matrix4x4f NormalMatrix(mv.Inverse().Transpose());
 
 	p->uProjectionMatrix.Set( proj );
 	p->uViewMatrix.Set( mv );
@@ -537,6 +538,7 @@ bool RendererGL::DrawBuffer(VertexBuffer* vb, RenderState* state, Material* mat,
 	EnableVertexAttributes(gvb);
 
 	glDrawArrays(pt, 0, gvb->GetVertexCount());
+	CheckRenderErrors();
 	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -635,6 +637,9 @@ Material *RendererGL::CreateMaterial(const MaterialDescriptor &d)
 	// Create the material. It will be also used to create the shader,
 	// like a tiny factory
 	switch (desc.effect) {
+	case EFFECT_VTXCOLOR:
+		mat = new PiGL::VtxColorMaterial();
+		break;
 	case EFFECT_UI:
 		mat = new PiGL::UIMaterial();
 		break;
@@ -958,10 +963,10 @@ void RendererGL::LoadIdentity()
 	PROFILE_SCOPED()
 	switch(m_matrixMode) {
 		case MatrixMode::MODELVIEW:
-			m_modelViewStack.top() = matrix4x4f::Identity();
+			m_modelViewStack.top() = mat4x4::Identityf();
 			break;
 		case MatrixMode::PROJECTION:
-			m_projectionStack.top() = matrix4x4f::Identity();
+			m_projectionStack.top() = mat4x4::Identityf();
 			break;
 	}
 	CheckRenderErrors();

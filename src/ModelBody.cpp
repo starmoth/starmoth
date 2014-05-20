@@ -147,7 +147,7 @@ void ModelBody::RebuildCollisionMesh()
 		Geom *dynG = new Geom(*it);
 		dynG->SetUserData(static_cast<void*>(this));
 		dynG->MoveTo(GetOrient(), GetPosition());
-		dynG->m_animTransform = matrix4x4d::Identity();
+		dynG->m_animTransform = mat4x4::Identityd();
 		SceneGraph::CollisionGeometry *cg = dgf.GetCgForTree(*it);
 		if (cg)
 			cg->SetGeom(dynG);

@@ -93,15 +93,19 @@ VertexBuffer::VertexBuffer(const VertexBufferDesc &desc)
 		switch (attr.semantic) {
 		case ATTRIB_POSITION:
 		case ATTRIB_NORMAL:
-		case ATTRIB_DIFFUSE:
 		case ATTRIB_UV0:
 			glEnableVertexAttribArray(location);	// Enable the attribute at that location
-			glVertexAttribPointer(location, get_num_components(attr.format), get_component_type(attr.format), 0, m_desc.stride, offset);	// Tell OpenGL what the array contains
-			CheckRenderErrors();
+			glVertexAttribPointer(location, get_num_components(attr.format), get_component_type(attr.format), GL_FALSE, m_desc.stride, offset);	// Tell OpenGL what the array contains
+			break;
+		case ATTRIB_DIFFUSE:
+			glEnableVertexAttribArray(location);	// Enable the attribute at that location
+			glVertexAttribPointer(location, get_num_components(attr.format), get_component_type(attr.format), GL_TRUE, m_desc.stride, offset);	// Tell OpenGL what the array contains
+			break;
 		case ATTRIB_NONE:
 		default:
 			break;
 		}
+		CheckRenderErrors();
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);

@@ -28,7 +28,7 @@ void main(void)
 #endif
 #if (NUM_LIGHTS > 0)
 	eyePos = vec3(uViewMatrix * a_vertex);
-	normal = normalize(uNormalMatrix * a_normal);
+	normal = normalize(uNormalMatrix * vec4(a_normal, 1.0)).xyz;
 #ifdef HEAT_COLOURING
 	heatingDir = normalize(heatingMatrix * heatingNormal);
 #endif

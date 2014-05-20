@@ -19,7 +19,7 @@ ObjectViewerView::ObjectViewerView(): UIView()
 {
 	SetTransparency(true);
 	viewingDist = 1000.0f;
-	m_camRot = matrix4x4d::Identity();
+	m_camRot = mat4x4::Identityd();
 
 	m_infoLabel = new Gui::Label("");
 	Add(m_infoLabel, 2, Gui::Screen::GetHeight()-66-Gui::Screen::GetFontHeight());
@@ -120,7 +120,7 @@ void ObjectViewerView::Draw3D()
 
 void ObjectViewerView::OnSwitchTo()
 {
-	m_camRot = matrix4x4d::Identity();
+	m_camRot = mat4x4::Identityd();
 	UIView::OnSwitchTo();
 }
 

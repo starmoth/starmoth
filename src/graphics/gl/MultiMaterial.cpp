@@ -95,7 +95,7 @@ void MultiMaterial::Apply()
 		p->heatingNormal.Set(pMGP->heatingNormal);
 		p->heatingAmount.Set(pMGP->heatingAmount);
 	} else {
-		p->heatingMatrix.Set(matrix3x3f::Identity());
+		p->heatingMatrix.Set(mat3x3::Identityf());
 		p->heatingNormal.Set(vector3f(0.0f, -1.0f, 0.0f));
 		p->heatingAmount.Set(0.0f);
 	}

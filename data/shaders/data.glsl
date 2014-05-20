@@ -5,7 +5,7 @@ uniform mat4 uProjectionMatrix;
 uniform mat4 uViewMatrix;
 uniform mat4 uViewMatrixInverse;
 uniform mat4 uViewProjectionMatrix;
-uniform mat3 uNormalMatrix;
+uniform mat4 uNormalMatrix;
 
 //Light uniform parameters
 struct Light {

@@ -25,6 +25,7 @@ protected:
 private:
 	RefCountedPtr<Graphics::Texture> m_texture;
 	RefCountedPtr<Graphics::Material> m_material;
+	RefCountedPtr<Graphics::VertexBuffer> m_vbuffer;
 	Point m_initialSize;
 };
 
