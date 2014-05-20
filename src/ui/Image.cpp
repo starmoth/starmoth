@@ -86,8 +86,7 @@ void Image::Draw()
 
 	Graphics::Renderer *r = GetContext()->GetRenderer();
 
-	r->SetMatrixMode(Graphics::MatrixMode::MODELVIEW);
-	r->PushMatrix();
+	Graphics::Renderer::MatrixTicket mt(r, Graphics::MatrixMode::MODELVIEW);
 
 	matrix4x4f local(r->GetCurrentModelView());
 	local.Translate(offset.x, offset.y, 0.0f);
@@ -97,8 +96,6 @@ void Image::Draw()
 	auto renderState = GetContext()->GetSkin().GetAlphaBlendState();
 	m_material->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, GetContext()->GetOpacity()*Color::WHITE.a);
 	r->DrawBuffer(m_vbuffer.Get(), renderState, m_material.Get(), Graphics::TRIANGLE_STRIP);
-
-	r->PopMatrix();
 }
 
 }
