@@ -70,8 +70,8 @@ Skin::Skin(const std::string &filename, Graphics::Renderer *renderer, float scal
 	m_checkboxCheckedHover    = LoadRectElement(cfg.String("CheckboxCheckedHover"));
 	m_checkboxCheckedActive   = LoadRectElement(cfg.String("CheckboxCheckedActive"));
 
-	m_sliderVerticalGutter         = LoadEdgedRectElement(cfg.String("SliderVerticalGutter"));
-	m_sliderHorizontalGutter       = LoadEdgedRectElement(cfg.String("SliderHorizontalGutter"));
+	m_sliderVerticalGutter         = LoadEdgedRectElement(cfg.String("SliderVerticalGutter"), EdgedOrientation::VERTICAL);
+	m_sliderHorizontalGutter       = LoadEdgedRectElement(cfg.String("SliderHorizontalGutter"), EdgedOrientation::HORIZONTAL);
 	m_sliderVerticalButtonNormal   = LoadRectElement(cfg.String("SliderVerticalButtonNormal"));
 	m_sliderVerticalButtonHover    = LoadRectElement(cfg.String("SliderVerticalButtonHover"));
 	m_sliderVerticalButtonActive   = LoadRectElement(cfg.String("SliderVerticalButtonActive"));
@@ -79,8 +79,8 @@ Skin::Skin(const std::string &filename, Graphics::Renderer *renderer, float scal
 	m_sliderHorizontalButtonHover  = LoadRectElement(cfg.String("SliderHorizontalButtonHover"));
 	m_sliderHorizontalButtonActive = LoadRectElement(cfg.String("SliderHorizontalButtonActive"));
 
-	m_gaugeBackground = LoadEdgedRectElement(cfg.String("GaugeBackground"));
-	m_gaugeMask = LoadEdgedRectElement(cfg.String("GaugeMask"));
+	m_gaugeBackground = LoadEdgedRectElement(cfg.String("GaugeBackground"), EdgedOrientation::HORIZONTAL);
+	m_gaugeMask = LoadEdgedRectElement(cfg.String("GaugeMask"), EdgedOrientation::HORIZONTAL);
 	m_gaugeFillNormal = LoadRectElement(cfg.String("GaugeFillNormal"));
 	m_gaugeFillWarning = LoadRectElement(cfg.String("GaugeFillWarning"));
 	m_gaugeFillCritical = LoadRectElement(cfg.String("GaugeFillCritical"));
@@ -146,141 +146,179 @@ Graphics::VertexBuffer* CreatePosVB(const Uint32 numVertices, Graphics::Material
 	return renderer->CreateVertexBuffer(vbd);
 }
 
-void Skin::DrawRectElement(const RectElement &element, const Point &pos, const Point &size, Graphics::BlendMode blendMode) const
+void Skin::RectElement::GenerateVertexBuffer(Graphics::Renderer* renderer, Graphics::Material* material)
 {
 	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_UV0);
 	
-	va.Add(vector3f(pos.x,        pos.y,        0.0f), scaled(vector2f(element.pos.x,                element.pos.y)));
-	va.Add(vector3f(pos.x,        pos.y+size.y, 0.0f), scaled(vector2f(element.pos.x,                element.pos.y+element.size.y)));
-	va.Add(vector3f(pos.x+size.x, pos.y,        0.0f), scaled(vector2f(element.pos.x+element.size.x, element.pos.y)));
-	va.Add(vector3f(pos.x+size.x, pos.y+size.y, 0.0f), scaled(vector2f(element.pos.x+element.size.x, element.pos.y+element.size.y)));
+	va.Add(vector3f(0.0f, 0.0f, 0.0f), scaled(vector2f(pos.x,        pos.y)));
+	va.Add(vector3f(0.0f, 1.0f, 0.0f), scaled(vector2f(pos.x,        pos.y+size.y)));
+	va.Add(vector3f(1.0f, 0.0f, 0.0f), scaled(vector2f(pos.x+size.x, pos.y)));
+	va.Add(vector3f(1.0f, 1.0f, 0.0f), scaled(vector2f(pos.x+size.x, pos.y+size.y)));
 
-	std::unique_ptr<Graphics::VertexBuffer> vertexBuffer( CreatePosUVVB(va.GetNumVerts(), m_textureMaterial.Get(), m_renderer) );
-	SkinVert* vtxPtr = vertexBuffer->Map<SkinVert>(Graphics::BUFFER_MAP_WRITE);
-	assert(vertexBuffer->GetDesc().stride == sizeof(SkinVert));
+	vbuffer.Reset( CreatePosUVVB(va.GetNumVerts(), material, renderer) );
+	SkinVert* vtxPtr = vbuffer->Map<SkinVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(vbuffer->GetDesc().stride == sizeof(SkinVert));
 	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
 	{
 		vtxPtr[i].pos	= va.position[i];
 		vtxPtr[i].uv	= va.uv0[i];
 	}
-	vertexBuffer->Unmap();
+	vbuffer->Unmap();
+}
+
+void Skin::BorderedRectElement::GenerateVertexBuffer(Graphics::Renderer* renderer, Graphics::Material* material)
+{
+	// for uv coordinates
+	const float width = borderWidth;
+	const float height = borderHeight;
+	// for position coordinates (which are subject to positioning and scaling)
+	const float invw = 1.0f / float(borderWidth);
+	const float invh = 1.0f / float(borderHeight);
+
+	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_UV0);
+	
+	va.Add(vector3f(0.0f,           0.0f,        0.0f), scaled(vector2f(pos.x,              pos.y)));
+	va.Add(vector3f(0.0f,           invh,        0.0f), scaled(vector2f(pos.x,              pos.y+height)));
+	va.Add(vector3f(invw,           0.0f,        0.0f), scaled(vector2f(pos.x+width,        pos.y)));
+	va.Add(vector3f(invw,           invh,        0.0f), scaled(vector2f(pos.x+width,        pos.y+height)));
+	va.Add(vector3f(1.0f-invw,      0.0f,        0.0f), scaled(vector2f(pos.x+size.x-width, pos.y)));
+	va.Add(vector3f(1.0f-invw,      invh,        0.0f), scaled(vector2f(pos.x+size.x-width, pos.y+height)));
+	va.Add(vector3f(1.0f,           0.0f,        0.0f), scaled(vector2f(pos.x+size.x,       pos.y)));
+	va.Add(vector3f(1.0f,           invh,        0.0f), scaled(vector2f(pos.x+size.x,       pos.y+height)));
+
+	// degenerate triangles to join rows
+	va.Add(vector3f(1.0f,           invh,        0.0f), scaled(vector2f(pos.x+size.x,       pos.y+height)));
+	va.Add(vector3f(0.0f,           invh,        0.0f), scaled(vector2f(pos.x,              pos.y+height)));
+
+	va.Add(vector3f(0.0f,           invh,        0.0f), scaled(vector2f(pos.x,              pos.y+height)));
+	va.Add(vector3f(0.0f,           1.0f-invh,   0.0f), scaled(vector2f(pos.x,              pos.y+size.y-height)));
+	va.Add(vector3f(invw,           invh,        0.0f), scaled(vector2f(pos.x+width,        pos.y+height)));
+	va.Add(vector3f(invw,           1.0f-invh,   0.0f), scaled(vector2f(pos.x+width,        pos.y+size.y-height)));
+	va.Add(vector3f(1.0f-invw,      invh,        0.0f), scaled(vector2f(pos.x+size.x-width, pos.y+height)));
+	va.Add(vector3f(1.0f-invw,      1.0f-invh,   0.0f), scaled(vector2f(pos.x+size.x-width, pos.y+size.y-height)));
+	va.Add(vector3f(1.0f,           invh,        0.0f), scaled(vector2f(pos.x+size.x,       pos.y+height)));
+	va.Add(vector3f(1.0f,           1.0f-invh,   0.0f), scaled(vector2f(pos.x+size.x,       pos.y+size.y-height)));
+
+	// degenerate triangles to join rows
+	va.Add(vector3f(1.0f,           1.0f-invh,   0.0f), scaled(vector2f(pos.x+size.x,       pos.y+size.y-height)));
+	va.Add(vector3f(0.0f,           1.0f-invh,   0.0f), scaled(vector2f(pos.x,              pos.y+size.y-height)));
+
+	va.Add(vector3f(0.0f,           1.0f-invh,   0.0f), scaled(vector2f(pos.x,              pos.y+size.y-height)));
+	va.Add(vector3f(0.0f,           1.0f,        0.0f), scaled(vector2f(pos.x,              pos.y+size.y)));
+	va.Add(vector3f(invw,           1.0f-invh,   0.0f), scaled(vector2f(pos.x+width,        pos.y+size.y-height)));
+	va.Add(vector3f(invw,           1.0f,        0.0f), scaled(vector2f(pos.x+width,        pos.y+size.y)));
+	va.Add(vector3f(1.0f-invw,      1.0f-invh,   0.0f), scaled(vector2f(pos.x+size.x-width, pos.y+size.y-height)));
+	va.Add(vector3f(1.0f-invw,      1.0f,        0.0f), scaled(vector2f(pos.x+size.x-width, pos.y+size.y)));
+	va.Add(vector3f(1.0f,           1.0f-invh,   0.0f), scaled(vector2f(pos.x+size.x,       pos.y+size.y-height)));
+	va.Add(vector3f(1.0f,           1.0f,        0.0f), scaled(vector2f(pos.x+size.x,       pos.y+size.y)));
+	
+	vbuffer.Reset( CreatePosUVVB(va.GetNumVerts(), material, renderer) );
+	SkinVert* vtxPtr = vbuffer->Map<SkinVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(vbuffer->GetDesc().stride == sizeof(SkinVert));
+	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= va.position[i];
+		vtxPtr[i].uv	= va.uv0[i];
+	}
+	vbuffer->Unmap();
+}
+
+void Skin::EdgedRectElement::GenerateVertexBuffer(Graphics::Renderer* renderer, Graphics::Material* material, const EdgedOrientation orient)
+{
+	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_UV0);
+
+	if( EdgedOrientation::VERTICAL == orient ) {
+		// for uv coordinates
+		const float height = edgeWidth;
+		// for position coordinates (which are subject to positioning and scaling)
+		const float invh = 1.0f / float(edgeWidth);
+
+		va.Add(vector3f(1.0f, 0.0f,      0.0f), scaled(vector2f(pos.x+size.x,       pos.y)));
+		va.Add(vector3f(0.0f, 0.0f,      0.0f), scaled(vector2f(pos.x,              pos.y)));
+		va.Add(vector3f(1.0f, invh,      0.0f), scaled(vector2f(pos.x+size.x,       pos.y+height)));
+		va.Add(vector3f(0.0f, invh,      0.0f), scaled(vector2f(pos.x,              pos.y+height)));
+		va.Add(vector3f(1.0f, 1.0f-invh, 0.0f), scaled(vector2f(pos.x+size.x,       pos.y+size.y-height)));
+		va.Add(vector3f(0.0f, 1.0f-invh, 0.0f), scaled(vector2f(pos.x,              pos.y+size.y-height)));
+		va.Add(vector3f(1.0f, 1.0f,      0.0f), scaled(vector2f(pos.x+size.x,       pos.y+size.y)));
+		va.Add(vector3f(0.0f, 1.0f,      0.0f), scaled(vector2f(pos.x,              pos.y+size.y)));
+	} else {
+		// for uv coordinates
+		const float width = edgeWidth;
+		// for position coordinates (which are subject to positioning and scaling)
+		const float invw = 1.0f / float(edgeWidth);
+
+		va.Add(vector3f(0.0f,      0.0f, 0.0f), scaled(vector2f(pos.x,              pos.y)));
+		va.Add(vector3f(0.0f,      1.0f, 0.0f), scaled(vector2f(pos.x,              pos.y+size.y)));
+		va.Add(vector3f(invw,      0.0f, 0.0f), scaled(vector2f(pos.x+width,        pos.y)));
+		va.Add(vector3f(invw,      1.0f, 0.0f), scaled(vector2f(pos.x+width,        pos.y+size.y)));
+		va.Add(vector3f(1.0f-invw, 0.0f, 0.0f), scaled(vector2f(pos.x+size.x-width, pos.y)));
+		va.Add(vector3f(1.0f-invw, 1.0f, 0.0f), scaled(vector2f(pos.x+size.x-width, pos.y+size.y)));
+		va.Add(vector3f(1.0f,      0.0f, 0.0f), scaled(vector2f(pos.x+size.x,       pos.y)));
+		va.Add(vector3f(1.0f,      1.0f, 0.0f), scaled(vector2f(pos.x+size.x,       pos.y+size.y)));
+	}
+
+	vbuffer.Reset( CreatePosUVVB(va.GetNumVerts(), material, renderer) );
+	SkinVert* vtxPtr = vbuffer->Map<SkinVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(vbuffer->GetDesc().stride == sizeof(SkinVert));
+	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= va.position[i];
+		vtxPtr[i].uv	= va.uv0[i];
+	}
+	vbuffer->Unmap();
+}
+
+void Skin::DrawRectElement(const RectElement &element, const Point &pos, const Point &size, Graphics::BlendMode blendMode) const
+{
+	Graphics::Renderer::MatrixTicket mt(m_renderer, Graphics::MatrixMode::MODELVIEW);
+
+	matrix4x4f local(m_renderer->GetCurrentModelView());
+	local.Translate(pos.x, pos.y, 0.0f);
+	local.Scale(size.x, size.y, 0.0f);
+	m_renderer->SetTransform(local);
 
 	m_textureMaterial->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, m_opacity*Color::WHITE.a);
-	m_renderer->DrawBuffer(vertexBuffer.get(), GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
+	m_renderer->DrawBuffer(element.GetVertexBuffer(), GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
 }
 
 void Skin::DrawBorderedRectElement(const BorderedRectElement &element, const Point &pos, const Point &size, Graphics::BlendMode blendMode) const
 {
-	const float width = element.borderWidth;
-	const float height = element.borderHeight;
+	Graphics::Renderer::MatrixTicket mt(m_renderer, Graphics::MatrixMode::MODELVIEW);
 
-	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_UV0);
-
-	va.Add(vector3f(pos.x,              pos.y,        0.0f), scaled(vector2f(element.pos.x,                             element.pos.y)));
-	va.Add(vector3f(pos.x,              pos.y+height, 0.0f), scaled(vector2f(element.pos.x,                             element.pos.y+height)));
-	va.Add(vector3f(pos.x+width,        pos.y,        0.0f), scaled(vector2f(element.pos.x+width,                       element.pos.y)));
-	va.Add(vector3f(pos.x+width,        pos.y+height, 0.0f), scaled(vector2f(element.pos.x+width,                       element.pos.y+height)));
-	va.Add(vector3f(pos.x+size.x-width, pos.y,        0.0f), scaled(vector2f(element.pos.x+element.size.x-width,        element.pos.y)));
-	va.Add(vector3f(pos.x+size.x-width, pos.y+height, 0.0f), scaled(vector2f(element.pos.x+element.size.x-width,        element.pos.y+height)));
-	va.Add(vector3f(pos.x+size.x,       pos.y,        0.0f), scaled(vector2f(element.pos.x+element.size.x,              element.pos.y)));
-	va.Add(vector3f(pos.x+size.x,       pos.y+height, 0.0f), scaled(vector2f(element.pos.x+element.size.x,              element.pos.y+height)));
-
-	// degenerate triangles to join rows
-	va.Add(vector3f(pos.x+size.x,       pos.y+height, 0.0f), scaled(vector2f(element.pos.x+element.size.x,              element.pos.y+height)));
-	va.Add(vector3f(pos.x,              pos.y+height, 0.0f), scaled(vector2f(element.pos.x,                             element.pos.y+height)));
-
-	va.Add(vector3f(pos.x,              pos.y+height,        0.0f), scaled(vector2f(element.pos.x,                      element.pos.y+height)));
-	va.Add(vector3f(pos.x,              pos.y+size.y-height, 0.0f), scaled(vector2f(element.pos.x,                      element.pos.y+element.size.y-height)));
-	va.Add(vector3f(pos.x+width,        pos.y+height,        0.0f), scaled(vector2f(element.pos.x+width,                element.pos.y+height)));
-	va.Add(vector3f(pos.x+width,        pos.y+size.y-height, 0.0f), scaled(vector2f(element.pos.x+width,                element.pos.y+element.size.y-height)));
-	va.Add(vector3f(pos.x+size.x-width, pos.y+height,        0.0f), scaled(vector2f(element.pos.x+element.size.x-width, element.pos.y+height)));
-	va.Add(vector3f(pos.x+size.x-width, pos.y+size.y-height, 0.0f), scaled(vector2f(element.pos.x+element.size.x-width, element.pos.y+element.size.y-height)));
-	va.Add(vector3f(pos.x+size.x,       pos.y+height,        0.0f), scaled(vector2f(element.pos.x+element.size.x,       element.pos.y+height)));
-	va.Add(vector3f(pos.x+size.x,       pos.y+size.y-height, 0.0f), scaled(vector2f(element.pos.x+element.size.x,       element.pos.y+element.size.y-height)));
-
-	// degenerate triangles to join rows
-	va.Add(vector3f(pos.x+size.x,       pos.y+size.y-height, 0.0f), scaled(vector2f(element.pos.x+element.size.x,       element.pos.y+element.size.y-height)));
-	va.Add(vector3f(pos.x,              pos.y+size.y-height, 0.0f), scaled(vector2f(element.pos.x,                      element.pos.y+element.size.y-height)));
-
-	va.Add(vector3f(pos.x,              pos.y+size.y-height, 0.0f), scaled(vector2f(element.pos.x,                      element.pos.y+element.size.y-height)));
-	va.Add(vector3f(pos.x,              pos.y+size.y,        0.0f), scaled(vector2f(element.pos.x,                      element.pos.y+element.size.y)));
-	va.Add(vector3f(pos.x+width,        pos.y+size.y-height, 0.0f), scaled(vector2f(element.pos.x+width,                element.pos.y+element.size.y-height)));
-	va.Add(vector3f(pos.x+width,        pos.y+size.y,        0.0f), scaled(vector2f(element.pos.x+width,                element.pos.y+element.size.y)));
-	va.Add(vector3f(pos.x+size.x-width, pos.y+size.y-height, 0.0f), scaled(vector2f(element.pos.x+element.size.x-width, element.pos.y+element.size.y-height)));
-	va.Add(vector3f(pos.x+size.x-width, pos.y+size.y,        0.0f), scaled(vector2f(element.pos.x+element.size.x-width, element.pos.y+element.size.y)));
-	va.Add(vector3f(pos.x+size.x,       pos.y+size.y-height, 0.0f), scaled(vector2f(element.pos.x+element.size.x,       element.pos.y+element.size.y-height)));
-	va.Add(vector3f(pos.x+size.x,       pos.y+size.y,        0.0f), scaled(vector2f(element.pos.x+element.size.x,       element.pos.y+element.size.y)));
-
-	Graphics::VertexBuffer* vertexBuffer( CreatePosUVVB(va.GetNumVerts(), m_textureMaterial.Get(), m_renderer) );
-	SkinVert* vtxPtr = vertexBuffer->Map<SkinVert>(Graphics::BUFFER_MAP_WRITE);
-	assert(vertexBuffer->GetDesc().stride == sizeof(SkinVert));
-	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
-	{
-		vtxPtr[i].pos	= va.position[i];
-		vtxPtr[i].uv	= va.uv0[i];
-	}
-	vertexBuffer->Unmap();
+	matrix4x4f local(m_renderer->GetCurrentModelView());
+	local.Translate(pos.x, pos.y, 0.0f);
+	local.Scale(size.x, size.y, 0.0f);
+	m_renderer->SetTransform(local);
 
 	m_textureMaterial->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, m_opacity*Color::WHITE.a);
-	m_renderer->DrawBuffer(vertexBuffer, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
+	m_renderer->DrawBuffer(element.GetVertexBuffer(), GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
 }
 
 void Skin::DrawVerticalEdgedRectElement(const EdgedRectElement &element, const Point &pos, const Point &size, Graphics::BlendMode blendMode) const
 {
-	const float height = element.edgeWidth;
+	Graphics::Renderer::MatrixTicket mt(m_renderer, Graphics::MatrixMode::MODELVIEW);
 
-	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_UV0);
-
-	va.Add(vector3f(pos.x+size.x, pos.y,               0.0f), scaled(vector2f(element.pos.x+element.size.x, element.pos.y)));
-	va.Add(vector3f(pos.x,        pos.y,               0.0f), scaled(vector2f(element.pos.x,                element.pos.y)));
-	va.Add(vector3f(pos.x+size.x, pos.y+height,        0.0f), scaled(vector2f(element.pos.x+element.size.x, element.pos.y+height)));
-	va.Add(vector3f(pos.x,        pos.y+height,        0.0f), scaled(vector2f(element.pos.x,                element.pos.y+height)));
-	va.Add(vector3f(pos.x+size.x, pos.y+size.y-height, 0.0f), scaled(vector2f(element.pos.x+element.size.x, element.pos.y+element.size.y-height)));
-	va.Add(vector3f(pos.x,        pos.y+size.y-height, 0.0f), scaled(vector2f(element.pos.x,                element.pos.y+element.size.y-height)));
-	va.Add(vector3f(pos.x+size.x, pos.y+size.y,        0.0f), scaled(vector2f(element.pos.x+element.size.x, element.pos.y+element.size.y)));
-	va.Add(vector3f(pos.x,        pos.y+size.y,        0.0f), scaled(vector2f(element.pos.x,                element.pos.y+element.size.y)));
-
-	Graphics::VertexBuffer* vertexBuffer( CreatePosUVVB(va.GetNumVerts(), m_textureMaterial.Get(), m_renderer) );
-	SkinVert* vtxPtr = vertexBuffer->Map<SkinVert>(Graphics::BUFFER_MAP_WRITE);
-	assert(vertexBuffer->GetDesc().stride == sizeof(SkinVert));
-	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
-	{
-		vtxPtr[i].pos	= va.position[i];
-		vtxPtr[i].uv	= va.uv0[i];
-	}
-	vertexBuffer->Unmap();
+	matrix4x4f local(m_renderer->GetCurrentModelView());
+	local.Translate(pos.x, pos.y, 0.0f);
+	local.Scale(size.x, size.y, 0.0f);
+	m_renderer->SetTransform(local);
 
 	m_textureMaterial->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, m_opacity*Color::WHITE.a);
-	m_renderer->DrawBuffer(vertexBuffer, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
+	m_renderer->DrawBuffer(element.GetVertexBuffer(), GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
 }
 
 void Skin::DrawHorizontalEdgedRectElement(const EdgedRectElement &element, const Point &pos, const Point &size, Graphics::BlendMode blendMode) const
 {
-	const float width = element.edgeWidth;
 
-	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_UV0);
+	Graphics::Renderer::MatrixTicket mt(m_renderer, Graphics::MatrixMode::MODELVIEW);
 
-	va.Add(vector3f(pos.x,              pos.y,        0.0f), scaled(vector2f(element.pos.x,                      element.pos.y)));
-	va.Add(vector3f(pos.x,              pos.y+size.y, 0.0f), scaled(vector2f(element.pos.x,                      element.pos.y+element.size.y)));
-	va.Add(vector3f(pos.x+width,        pos.y,        0.0f), scaled(vector2f(element.pos.x+width,                element.pos.y)));
-	va.Add(vector3f(pos.x+width,        pos.y+size.y, 0.0f), scaled(vector2f(element.pos.x+width,                element.pos.y+element.size.y)));
-	va.Add(vector3f(pos.x+size.x-width, pos.y,        0.0f), scaled(vector2f(element.pos.x+element.size.x-width, element.pos.y)));
-	va.Add(vector3f(pos.x+size.x-width, pos.y+size.y, 0.0f), scaled(vector2f(element.pos.x+element.size.x-width, element.pos.y+element.size.y)));
-	va.Add(vector3f(pos.x+size.x,       pos.y,        0.0f), scaled(vector2f(element.pos.x+element.size.x,       element.pos.y)));
-	va.Add(vector3f(pos.x+size.x,       pos.y+size.y, 0.0f), scaled(vector2f(element.pos.x+element.size.x,       element.pos.y+element.size.y)));
-
-	Graphics::VertexBuffer* vertexBuffer( CreatePosUVVB(va.GetNumVerts(), m_textureMaterial.Get(), m_renderer) );
-	SkinVert* vtxPtr = vertexBuffer->Map<SkinVert>(Graphics::BUFFER_MAP_WRITE);
-	assert(vertexBuffer->GetDesc().stride == sizeof(SkinVert));
-	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
-	{
-		vtxPtr[i].pos	= va.position[i];
-		vtxPtr[i].uv	= va.uv0[i];
-	}
-	vertexBuffer->Unmap();
+	matrix4x4f local(m_renderer->GetCurrentModelView());
+	local.Translate(pos.x, pos.y, 0.0f);
+	local.Scale(size.x, size.y, 0.0f);
+	m_renderer->SetTransform(local);
 
 	m_textureMaterial->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, m_opacity*Color::WHITE.a);
-	m_renderer->DrawBuffer(vertexBuffer, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
+	m_renderer->DrawBuffer(element.GetVertexBuffer(), GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
 }
 
 void Skin::DrawRectColor(const Color &col, const Point &pos, const Point &size) const
@@ -292,7 +330,7 @@ void Skin::DrawRectColor(const Color &col, const Point &pos, const Point &size) 
 	va.Add(vector3f(pos.x+size.x, pos.y,        0.0f));
 	va.Add(vector3f(pos.x+size.x, pos.y+size.y, 0.0f));
 	
-	Graphics::VertexBuffer* vertexBuffer( CreatePosVB(va.GetNumVerts(), m_textureMaterial.Get(), m_renderer) );
+	Graphics::VertexBuffer* vertexBuffer( CreatePosVB(va.GetNumVerts(), m_colorMaterial.Get(), m_renderer) );
 	SkinPosOnlyVert* vtxPtr = vertexBuffer->Map<SkinPosOnlyVert>(Graphics::BUFFER_MAP_WRITE);
 	assert(vertexBuffer->GetDesc().stride == sizeof(SkinPosOnlyVert));
 	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
@@ -332,21 +370,27 @@ Skin::RectElement Skin::LoadRectElement(const std::string &spec)
 {
 	std::vector<int> v(4);
 	SplitSpec(spec, v);
-	return RectElement(v[0], v[1], v[2], v[3]);
+	RectElement res(v[0], v[1], v[2], v[3]);
+	res.GenerateVertexBuffer(m_renderer, m_textureMaterial.Get());
+	return res;
 }
 
 Skin::BorderedRectElement Skin::LoadBorderedRectElement(const std::string &spec)
 {
 	std::vector<int> v(8);
 	SplitSpec(spec, v);
-	return BorderedRectElement(v[0], v[1], v[2], v[3], v[4]*m_scale, v[5]*m_scale, v[6]*m_scale, v[7]*m_scale);
+	BorderedRectElement res(v[0], v[1], v[2], v[3], v[4]*m_scale, v[5]*m_scale, v[6]*m_scale, v[7]*m_scale);
+	res.GenerateVertexBuffer(m_renderer, m_textureMaterial.Get());
+	return res;
 }
 
-Skin::EdgedRectElement Skin::LoadEdgedRectElement(const std::string &spec)
+Skin::EdgedRectElement Skin::LoadEdgedRectElement(const std::string &spec, const EdgedOrientation orient)
 {
 	std::vector<int> v(5);
 	SplitSpec(spec, v);
-	return EdgedRectElement(v[0], v[1], v[2], v[3], v[4]);
+	EdgedRectElement res(v[0], v[1], v[2], v[3], v[4]);
+	res.GenerateVertexBuffer(m_renderer, m_textureMaterial.Get(), orient);
+	return res;
 }
 
 }

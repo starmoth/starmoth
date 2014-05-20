@@ -20,6 +20,11 @@ class Skin {
 public:
 	Skin(const std::string &filename, Graphics::Renderer *renderer, float scale);
 
+	enum class EdgedOrientation {
+		VERTICAL,
+		HORIZONTAL
+	};
+
 	void SetOpacity(float o) { m_opacity = o; }
 
 	void DrawBackgroundNormal(const Point &pos, const Point &size) const {
@@ -140,8 +145,14 @@ public:
 	struct RectElement {
 		RectElement() {}
 		RectElement(unsigned int x, unsigned int y, unsigned int w, unsigned int h) : pos(x,y), size(w,h) {}
+		void GenerateVertexBuffer(Graphics::Renderer*, Graphics::Material*);
+		Graphics::VertexBuffer* GetVertexBuffer() const { return vbuffer.Get(); }
+
 		Point pos;
 		Point size;
+	
+	protected:
+		RefCountedPtr<Graphics::VertexBuffer> vbuffer;
 	};
 
 	struct BorderedRectElement : public RectElement {
@@ -149,6 +160,8 @@ public:
 		BorderedRectElement(unsigned int x, unsigned int y, unsigned int w, unsigned int h,
 				            unsigned int _borderWidth, unsigned int _borderHeight, unsigned int _paddingX, unsigned int _paddingY) :
 			RectElement(x, y, w, h), borderWidth(_borderWidth), borderHeight(_borderHeight), paddingX(_paddingX), paddingY(_paddingY) {}
+		void GenerateVertexBuffer(Graphics::Renderer*, Graphics::Material*);
+
 		unsigned int borderWidth;
 		unsigned int borderHeight;
 		unsigned int paddingX;
@@ -159,6 +172,8 @@ public:
 		EdgedRectElement() : edgeWidth(0) {}
 		EdgedRectElement(unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int _edgeWidth) :
 			RectElement(x, y, w, h), edgeWidth(_edgeWidth) {}
+		void GenerateVertexBuffer(Graphics::Renderer*, Graphics::Material*, const EdgedOrientation);
+
 		unsigned int edgeWidth;
 	};
 
@@ -235,7 +250,7 @@ private:
 
 	RectElement LoadRectElement(const std::string &spec);
 	BorderedRectElement LoadBorderedRectElement(const std::string &spec);
-	EdgedRectElement LoadEdgedRectElement(const std::string &spec);
+	EdgedRectElement LoadEdgedRectElement(const std::string &spec, const EdgedOrientation);
 
 	BorderedRectElement m_backgroundNormal;
 	BorderedRectElement m_backgroundActive;
