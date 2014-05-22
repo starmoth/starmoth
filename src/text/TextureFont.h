@@ -72,7 +72,7 @@ private:
 
 	float GetKern(const Glyph &a, const Glyph &b);
 
-	void AddGlyphGeometry(const Uint32 vtxidx, const Glyph &glyph, float x, float y, const Color &color);
+	void AddGlyphGeometry(Graphics::VertexArray &va, const Glyph &glyph, float x, float y, const Color &color);
 	float m_height;
 	float m_descender;
 	std::unique_ptr<Graphics::Material> m_mat;

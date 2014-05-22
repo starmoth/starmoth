@@ -27,7 +27,7 @@ struct GlyphVert {
 };
 #pragma pack(pop)
 
-void TextureFont::AddGlyphGeometry(const Uint32 vtxidx, const Glyph &glyph, float x, float y, const Color &c)
+void TextureFont::AddGlyphGeometry(Graphics::VertexArray &va, const Glyph &glyph, float x, float y, const Color &c)
 {
 	const float offX = x + float(glyph.offX);
 	const float offY = y + GetHeight() - float(glyph.offY);
@@ -44,18 +44,12 @@ void TextureFont::AddGlyphGeometry(const Uint32 vtxidx, const Glyph &glyph, floa
 	const vector2f t2(offU+glyph.texWidth, offV                );
 	const vector2f t3(offU+glyph.texWidth, offV+glyph.texHeight);
 
-	GlyphVert* vtxPtr = m_vertexBuffer->Map<GlyphVert>(Graphics::BUFFER_MAP_WRITE);
-	assert(m_vertexBuffer->GetDesc().stride == sizeof(GlyphVert));
-	{
-		const Uint32 offset = (vtxidx * 6);
-		vtxPtr[0 + offset].pos = p0;		vtxPtr[0 + offset].col = Color4ub(c);		vtxPtr[0 + offset].uv = t0;
-		vtxPtr[1 + offset].pos = p1;		vtxPtr[1 + offset].col = Color4ub(c);		vtxPtr[1 + offset].uv = t1;
-		vtxPtr[2 + offset].pos = p2;		vtxPtr[2 + offset].col = Color4ub(c);		vtxPtr[2 + offset].uv = t2;
-		vtxPtr[3 + offset].pos = p2;		vtxPtr[3 + offset].col = Color4ub(c);		vtxPtr[3 + offset].uv = t2;
-		vtxPtr[4 + offset].pos = p1;		vtxPtr[4 + offset].col = Color4ub(c);		vtxPtr[4 + offset].uv = t1;
-		vtxPtr[5 + offset].pos = p3;		vtxPtr[5 + offset].col = Color4ub(c);		vtxPtr[5 + offset].uv = t3;
-	}
-	m_vertexBuffer->Unmap();
+	va.Add(p0, c, t0);
+	va.Add(p1, c, t1);
+	va.Add(p2, c, t2);
+	va.Add(p2, c, t2);
+	va.Add(p1, c, t1);
+	va.Add(p3, c, t3);
 
 	s_glyphCount++;
 }
@@ -189,18 +183,25 @@ void TextureFont::RenderString(const std::string &str, float x, float y, const C
 
 	if(str.empty()) return;
 
-	//create buffer and upload data
-	Graphics::VertexBufferDesc vbd;
-	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
-	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
-	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
-	vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
-	vbd.attrib[2].semantic = Graphics::ATTRIB_UV0;
-	vbd.attrib[2].format   = Graphics::ATTRIB_FORMAT_FLOAT2;
-	vbd.numVertices = str.size() * 6;	// 2 tringles per character, 3 vertices per triangle = 6 vertices per character
-	vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;	// we could be updating this per-frame
-	m_mat->SetupVertexBufferDesc( vbd );
-	m_vertexBuffer.reset( m_renderer->CreateVertexBuffer(vbd) );
+	// 2 tringles per character, 3 vertices per triangle = 6 vertices per character
+	const size_t NewNumVertices = str.size() * 6;
+
+	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE | Graphics::ATTRIB_UV0);
+
+	if( !m_vertexBuffer.get() || m_vertexBuffer->GetVertexCount() != NewNumVertices ) {
+		//create buffer and upload data
+		Graphics::VertexBufferDesc vbd;
+		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+		vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+		vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+		vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
+		vbd.attrib[2].semantic = Graphics::ATTRIB_UV0;
+		vbd.attrib[2].format   = Graphics::ATTRIB_FORMAT_FLOAT2;
+		vbd.numVertices = str.size() * 6;	// 2 tringles per character, 3 vertices per triangle = 6 vertices per character
+		vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;	// we could be updating this per-frame
+		m_mat->SetupVertexBufferDesc( vbd );
+		m_vertexBuffer.reset( m_renderer->CreateVertexBuffer(vbd) );
+	}
 
 	float alpha_f = color.a / 255.0f;
 	const Color premult_color = Color(color.r * alpha_f, color.g * alpha_f, color.b * alpha_f, color.a);
@@ -221,7 +222,7 @@ void TextureFont::RenderString(const std::string &str, float x, float y, const C
 			assert(n);
 
 			const Glyph &glyph = GetGlyph(chr);
-			AddGlyphGeometry(i++, glyph, roundf(px), py, premult_color);
+			AddGlyphGeometry(va, glyph, roundf(px), py, premult_color);
 
 			if (ch) {
 				Uint32 chr2;
@@ -235,6 +236,16 @@ void TextureFont::RenderString(const std::string &str, float x, float y, const C
 		}
 	}
 
+	GlyphVert* vtxPtr = m_vertexBuffer->Map<GlyphVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(m_vertexBuffer->GetDesc().stride == sizeof(GlyphVert));
+	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= va.position[i];
+		vtxPtr[i].col	= va.diffuse[i];
+		vtxPtr[i].uv	= va.uv0[i];
+	}
+	m_vertexBuffer->Unmap();
+
 	m_renderer->DrawBuffer(m_vertexBuffer.get(), m_renderState, m_mat.get());
 }
 
@@ -244,18 +255,25 @@ Color TextureFont::RenderMarkup(const std::string &str, float x, float y, const 
 
 	if(str.empty()) return Color::BLACK;
 
-	//create buffer and upload data
-	Graphics::VertexBufferDesc vbd;
-	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
-	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
-	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
-	vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
-	vbd.attrib[2].semantic = Graphics::ATTRIB_UV0;
-	vbd.attrib[2].format   = Graphics::ATTRIB_FORMAT_FLOAT2;
-	vbd.numVertices = str.size() * 6;	// 2 tringles per character, 3 vertices per triangle = 6 vertices per character
-	vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;	// we could be updating this per-frame
-	m_mat->SetupVertexBufferDesc( vbd );
-	m_vertexBuffer.reset( m_renderer->CreateVertexBuffer(vbd) );
+	// 2 tringles per character, 3 vertices per triangle = 6 vertices per character
+	const size_t NewNumVertices = str.size() * 6;
+
+	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE | Graphics::ATTRIB_UV0);
+	
+	if( !m_vertexBuffer.get() || m_vertexBuffer->GetVertexCount() != NewNumVertices ) {
+		//create buffer and upload data
+		Graphics::VertexBufferDesc vbd;
+		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+		vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+		vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+		vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
+		vbd.attrib[2].semantic = Graphics::ATTRIB_UV0;
+		vbd.attrib[2].format   = Graphics::ATTRIB_FORMAT_FLOAT2;
+		vbd.numVertices = NewNumVertices;	// 2 tringles per character, 3 vertices per triangle = 6 vertices per character
+		vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;	// we could be updating this per-frame
+		m_mat->SetupVertexBufferDesc( vbd );
+		m_vertexBuffer.reset( m_renderer->CreateVertexBuffer(vbd) );
+	}
 
 	float px = x;
 	float py = y;
@@ -295,7 +313,7 @@ Color TextureFont::RenderMarkup(const std::string &str, float x, float y, const 
 			i += n;
 
 			const Glyph &glyph = GetGlyph(chr);
-			AddGlyphGeometry(idx++, glyph, roundf(px), py, premult_c);
+			AddGlyphGeometry(va, glyph, roundf(px), py, premult_c);
 
 			// XXX kerning doesn't skip markup
 			if (ch) {
@@ -309,6 +327,16 @@ Color TextureFont::RenderMarkup(const std::string &str, float x, float y, const 
 			px += glyph.advX;
 		}
 	}
+
+	GlyphVert* vtxPtr = m_vertexBuffer->Map<GlyphVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(m_vertexBuffer->GetDesc().stride == sizeof(GlyphVert));
+	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= va.position[i];
+		vtxPtr[i].col	= va.diffuse[i];
+		vtxPtr[i].uv	= va.uv0[i];
+	}
+	m_vertexBuffer->Unmap();
 
 	m_renderer->DrawBuffer(m_vertexBuffer.get(), m_renderState, m_mat.get());
 	return c;
