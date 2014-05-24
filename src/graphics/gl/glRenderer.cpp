@@ -375,7 +375,8 @@ void RendererGL::SetProgramShaderTransforms(PiGL::Program *p)
 
 bool RendererGL::DrawLines(int count, const vector3f *v, const Color *c, RenderState* state, LineType t)
 {
-	PROFILE_SCOPED()
+	return false;
+	/*PROFILE_SCOPED()
 	if (count < 2 || !v) return false;
 
 	SetRenderState(state);
@@ -394,12 +395,13 @@ bool RendererGL::DrawLines(int count, const vector3f *v, const Color *c, RenderS
 	glDisableClientState(GL_COLOR_ARRAY);
 	CheckRenderErrors();
 
-	return true;
+	return true;*/
 }
 
 bool RendererGL::DrawLines(int count, const vector3f *v, const Color &c, RenderState *state, LineType t)
 {
-	PROFILE_SCOPED()
+	return false;
+	/*PROFILE_SCOPED()
 	if (count < 2 || !v) return false;
 
 	SetRenderState(state);
@@ -416,12 +418,13 @@ bool RendererGL::DrawLines(int count, const vector3f *v, const Color &c, RenderS
 	glDisableClientState(GL_VERTEX_ARRAY);
 	CheckRenderErrors();
 
-	return true;
+	return true;*/
 }
 
 bool RendererGL::DrawLines2D(int count, const vector2f *v, const Color &c, Graphics::RenderState* state, LineType t)
 {
-	if (count < 2 || !v) return false;
+	return false;
+	/*if (count < 2 || !v) return false;
 
 	SetRenderState(state);
 
@@ -437,12 +440,13 @@ bool RendererGL::DrawLines2D(int count, const vector2f *v, const Color &c, Graph
 	glDisableClientState(GL_VERTEX_ARRAY);
 	CheckRenderErrors();
 
-	return true;
+	return true;*/
 }
 
 bool RendererGL::DrawPoints(int count, const vector3f *points, const Color *colors, Graphics::RenderState *state, float size)
 {
-	if (count < 1 || !points || !colors) return false;
+	return false;
+	/*if (count < 1 || !points || !colors) return false;
 
 	vtxColorProg->Use();
 	vtxColorProg->invLogZfarPlus1.Set(m_invLogZfarPlus1);
@@ -462,13 +466,12 @@ bool RendererGL::DrawPoints(int count, const vector3f *points, const Color *colo
 	glPointSize(1.f); // XXX wont't be necessary
 	CheckRenderErrors();
 
-	return true;
+	return true;*/
 }
 
-bool RendererGL::DrawTriangles(const VertexArray *v, RenderState *rs, Material *m, PrimitiveType t)
+/*bool RendererGL::DrawTriangles(const VertexArray *v, RenderState *rs, Material *m, PrimitiveType t)
 {
-	return true;
-	/*if (!v || v->position.size() < 3) return false;
+	if (!v || v->position.size() < 3) return false;
 
 	SetRenderState(rs);
 
@@ -483,8 +486,8 @@ bool RendererGL::DrawTriangles(const VertexArray *v, RenderState *rs, Material *
 	m->Unapply();
 	CheckRenderErrors();
 
-	return true;*/
-}
+	return true;
+}*/
 
 bool RendererGL::DrawPointSprites(int count, const vector3f *positions, RenderState *rs, Material *material, float size)
 {
@@ -517,7 +520,7 @@ bool RendererGL::DrawPointSprites(int count, const vector3f *positions, RenderSt
 		va.Add(pos+rotv2, vector2f(1.f, 1.f)); //bottom right
 	}
 
-	DrawTriangles(&va, rs, material);
+	//DrawTriangles(&va, rs, material);
 	CheckRenderErrors();
 
 	return true;
@@ -542,6 +545,7 @@ bool RendererGL::DrawBuffer(VertexBuffer* vb, RenderState* state, Material* mat,
 	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+	CheckRenderErrors();
 
 	return true;
 }
@@ -567,6 +571,7 @@ bool RendererGL::DrawBufferIndexed(VertexBuffer *vb, IndexBuffer *ib, RenderStat
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+	CheckRenderErrors();
 
 	return true;
 }
