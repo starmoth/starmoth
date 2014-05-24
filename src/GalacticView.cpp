@@ -115,7 +115,7 @@ void GalacticView::Draw3D()
 
 	//apply zoom
 	m_renderer->SetTransform(
-		mat4x4::Identityf() *
+		matrix4x4f::Identity() *
 		matrix4x4f::ScaleMatrix(m_zoom, m_zoom, 0.f) *
 		matrix4x4f::Translation(-offset_x, -offset_y, 0.f));
 
@@ -128,7 +128,7 @@ void GalacticView::Draw3D()
 	m_renderer->DrawPoints(1, &offs, &Color::GREEN, m_renderState, 3.f);
 
 	// scale at the top
-	m_renderer->SetTransform(mat4x4::Identityf());
+	m_renderer->SetTransform(matrix4x4f::Identity());
 	//Color white(255);
 	const vector2f vts[] = {
 		vector2f(-0.25f,-0.93f),

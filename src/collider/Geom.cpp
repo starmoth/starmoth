@@ -11,8 +11,8 @@ static const unsigned int MAX_CONTACTS = 8;
 
 Geom::Geom(const GeomTree *geomtree) :
 	m_mailboxIndex(0),
-	m_orient(mat4x4::Identityd()),
-	m_invOrient(mat4x4::Identityd()),
+	m_orient(matrix4x4d::Identity()),
+	m_invOrient(matrix4x4d::Identity()),
 	m_active(true),
 	m_geomtree(geomtree),
 	m_data(nullptr),

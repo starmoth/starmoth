@@ -106,8 +106,8 @@ RendererGL::RendererGL(WindowSDL *window, const Graphics::Settings &vs)
 
 	SetMatrixMode(MatrixMode::MODELVIEW);
 
-	m_modelViewStack.push(mat4x4::Identityf());
-	m_projectionStack.push(mat4x4::Identityf());
+	m_modelViewStack.push(matrix4x4f::Identity());
+	m_projectionStack.push(matrix4x4f::Identity());
 
 	SetClearColor(Color4f(0.f, 0.f, 0.f, 0.f));
 	SetViewport(0, 0, m_width, m_height);
@@ -313,7 +313,7 @@ bool RendererGL::SetLights(const int numlights, const Light *lights)
 	//glLight depends on the current transform, but we have always
 	//relied on it being identity when setting lights.
 	Graphics::Renderer::MatrixTicket ticket(this, MatrixMode::MODELVIEW);
-	SetTransform(mat4x4::Identityf());
+	SetTransform(matrix4x4f::Identity());
 
 	m_numLights = NumLights;
 	m_numDirLights = 0;
@@ -930,7 +930,6 @@ void RendererGL::SetMatrixMode(MatrixMode mm)
 	if( mm != m_matrixMode ) {
 		m_matrixMode = mm;
 	}
-	CheckRenderErrors();
 }
 
 void RendererGL::PushMatrix()
@@ -944,7 +943,6 @@ void RendererGL::PushMatrix()
 			m_projectionStack.push(m_projectionStack.top());
 			break;
 	}
-	CheckRenderErrors();
 }
 
 void RendererGL::PopMatrix()
@@ -960,7 +958,6 @@ void RendererGL::PopMatrix()
 			assert(m_projectionStack.size());
 			break;
 	}
-	CheckRenderErrors();
 }
 
 void RendererGL::LoadIdentity()
@@ -968,13 +965,12 @@ void RendererGL::LoadIdentity()
 	PROFILE_SCOPED()
 	switch(m_matrixMode) {
 		case MatrixMode::MODELVIEW:
-			m_modelViewStack.top() = mat4x4::Identityf();
+			m_modelViewStack.top() = matrix4x4f::Identity();
 			break;
 		case MatrixMode::PROJECTION:
-			m_projectionStack.top() = mat4x4::Identityf();
+			m_projectionStack.top() = matrix4x4f::Identity();
 			break;
 	}
-	CheckRenderErrors();
 }
 
 void RendererGL::LoadMatrix(const matrix4x4f &m)
@@ -988,7 +984,6 @@ void RendererGL::LoadMatrix(const matrix4x4f &m)
 			m_projectionStack.top() = m;
 			break;
 	}
-	CheckRenderErrors();
 }
 
 void RendererGL::Translate( const float x, const float y, const float z )
@@ -1002,7 +997,6 @@ void RendererGL::Translate( const float x, const float y, const float z )
 			m_projectionStack.top().Translate(x,y,z);
 			break;
 	}
-	CheckRenderErrors();
 }
 
 void RendererGL::Scale( const float x, const float y, const float z )
@@ -1016,7 +1010,6 @@ void RendererGL::Scale( const float x, const float y, const float z )
 			m_modelViewStack.top().Scale(x,y,z);
 			break;
 	}
-	CheckRenderErrors();
 }
 
 }

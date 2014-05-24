@@ -76,7 +76,7 @@ void CameraContext::EndFrame()
 void CameraContext::ApplyDrawTransforms(Graphics::Renderer *r)
 {
 	r->SetPerspectiveProjection(m_fovAng, m_width/m_height, m_zNear, m_zFar);
-	r->SetTransform(mat4x4::Identityf());
+	r->SetTransform(matrix4x4f::Identity());
 }
 
 
@@ -243,7 +243,7 @@ void Camera::Draw(const Body *excludeBody, ShipCockpit* cockpit)
 		// draw something!
 		if (attrs->billboard) {
 			Graphics::Renderer::MatrixTicket mt(m_renderer, Graphics::MatrixMode::MODELVIEW);
-			m_renderer->SetTransform(mat4x4::Identityd());
+			m_renderer->SetTransform(matrix4x4d::Identity());
 			m_billboardMaterial->diffuse = attrs->billboardColor;
 			m_renderer->DrawPointSprites(1, &attrs->billboardPos, Sfx::additiveAlphaState, m_billboardMaterial.get(), attrs->billboardSize);
 		}

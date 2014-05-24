@@ -140,7 +140,7 @@ void HyperspaceCloud::UpdateInterpTransform(double alpha)
 
 void HyperspaceCloud::Render(Renderer *renderer, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
-	matrix4x4d trans(mat4x4::Identityd());
+	matrix4x4d trans(matrix4x4d::Identity());
 	trans.Translate(float(viewCoords.x), float(viewCoords.y), float(viewCoords.z));
 
 	// face the camera dammit
