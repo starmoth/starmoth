@@ -24,6 +24,10 @@ namespace Gui {
 		Gui::Label *m_label;
 		::Color m_barColor;
 		float m_barValue;
+		vector2f m_prevLargeSize;
+		vector2f m_prevSmallSize;
+		RefCountedPtr<Graphics::VertexBuffer> m_smallVB;
+		RefCountedPtr<Graphics::VertexBuffer> m_largeVB;
 	};
 }
 

@@ -11,23 +11,33 @@ namespace Graphics {
 	class Renderer;
 	class WindowSDL;
 	class RenderState;
+	class VertexBuffer;
+	class IndexBuffer;
 }
 
 namespace Gui {
-
 	namespace Theme {
-		void DrawRect(const vector2f&, const vector2f &size, const Color&, Graphics::RenderState*);
-		void DrawRoundEdgedRect(const float size[2], float rad, const Color&, Graphics::RenderState*);
-		void DrawIndent(const float size[2], Graphics::RenderState*);
-		void DrawOutdent(const float size[2], Graphics::RenderState*);
-		void DrawHollowRect(const float size[2], const Color&, Graphics::RenderState*);
+		struct IndentData {
+			RefCountedPtr<Graphics::VertexBuffer>	vb;
+			RefCountedPtr<Graphics::IndexBuffer>	ib[3];
+		};
+		Graphics::VertexBuffer* GenerateRectVB();
+		Graphics::VertexBuffer* GenerateRoundEdgedRect(const vector2f& size, float rad);
+		void GenerateIndent(IndentData &id, const vector2f& size);
+		void GenerateOutdent(IndentData &id, const vector2f& size);
+		void GenerateHollowRect(RefCountedPtr<Graphics::VertexBuffer> &vb, RefCountedPtr<Graphics::IndexBuffer> &ib, const vector2f& size);
+
+		void DrawRect(Graphics::VertexBuffer* vb, const vector2f &pos, const vector2f &size, const Color&, Graphics::RenderState*);
+		void DrawRoundEdgedRect(Graphics::VertexBuffer* vb, const Color&, Graphics::RenderState*);
+		void DrawIndent(const IndentData &id, Graphics::RenderState*);
+		void DrawOutdent(const IndentData &id, Graphics::RenderState*);
+		void DrawHollowRect(Graphics::VertexBuffer *vb, Graphics::IndexBuffer *ib, const Color&, Graphics::RenderState*);
 		namespace Colors {
 			extern const Color bg;
 			extern const Color bgShadow;
 			extern const Color tableHeading;
 		}
 	}
-
 
 	void HandleSDLEvent(SDL_Event *event);
 	void Draw();

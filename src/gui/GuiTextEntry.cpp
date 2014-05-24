@@ -16,6 +16,7 @@ TextEntry::TextEntry()
 	m_font = Gui::Screen::GetFont();
 	m_newlineMode = IgnoreNewline;
 	m_newlineCount = 0;
+	m_rectVB.Reset( Theme::GenerateRectVB() );
 }
 
 TextEntry::~TextEntry()
@@ -221,7 +222,7 @@ void TextEntry::Draw()
 	}
 
 	//background
-	Theme::DrawRect(vector2f(0.f), vector2f(size[0], size[1]), Color(0,0,0,192), Screen::alphaBlendState);
+	Theme::DrawRect(m_rectVB.Get(), vector2f(0.f), vector2f(size[0], size[1]), Color(0,0,0,192), Screen::alphaBlendState);
 
 	//outline
 	const Color c = IsFocused() ? Color::WHITE : Color(192, 192, 192, 255);

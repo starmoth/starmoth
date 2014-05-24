@@ -57,6 +57,8 @@ namespace Gui {
 		WidgetList::iterator FindChild(const Widget *w);
 
 		WidgetList m_children;
+
+		RefCountedPtr<Graphics::VertexBuffer> m_rectVB;
 	};
 }
 

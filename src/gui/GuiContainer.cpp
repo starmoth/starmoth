@@ -11,6 +11,7 @@ namespace Gui {
 Container::Container()
 {
 	m_transparent = true;
+	m_rectVB.Reset( Theme::GenerateRectVB() );
 	SetBgColor(Theme::Colors::bg);
 	onMouseLeave.connect(sigc::mem_fun(this, &Container::_OnMouseLeave));
 	onSetSize.connect(sigc::mem_fun(this, &Container::_OnSetSize));
@@ -195,7 +196,7 @@ void Container::Draw()
 	GetSize(size);
 	if (!m_transparent) {
 		PROFILE_SCOPED_RAW("Container::Draw - !m_transparent")
-		Theme::DrawRect(vector2f(0.f), vector2f(size[0], size[1]), m_bgcol, Screen::alphaBlendState);
+		Theme::DrawRect(m_rectVB.Get(), vector2f(0.f), vector2f(size[0], size[1]), m_bgcol, Screen::alphaBlendState);
 	}
 
 	for (WidgetList::iterator i = m_children.begin(), itEnd = m_children.end(); i != itEnd; ++i) {

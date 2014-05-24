@@ -82,20 +82,29 @@ void TransparentButton::GetSizeRequested(float size[2])
 void SolidButton::Draw()
 {
 	PROFILE_SCOPED()
-	float size[2];
-	GetSize(size);
+	vector2f size; GetSize(size);
+	if( !m_prevSize.ExactlyEqual(size) ) {
+		Theme::GenerateIndent(m_indent, m_prevSize);
+		Theme::GenerateOutdent(m_outdent, m_prevSize);
+		m_prevSize = size;
+	}
+	
 	if (IsPressed()) {
-		Theme::DrawIndent(size, Screen::alphaBlendState);
+		Theme::DrawIndent(m_indent, Screen::alphaBlendState);
 	} else {
-		Theme::DrawOutdent(size, Screen::alphaBlendState);
+		Theme::DrawOutdent(m_outdent, Screen::alphaBlendState);
 	}
 }
 void TransparentButton::Draw()
 {
 	PROFILE_SCOPED()
-	float size[2];
+	vector2f size;
 	GetSize(size);
-	Theme::DrawHollowRect(size, Color::WHITE, Screen::alphaBlendState);
+	if( !m_prevSize.ExactlyEqual(size) ) {
+		Theme::GenerateHollowRect( m_VB, m_IB, size );
+		m_prevSize = size;
+	}
+	Theme::DrawHollowRect(m_VB.Get(), m_IB.Get(), Color::WHITE, Screen::alphaBlendState);
 }
 
 LabelButton::LabelButton(Label *label): Button()
@@ -117,13 +126,17 @@ void LabelButton::GetSizeRequested(float size[2])
 void LabelButton::Draw()
 {
 	PROFILE_SCOPED()
-	float size[2];
-	GetSize(size);
-
+	vector2f size; GetSize(size);
+	if( !m_prevSize.ExactlyEqual(size) ) {
+		Theme::GenerateIndent(m_indent, m_prevSize);
+		Theme::GenerateOutdent(m_outdent, m_prevSize);
+		m_prevSize = size;
+	}
+	
 	if (IsPressed()) {
-		Theme::DrawIndent(size, Screen::alphaBlendState);
+		Theme::DrawIndent(m_indent, Screen::alphaBlendState);
 	} else {
-		Theme::DrawOutdent(size, Screen::alphaBlendState);
+		Theme::DrawOutdent(m_outdent, Screen::alphaBlendState);
 	}
 
 	Graphics::Renderer *r = Gui::Screen::GetRenderer();

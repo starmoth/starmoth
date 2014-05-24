@@ -34,6 +34,14 @@ void Screen::Init(Graphics::Renderer *renderer, int real_width, int real_height,
 {
     s_renderer = renderer;
 
+	Graphics::RenderStateDesc rsd;
+	rsd.blendMode = Graphics::BLEND_ALPHA;
+	rsd.depthWrite = false;
+	alphaBlendState = renderer->CreateRenderState(rsd);
+
+	Graphics::MaterialDescriptor mdesc;
+	flatColorMaterial = renderer->CreateMaterial(mdesc);
+
 	Screen::width = ui_width;
 	Screen::height = ui_height;
 	Screen::realWidth = real_width;
@@ -51,14 +59,6 @@ void Screen::Init(Graphics::Renderer *renderer, int real_width, int real_height,
 	Screen::baseContainer = new Gui::Fixed();
 	Screen::baseContainer->SetSize(float(Screen::width), float(Screen::height));
 	Screen::baseContainer->Show();
-
-	Graphics::RenderStateDesc rsd;
-	rsd.blendMode = Graphics::BLEND_ALPHA;
-	rsd.depthWrite = false;
-	alphaBlendState = renderer->CreateRenderState(rsd);
-
-	Graphics::MaterialDescriptor mdesc;
-	flatColorMaterial = renderer->CreateMaterial(mdesc);
 }
 
 void Screen::Uninit()

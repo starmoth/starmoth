@@ -50,6 +50,8 @@ namespace Gui {
 
 		bool m_justFocused;
 		sigc::connection m_clickout;
+
+		RefCountedPtr<Graphics::VertexBuffer> m_rectVB;
 	};
 }
 

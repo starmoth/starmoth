@@ -38,14 +38,22 @@ namespace Gui {
 		virtual ~SolidButton() {}
 		virtual void GetSizeRequested(float size[2]);
 		virtual void Draw();
+	private:
+		vector2f m_prevSize;
+		Theme::IndentData m_indent;
+		Theme::IndentData m_outdent;
 	};
 
 	class TransparentButton: public Button {
 	public:
-		TransparentButton(): Button() {}
+		TransparentButton(): Button(), m_prevSize(0) {}
 		virtual ~TransparentButton() {}
 		virtual void GetSizeRequested(float size[2]);
 		virtual void Draw();
+	private:
+		vector2f m_prevSize;
+		RefCountedPtr<Graphics::VertexBuffer> m_VB;
+		RefCountedPtr<Graphics::IndexBuffer> m_IB;
 	};
 
 	class LabelButton: public Button {
@@ -60,6 +68,9 @@ namespace Gui {
 	private:
 		void OnSetSize();
 		float m_padding;
+		vector2f m_prevSize;
+		Theme::IndentData m_indent;
+		Theme::IndentData m_outdent;
 	};
 }
 

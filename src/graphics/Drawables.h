@@ -57,13 +57,13 @@ private:
 class Disk : public Drawable {
 public:
 	Disk(Graphics::Renderer *r, Graphics::RenderState*, const Color &c, float radius);
-	Disk(RefCountedPtr<Material> material, Graphics::RenderState*, const int numEdges=72, const float radius=1.0f);
 	virtual void Draw(Graphics::Renderer *r);
 
 	void SetColor(const Color&);
 
 private:
-	std::unique_ptr<Graphics::VertexArray> m_vertices;
+	void SetupVertexBuffer(const Graphics::VertexArray&, Graphics::Renderer *);
+	std::unique_ptr<VertexBuffer> m_vertexBuffer;
 	RefCountedPtr<Material> m_material;
 };
 
@@ -110,15 +110,12 @@ private:
 class TexturedQuad : public Drawable {
 public:
 	TexturedQuad(Graphics::Renderer *r, Graphics::Texture *texture, const vector2f &pos, const vector2f &size, RenderState *state);
-	virtual void Draw(Graphics::Renderer *r) {
-		r->DrawTriangles(m_vertices.get(), m_renderState, m_material.get(), TRIANGLE_STRIP);
-	}
-
+	virtual void Draw(Graphics::Renderer *r);
 	const Graphics::Texture* GetTexture() const { return m_texture.Get(); }
 private:
 	RefCountedPtr<Graphics::Texture> m_texture;
 	std::unique_ptr<Graphics::Material> m_material;
-	std::unique_ptr<Graphics::VertexArray> m_vertices;
+	std::unique_ptr<VertexBuffer> m_vertexBuffer;
 };
 
 }

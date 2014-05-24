@@ -45,12 +45,17 @@ void ToggleButton::GetSizeRequested(float size[2])
 void ToggleButton::Draw()
 {
 	PROFILE_SCOPED()
-	float size[2];
-	GetSize(size);
+	vector2f size; GetSize(size);
+	if( !m_prevSize.ExactlyEqual(size) ) {
+		Theme::GenerateIndent(m_indent, m_prevSize);
+		Theme::GenerateOutdent(m_outdent, m_prevSize);
+		m_prevSize = size;
+	}
+	
 	if (m_pressed) {
-		Theme::DrawIndent(size, Screen::alphaBlendState);
+		Theme::DrawIndent(m_indent, Screen::alphaBlendState);
 	} else {
-		Theme::DrawOutdent(size, Screen::alphaBlendState);
+		Theme::DrawOutdent(m_outdent, Screen::alphaBlendState);
 	}
 }
 

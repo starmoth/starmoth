@@ -25,6 +25,8 @@ namespace Gui {
 		void OnRawMouseMotion(MouseMotionEvent *e);
 		bool m_isPressed, m_isHoriz;
 		sigc::connection _m_release, _m_motion;
+		vector2f m_prevSize;
+		Theme::IndentData m_indent;
 	};
 
 	class VScrollBar: public ScrollBar {

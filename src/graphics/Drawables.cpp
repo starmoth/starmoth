@@ -12,44 +12,53 @@ Disk::Disk(Graphics::Renderer *r, Graphics::RenderState *state, const Color &c, 
 {
 	m_renderState = state;
 
-	m_vertices.reset(new VertexArray(ATTRIB_POSITION));
+	VertexArray vertices (ATTRIB_POSITION);
 	m_material.Reset(r->CreateMaterial(MaterialDescriptor()));
 	m_material->diffuse = c;
 
-	m_vertices->Add(vector3f(0.f, 0.f, 0.f));
+	vertices.Add(vector3f(0.f, 0.f, 0.f));
 	for (int i = 72; i >= 0; i--) {
-		m_vertices->Add(vector3f(
+		vertices.Add(vector3f(
 			0.f+sinf(DEG2RAD(i*5.f))*rad,
 			0.f+cosf(DEG2RAD(i*5.f))*rad,
 			0.f));
 	}
-}
 
-Disk::Disk(RefCountedPtr<Material> material, Graphics::RenderState *state, const int numEdges/*=72*/, const float radius/*=1.0f*/)
-	: m_material(material)
-{
-	m_renderState = state;
-
-	m_vertices.reset(new VertexArray(ATTRIB_POSITION));
-
-	m_vertices->Add(vector3f(0.f, 0.f, 0.f));
-	const float edgeStep = 360.0f / float(numEdges);
-	for (int i = numEdges; i >= 0; i--) {
-		m_vertices->Add(vector3f(
-			0.f+sinf(DEG2RAD(i*edgeStep))*radius,
-			0.f+cosf(DEG2RAD(i*edgeStep))*radius,
-			0.f));
-	}
+	SetupVertexBuffer(vertices, r);
 }
 
 void Disk::Draw(Renderer *r)
 {
-	r->DrawTriangles(m_vertices.get(), m_renderState, m_material.Get(), TRIANGLE_FAN);
+	r->DrawBuffer(m_vertexBuffer.get(), m_renderState, m_material.Get(), TRIANGLE_FAN);
 }
 
 void Disk::SetColor(const Color &c)
 {
 	m_material->diffuse = c;
+}
+
+void Disk::SetupVertexBuffer(const Graphics::VertexArray& vertices, Graphics::Renderer *r)
+{
+	struct DiskVertex {
+		vector3f pos;
+	};
+
+	//Create vtx & index buffers and copy data
+	VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = ATTRIB_POSITION;
+	vbd.attrib[0].format   = ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[0].offset   = offsetof(DiskVertex, pos);
+	vbd.stride = sizeof(DiskVertex);
+	vbd.numVertices = vertices.GetNumVerts();
+	vbd.usage = BUFFER_USAGE_STATIC;
+	m_vertexBuffer.reset(r->CreateVertexBuffer(vbd));
+	DiskVertex* vtxPtr = m_vertexBuffer->Map<DiskVertex>(Graphics::BUFFER_MAP_WRITE);
+	assert(m_vertexBuffer->GetDesc().stride == sizeof(DiskVertex));
+	for(Uint32 i=0 ; i<vertices.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= vertices.position[i];
+	}
+	m_vertexBuffer->Unmap();
 }
 
 Line3D::Line3D()
@@ -225,7 +234,7 @@ TexturedQuad::TexturedQuad(Graphics::Renderer *r, Graphics::Texture *texture, co
 	assert(state);
 	m_renderState = state;
 
-	m_vertices.reset(new VertexArray(ATTRIB_POSITION | ATTRIB_UV0));
+	VertexArray vertices(ATTRIB_POSITION | ATTRIB_UV0);
 	Graphics::MaterialDescriptor desc;
 	desc.textures = 1;
 	m_material.reset(r->CreateMaterial(desc));
@@ -235,10 +244,41 @@ TexturedQuad::TexturedQuad(Graphics::Renderer *r, Graphics::Texture *texture, co
 	const vector2f texPos = vector2f(0.0f);
 	const vector2f texSize = m_texture->GetDescriptor().texSize;
 
-	m_vertices->Add(vector3f(pos.x,        pos.y,        0.0f), vector2f(texPos.x,           texPos.y+texSize.y));
-	m_vertices->Add(vector3f(pos.x,        pos.y+size.y, 0.0f), vector2f(texPos.x,           texPos.y));
-	m_vertices->Add(vector3f(pos.x+size.x, pos.y,        0.0f), vector2f(texPos.x+texSize.x, texPos.y+texSize.y));
-	m_vertices->Add(vector3f(pos.x+size.x, pos.y+size.y, 0.0f), vector2f(texPos.x+texSize.x, texPos.y));
+	vertices.Add(vector3f(pos.x,        pos.y,        0.0f), vector2f(texPos.x,           texPos.y+texSize.y));
+	vertices.Add(vector3f(pos.x,        pos.y+size.y, 0.0f), vector2f(texPos.x,           texPos.y));
+	vertices.Add(vector3f(pos.x+size.x, pos.y,        0.0f), vector2f(texPos.x+texSize.x, texPos.y+texSize.y));
+	vertices.Add(vector3f(pos.x+size.x, pos.y+size.y, 0.0f), vector2f(texPos.x+texSize.x, texPos.y));
+
+	struct QuadVertex {
+		vector3f pos;
+		vector2f uv;
+	};
+
+	//Create vtx & index buffers and copy data
+	VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = ATTRIB_POSITION;
+	vbd.attrib[0].format   = ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[0].offset   = offsetof(QuadVertex, pos);
+	vbd.attrib[1].semantic = ATTRIB_UV0;
+	vbd.attrib[1].format   = ATTRIB_FORMAT_FLOAT2;
+	vbd.attrib[1].offset   = offsetof(QuadVertex, uv);
+	vbd.stride = sizeof(QuadVertex);
+	vbd.numVertices = vertices.GetNumVerts();
+	vbd.usage = BUFFER_USAGE_STATIC;
+	m_vertexBuffer.reset(r->CreateVertexBuffer(vbd));
+	QuadVertex* vtxPtr = m_vertexBuffer->Map<QuadVertex>(Graphics::BUFFER_MAP_WRITE);
+	assert(m_vertexBuffer->GetDesc().stride == sizeof(QuadVertex));
+	for(Uint32 i=0 ; i<vertices.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= vertices.position[i];
+		vtxPtr[i].uv	= vertices.uv0[i];
+	}
+	m_vertexBuffer->Unmap();
+}
+
+void TexturedQuad::Draw(Graphics::Renderer *r)
+{
+	r->DrawBuffer(m_vertexBuffer.get(), m_renderState, m_material.get(), TRIANGLE_STRIP);
 }
 
 }

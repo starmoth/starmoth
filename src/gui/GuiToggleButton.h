@@ -22,6 +22,9 @@ namespace Gui {
 		sigc::signal<void, ToggleButton *, bool> onChange;
 	private:
 		bool m_pressed;
+		vector2f m_prevSize;
+		Theme::IndentData m_indent;
+		Theme::IndentData m_outdent;
 	};
 }
 

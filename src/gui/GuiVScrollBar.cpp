@@ -71,16 +71,20 @@ void ScrollBar::OnRawMouseMotion(MouseMotionEvent *e)
 void ScrollBar::Draw()
 {
 	PROFILE_SCOPED()
-	float size[2]; GetSize(size);
-	Theme::DrawIndent(size, Screen::alphaBlendState);
+	vector2f size; GetSize(size);
+	if( !m_prevSize.ExactlyEqual(size) ) {
+		Theme::GenerateIndent(m_indent, m_prevSize);
+		m_prevSize = size;
+	}
+	Theme::DrawIndent(m_indent, Screen::alphaBlendState);
 	float pos = m_adjustment->GetValue();
 	vector3f lines[2];
 	if (m_isHoriz) {
-		lines[0] = vector3f(BORDER+(size[0]-2*BORDER)*pos, BORDER, 0.f);
-		lines[1] = vector3f(BORDER+(size[0]-2*BORDER)*pos, size[1]-BORDER, 0.f);
+		lines[0] = vector3f(BORDER+(size.x-2*BORDER)*pos, BORDER, 0.f);
+		lines[1] = vector3f(BORDER+(size.x-2*BORDER)*pos, size.y-BORDER, 0.f);
 	} else {
-		lines[0] = vector3f(BORDER, BORDER+(size[1]-2*BORDER)*pos, 0.f);
-		lines[1] = vector3f(size[0]-BORDER, BORDER+(size[1]-2*BORDER)*pos, 0.f);
+		lines[0] = vector3f(BORDER, BORDER+(size.y-2*BORDER)*pos, 0.f);
+		lines[1] = vector3f(size.x-BORDER, BORDER+(size.y-2*BORDER)*pos, 0.f);
 	}
 	Screen::GetRenderer()->DrawLines(2, &lines[0], Color::WHITE, Screen::alphaBlendState);
 }
