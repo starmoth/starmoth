@@ -8,6 +8,10 @@
 #include "SmartPtr.h"
 #include "graphics/Texture.h"
 
+namespace Graphics {
+	class VertexBuffer;
+}
+
 namespace GameUI {
 
 class Face : public UI::Single {
@@ -38,6 +42,8 @@ private:
 	static RefCountedPtr<Graphics::Material> s_material;
 
 	std::unique_ptr<Graphics::Texture> m_texture;
+
+	RefCountedPtr<Graphics::VertexBuffer> m_vbuffer;
 };
 
 }

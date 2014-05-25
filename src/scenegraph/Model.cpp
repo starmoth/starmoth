@@ -191,26 +191,41 @@ void Model::DrawCollisionMesh()
 {
 	if (!m_collMesh) return;
 
-	const vector3f *vertices = reinterpret_cast<const vector3f*>(m_collMesh->GetGeomTree()->GetVertices());
-	const Uint16 *indices = m_collMesh->GetGeomTree()->GetIndices();
-	const unsigned int *triFlags = m_collMesh->GetGeomTree()->GetTriFlags();
-	const unsigned int numIndices = m_collMesh->GetGeomTree()->GetNumTris() * 3;
+	if( !m_collisionMeshVB.Valid() )
+	{
+		const vector3f *vertices = reinterpret_cast<const vector3f*>(m_collMesh->GetGeomTree()->GetVertices());
+		const Uint16 *indices = m_collMesh->GetGeomTree()->GetIndices();
+		const unsigned int *triFlags = m_collMesh->GetGeomTree()->GetTriFlags();
+		const unsigned int numIndices = m_collMesh->GetGeomTree()->GetNumTris() * 3;
 
-	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, numIndices * 3);
-	int trindex = -1;
-	for(unsigned int i = 0; i < numIndices; i++) {
-		if (i % 3 == 0)
-			trindex++;
-		const unsigned int flag = triFlags[trindex];
-		//show special geomflags in red
-		va.Add(vertices[indices[i]], flag > 0 ? Color::RED : Color::WHITE);
+		Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, numIndices * 3);
+		int trindex = -1;
+		for(unsigned int i = 0; i < numIndices; i++) {
+			if (i % 3 == 0)
+				trindex++;
+			const unsigned int flag = triFlags[trindex];
+			//show special geomflags in red
+			va.Add(vertices[indices[i]], flag > 0 ? Color::RED : Color::WHITE);
+		}
+
+		//create buffer and upload data
+		Graphics::VertexBufferDesc vbd;
+		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+		vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+		vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+		vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
+		vbd.numVertices = va.GetNumVerts();
+		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+		Graphics::vtxColorMaterial->SetupVertexBufferDesc( vbd );
+		m_collisionMeshVB.Reset( m_renderer->CreateVertexBuffer(vbd) );
+		m_collisionMeshVB->Populate( va );
 	}
 
 	//might want to add some offset
 	m_renderer->SetWireFrameMode(true);
 	Graphics::RenderStateDesc rsd;
 	rsd.cullMode = Graphics::CULL_NONE;
-	m_renderer->DrawTriangles(&va, m_renderer->CreateRenderState(rsd), Graphics::vtxColorMaterial);
+	m_renderer->DrawBuffer(m_collisionMeshVB.Get(), m_renderer->CreateRenderState(rsd), Graphics::vtxColorMaterial);
 	m_renderer->SetWireFrameMode(false);
 }
 

@@ -15,6 +15,7 @@
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 #include "graphics/RenderState.h"
 
 using namespace Graphics;
@@ -122,13 +123,13 @@ Ship *HyperspaceCloud::EvictShip()
 	return s;
 }
 
-static void make_circle_thing(VertexArray &va, float radius, const Color &colCenter, const Color &colEdge)
+static void make_circle_thing(VertexArray &va, const Color &colCenter, const Color &colEdge)
 {
 	va.Add(vector3f(0.f, 0.f, 0.f), colCenter);
 	for (float ang=0; ang<float(M_PI)*2.f; ang+=0.1f) {
-		va.Add(vector3f(radius*sin(ang), radius*cos(ang), 0.0f), colEdge);
+		va.Add(vector3f(sin(ang), cos(ang), 0.0f), colEdge);
 	}
-	va.Add(vector3f(0.f, radius, 0.f), colEdge);
+	va.Add(vector3f(0.f, 1.0f, 0.f), colEdge);
 }
 
 void HyperspaceCloud::UpdateInterpTransform(double alpha)
@@ -140,8 +141,17 @@ void HyperspaceCloud::UpdateInterpTransform(double alpha)
 
 void HyperspaceCloud::Render(Renderer *renderer, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
+	// precise to the rendered frame (better than PHYSICS_HZ granularity)
+	const double preciseTime = Pi::game->GetTime() + Pi::GetGameTickAlpha()*Pi::game->GetTimeStep();
+	// Flickering gradient circle, departure clouds are red and arrival clouds blue
+	// XXX could just alter the scale instead of recreating the model
+	const float radius = 1000.0f + 200.0f*float(noise(10.0*preciseTime, 0, 0));
+	
+	Graphics::Renderer::MatrixTicket mt(renderer, Graphics::MatrixMode::MODELVIEW);
+
 	matrix4x4d trans(matrix4x4d::Identity());
-	trans.Translate(float(viewCoords.x), float(viewCoords.y), float(viewCoords.z));
+	trans.Translate(viewCoords.x, viewCoords.y, viewCoords.z);
+	trans.Scale(radius);
 
 	// face the camera dammit
 	vector3d zaxis = viewCoords.NormalizedSafe();
@@ -149,16 +159,24 @@ void HyperspaceCloud::Render(Renderer *renderer, const Camera *camera, const vec
 	vector3d yaxis = zaxis.Cross(xaxis);
 	matrix4x4d rot = matrix4x4d::MakeRotMatrix(xaxis, yaxis, zaxis).Inverse();
 	renderer->SetTransform(trans * rot);
-
-	// precise to the rendered frame (better than PHYSICS_HZ granularity)
-	const double preciseTime = Pi::game->GetTime() + Pi::GetGameTickAlpha()*Pi::game->GetTimeStep();
-
-	// Flickering gradient circle, departure clouds are red and arrival clouds blue
-	// XXX could just alter the scale instead of recreating the model
-	const float radius = 1000.0f + 200.0f*float(noise(10.0*preciseTime, 0, 0));
-	m_graphic.vertices->Clear();
+	
 	Color outerColor = m_isArrival ? Color::BLUE : Color::RED;
 	outerColor.a = 0;
-	make_circle_thing(*m_graphic.vertices.get(), radius, Color::WHITE, outerColor);
-	renderer->DrawTriangles(m_graphic.vertices.get(), m_graphic.renderState, m_graphic.material.get(), TRIANGLE_FAN);
+	if( !m_graphic.vbuffer.get() )
+	{
+		make_circle_thing(*m_graphic.vertices.get(), Color::WHITE, outerColor);
+
+		//create buffer and upload data
+		Graphics::VertexBufferDesc vbd;
+		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+		vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+		vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+		vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
+		vbd.numVertices = m_graphic.vertices->GetNumVerts();
+		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+		m_graphic.material->SetupVertexBufferDesc( vbd );
+		m_graphic.vbuffer.reset( renderer->CreateVertexBuffer(vbd) );
+		m_graphic.vbuffer->Populate( *m_graphic.vertices );
+	}
+	renderer->DrawBuffer(m_graphic.vbuffer.get(), m_graphic.renderState, m_graphic.material.get(), TRIANGLE_FAN);
 }

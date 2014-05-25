@@ -5,7 +5,10 @@
 #include "FileSystem.h"
 #include "SDLWrappers.h"
 #include "graphics/TextureBuilder.h"
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 #include "FaceGenManager.h"
+#include "utils.h"
 
 using namespace UI;
 
@@ -59,6 +62,7 @@ void Face::Layout()
 
 void Face::Draw()
 {
+	Graphics::Renderer *r = GetContext()->GetRenderer();
 	const Point &offset = GetActiveOffset();
 	const Point &area = GetActiveArea();
 
@@ -67,18 +71,26 @@ void Face::Draw()
 	const float sx = area.x;
 	const float sy = area.y;
 
-	const vector2f texSize = m_texture->GetDescriptor().texSize;
+	if( !m_vbuffer.Valid() )
+	{
+		const vector2f texSize = m_texture->GetDescriptor().texSize;
+		Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_UV0);
+		va.Add(vector3f(0.0f, 0.0f, 0.0f), vector2f(0.0f,      0.0f));
+		va.Add(vector3f(0.0f, 1.0f, 0.0f), vector2f(0.0f,      texSize.y));
+		va.Add(vector3f(1.0f, 0.0f, 0.0f), vector2f(texSize.x, 0.0f));
+		va.Add(vector3f(1.0f, 1.0f, 0.0f), vector2f(texSize.x, texSize.y));
 
-	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_UV0);
-	va.Add(vector3f(x,    y,    0.0f), vector2f(0.0f,      0.0f));
-	va.Add(vector3f(x,    y+sy, 0.0f), vector2f(0.0f,      texSize.y));
-	va.Add(vector3f(x+sx, y,    0.0f), vector2f(texSize.x, 0.0f));
-	va.Add(vector3f(x+sx, y+sy, 0.0f), vector2f(texSize.x, texSize.y));
+		m_vbuffer.Reset( CreatePosUVVB( va.GetNumVerts(), s_material.Get(), r) );
+	}
+	Graphics::Renderer::MatrixTicket mt(r, Graphics::MatrixMode::MODELVIEW);
 
-	Graphics::Renderer *r = GetContext()->GetRenderer();
+	matrix4x4f local(r->GetCurrentModelView());
+	local.Translate(x, y, 0.0f);
+	local.Scale(sx, sy, 0.0f);
+	r->SetTransform(local);
+
 	s_material->texture0 = m_texture.get();
-	auto state = GetContext()->GetSkin().GetAlphaBlendState();
-	r->DrawTriangles(&va, state, s_material.Get(), Graphics::TRIANGLE_STRIP);
+	r->DrawBuffer(m_vbuffer.Get(), GetContext()->GetSkin().GetAlphaBlendState(), s_material.Get(), Graphics::TRIANGLE_STRIP);
 
 	Single::Draw();
 }

@@ -2,6 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "graphics/gl/glVertexBuffer.h"
+#include "graphics/VertexArray.h"
 #include "utils.h"
 
 extern void CheckRenderErrors();
@@ -161,6 +162,90 @@ void VertexBuffer::Unmap()
 	}
 
 	m_mapMode = BUFFER_MAP_NONE;
+}
+
+#pragma pack(push, 4)
+struct PosUVVert {
+	vector3f pos;
+	vector2f uv;
+};
+
+struct PosColVert {
+	vector3f pos;
+	Color4ub col;
+};
+
+struct PosVert {
+	vector3f pos;
+};
+
+struct PosColUVVert {
+	vector3f pos;
+	Color4ub col;
+	vector2f uv;
+};
+#pragma pack(pop)
+
+void CopyPosUV0(Graphics::VertexBuffer *vb, const Graphics::VertexArray &va)
+{
+	PosUVVert* vtxPtr = vb->Map<PosUVVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(vb->GetDesc().stride == sizeof(PosUVVert));
+	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= va.position[i];
+		vtxPtr[i].uv	= va.uv0[i];
+	}
+	vb->Unmap();
+}
+
+void CopyPosCol(Graphics::VertexBuffer *vb, const Graphics::VertexArray &va)
+{
+	PosColVert* vtxPtr = vb->Map<PosColVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(vb->GetDesc().stride == sizeof(PosColVert));
+	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= va.position[i];
+		vtxPtr[i].col	= va.diffuse[i];
+	}
+	vb->Unmap();
+}
+
+void CopyPos(Graphics::VertexBuffer *vb, const Graphics::VertexArray &va)
+{
+	PosVert* vtxPtr = vb->Map<PosVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(vb->GetDesc().stride == sizeof(PosVert));
+	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= va.position[i];
+	}
+	vb->Unmap();
+}
+
+void CopyPosColUV0(Graphics::VertexBuffer *vb, const Graphics::VertexArray &va)
+{
+	PosColUVVert* vtxPtr = vb->Map<PosColUVVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(vb->GetDesc().stride == sizeof(PosColUVVert));
+	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= va.position[i];
+		vtxPtr[i].col	= va.diffuse[i];
+		vtxPtr[i].uv	= va.uv0[i];
+	}
+	vb->Unmap();
+}
+
+// copies the contents of the VertexArray into the buffer
+bool VertexBuffer::Populate(const VertexArray &va)
+{
+	bool result = false;
+	const Graphics::AttributeSet as = va.GetAttributeSet();
+	switch( as ) {
+	case Graphics::ATTRIB_POSITION:														CopyPos(this, va);			result = true;	break;
+	case Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE:							CopyPosCol(this, va);		result = true;	break;
+	case Graphics::ATTRIB_POSITION | Graphics::ATTRIB_UV0:								CopyPosUV0(this, va);		result = true;	break;
+	case Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE | Graphics::ATTRIB_UV0:	CopyPosColUV0(this, va);	result = true;	break;
+	}
+	return result;
 }
 
 IndexBuffer::IndexBuffer(Uint32 size, BufferUsage hint)

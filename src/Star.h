@@ -7,7 +7,10 @@
 #include "TerrainBody.h"
 #include "graphics/RenderState.h"
 
-namespace Graphics { class Renderer; }
+namespace Graphics { 
+	class Renderer; 
+	class VertexBuffer;
+}
 
 class Star: public TerrainBody {
 public:
@@ -22,6 +25,7 @@ protected:
 	virtual void Load(Serializer::Reader &rd, Space *space);
 
 	Graphics::RenderState *m_haloState;
+	RefCountedPtr<Graphics::VertexBuffer> m_vbuffer;
 };
 
 #endif /* _STAR_H */

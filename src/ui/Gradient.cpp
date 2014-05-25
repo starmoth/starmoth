@@ -5,6 +5,7 @@
 #include "Context.h"
 #include "graphics/Renderer.h"
 #include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 #include "graphics/Material.h"
 
 namespace UI {
@@ -19,6 +20,7 @@ Gradient::Gradient(Context *context, const Color &beginColor, const Color &endCo
 
 void Gradient::Draw()
 {
+	Graphics::Renderer *r = GetContext()->GetRenderer();
 	const Point &offset = GetActiveOffset();
 	const Point &area = GetActiveArea();
 
@@ -27,16 +29,36 @@ void Gradient::Draw()
 	const float sx = area.x;
 	const float sy = area.y;
 
-	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE);
-	va.Add(vector3f(x,    y,    0.0f), m_beginColor);
-	va.Add(vector3f(x,    y+sy, 0.0f), m_direction == HORIZONTAL ? m_beginColor : m_endColor);
-	va.Add(vector3f(x+sx, y,    0.0f), m_direction == HORIZONTAL ? m_endColor : m_beginColor);
-	va.Add(vector3f(x+sx, y+sy, 0.0f), m_endColor);
+	if( !m_vbuffer.Valid() )
+	{
+		Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE);
+		va.Add(vector3f(0.0f, 0.0f, 0.0f), m_beginColor);
+		va.Add(vector3f(0.0f, 1.0f, 0.0f), m_direction == HORIZONTAL ? m_beginColor : m_endColor);
+		va.Add(vector3f(1.0f, 0.0f, 0.0f), m_direction == HORIZONTAL ? m_endColor : m_beginColor);
+		va.Add(vector3f(1.0f, 1.0f, 0.0f), m_endColor);
 
-	Graphics::Renderer *r = GetContext()->GetRenderer();
+		//create buffer and upload data
+		Graphics::VertexBufferDesc vbd;
+		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+		vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+		vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+		vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
+		vbd.numVertices = va.GetNumVerts();
+		vbd.usage = Graphics::BUFFER_USAGE_STATIC;	// we could be updating this per-frame
+		m_material->SetupVertexBufferDesc( vbd );
+		m_vbuffer.Reset( r->CreateVertexBuffer(vbd) );
+		m_vbuffer->Populate( va );
+	}
+	Graphics::Renderer::MatrixTicket mt(r, Graphics::MatrixMode::MODELVIEW);
+
+	matrix4x4f local(r->GetCurrentModelView());
+	local.Translate(x, y, 0.0f);
+	local.Scale(sx, sy, 0.0f);
+	r->SetTransform(local);
+
 	auto renderState = GetContext()->GetSkin().GetAlphaBlendState();
 	m_material->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, GetContext()->GetOpacity()*Color::WHITE.a);
-	r->DrawTriangles(&va, renderState, m_material.get(), Graphics::TRIANGLE_STRIP);
+	r->DrawBuffer(m_vbuffer.Get(), renderState, m_material.get(), Graphics::TRIANGLE_STRIP);
 
 	Container::Draw();
 }

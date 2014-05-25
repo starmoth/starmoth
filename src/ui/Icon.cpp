@@ -5,6 +5,9 @@
 #include "Context.h"
 #include "FileSystem.h"
 #include "graphics/TextureBuilder.h"
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
+#include "utils.h"
 
 static const char CONFIG_FILE[] = "ui/Icons.ini";
 static const char FALLBACK_ICON[] = "Blank";
@@ -74,6 +77,8 @@ Point Icon::PreferredSize()
 
 void Icon::Draw()
 {
+	Graphics::Renderer *r = GetContext()->GetRenderer();
+
 	const Point &offset = GetActiveOffset();
 	const Point &area = GetActiveArea();
 
@@ -82,17 +87,26 @@ void Icon::Draw()
 	const float sx = area.x;
 	const float sy = area.y;
 
-	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_UV0);
-	va.Add(vector3f(x,    y,    0.0f), vector2f(s_texScale.x*(m_texPos.x),    s_texScale.y*(m_texPos.y)));
-	va.Add(vector3f(x,    y+sy, 0.0f), vector2f(s_texScale.x*(m_texPos.x),    s_texScale.y*(m_texPos.y+48)));
-	va.Add(vector3f(x+sx, y,    0.0f), vector2f(s_texScale.x*(m_texPos.x+48), s_texScale.y*(m_texPos.y)));
-	va.Add(vector3f(x+sx, y+sy, 0.0f), vector2f(s_texScale.x*(m_texPos.x+48), s_texScale.y*(m_texPos.y+48)));
+	if( !m_vbuffer.Valid() )
+	{
+		Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_UV0);
+		va.Add(vector3f(0.0f, 0.0f, 0.0f), vector2f(s_texScale.x*(m_texPos.x),    s_texScale.y*(m_texPos.y)));
+		va.Add(vector3f(0.0f, 1.0f, 0.0f), vector2f(s_texScale.x*(m_texPos.x),    s_texScale.y*(m_texPos.y+48)));
+		va.Add(vector3f(1.0f, 0.0f, 0.0f), vector2f(s_texScale.x*(m_texPos.x+48), s_texScale.y*(m_texPos.y)));
+		va.Add(vector3f(1.0f, 1.0f, 0.0f), vector2f(s_texScale.x*(m_texPos.x+48), s_texScale.y*(m_texPos.y+48)));
 
-	Graphics::Renderer *r = GetContext()->GetRenderer();
+		m_vbuffer.Reset( CreatePosUVVB( va.GetNumVerts(), s_material.Get(), r) );
+	}
+	Graphics::Renderer::MatrixTicket mt(r, Graphics::MatrixMode::MODELVIEW);
+
+	matrix4x4f local(r->GetCurrentModelView());
+	local.Translate(x, y, 0.0f);
+	local.Scale(sx, sy, 0.0f);
+	r->SetTransform(local);
+
 	s_material->diffuse = m_color;
 	s_material->diffuse = Color(m_color.r, m_color.g, m_color.b, GetContext()->GetOpacity()*m_color.a);
-	auto renderState = GetContext()->GetSkin().GetAlphaBlendState();
-	r->DrawTriangles(&va, renderState, s_material.Get(), Graphics::TRIANGLE_STRIP);
+	r->DrawBuffer(m_vbuffer.Get(), GetContext()->GetSkin().GetAlphaBlendState(), s_material.Get(), Graphics::TRIANGLE_STRIP);
 }
 
 }

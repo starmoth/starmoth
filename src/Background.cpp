@@ -16,6 +16,7 @@
 #include "graphics/VertexArray.h"
 #include "graphics/TextureBuilder.h"
 #include "StringF.h"
+#include "utils.h"
 
 #include <SDL_stdinc.h>
 #include <sstream>
@@ -58,10 +59,6 @@ struct MilkyWayVert {
 struct StarVert {
 	vector3f pos;
 	Color4ub col;
-};
-
-struct SkyboxVert {
-	vector3f pos;
 };
 #pragma pack(pop)
 
@@ -149,12 +146,7 @@ void UniverseBox::Init()
 
 	m_vertexBuffer.reset(m_renderer->CreateVertexBuffer(vbd));
 
-	SkyboxVert* vtxPtr = m_vertexBuffer->Map<SkyboxVert>(Graphics::BUFFER_MAP_WRITE);
-	assert(m_vertexBuffer->GetDesc().stride == sizeof(SkyboxVert));
-	for (Uint32 i = 0; i < box->GetNumVerts(); i++) {
-		vtxPtr[i].pos = box->position[i];
-	}
-	m_vertexBuffer->Unmap();
+	m_vertexBuffer->Populate(*box.get());
 
 	SetIntensity(1.0f);
 

@@ -66,7 +66,7 @@ private:
 	void DrawNearSector(const int sx, const int sy, const int sz, const vector3f &playerAbsPos, const matrix4x4f &trans);
 	void PutSystemLabels(RefCountedPtr<Sector> sec, const vector3f &origin, int drawRadius);
 
-	void AddStarBillboard(const matrix4x4f &modelview, const vector3f &pos, const Color &col, float size);
+	void AddStarBillboard(Graphics::VertexArray &va, const matrix4x4f &modelview, const vector3f &pos, const Color &col, float size);
 
 	void OnClickSystem(const SystemPath &path);
 
@@ -161,7 +161,7 @@ private:
 
 	std::unique_ptr<Graphics::VertexArray> m_lineVerts;
 	std::unique_ptr<Graphics::VertexArray> m_secLineVerts;
-	std::unique_ptr<Graphics::VertexArray> m_starVerts;
+	RefCountedPtr<Graphics::VertexBuffer> m_starBuffer;
 };
 
 #endif /* _SECTORVIEW_H */

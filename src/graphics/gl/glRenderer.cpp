@@ -469,26 +469,6 @@ bool RendererGL::DrawPoints(int count, const vector3f *points, const Color *colo
 	return true;*/
 }
 
-/*bool RendererGL::DrawTriangles(const VertexArray *v, RenderState *rs, Material *m, PrimitiveType t)
-{
-	if (!v || v->position.size() < 3) return false;
-
-	SetRenderState(rs);
-
-	m->Apply();
-
-	SetMaterialShaderTransforms(m);
-
-	EnableClientStates(v, m);
-
-	glDrawArrays(t, 0, v->GetNumVerts());
-
-	m->Unapply();
-	CheckRenderErrors();
-
-	return true;
-}*/
-
 bool RendererGL::DrawPointSprites(int count, const vector3f *positions, RenderState *rs, Material *material, float size)
 {
 	if (count < 1 || !material || !material->texture0) return false;

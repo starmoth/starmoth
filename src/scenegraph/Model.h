@@ -72,7 +72,10 @@
 #include "DeleteEmitter.h"
 #include <stdexcept>
 
-namespace Graphics { class Renderer; }
+namespace Graphics { 
+	class Renderer; 
+	class VertexBuffer;
+}
 
 namespace SceneGraph
 {
@@ -189,6 +192,7 @@ private:
 	Uint32 m_debugFlags;
 	std::vector<Graphics::Drawables::Line3D> m_tagPoints;
 	std::vector<Graphics::Drawables::Line3D> m_dockingPoints;
+	RefCountedPtr<Graphics::VertexBuffer> m_collisionMeshVB;
 };
 
 }

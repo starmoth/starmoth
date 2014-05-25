@@ -119,8 +119,6 @@ void SectorView::InitObject()
 
 	m_lineVerts.reset(new Graphics::VertexArray(Graphics::ATTRIB_POSITION, 500));
 	m_secLineVerts.reset(new Graphics::VertexArray(Graphics::ATTRIB_POSITION, 500));
-	m_starVerts.reset(new Graphics::VertexArray(
-		Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE | Graphics::ATTRIB_UV0, 500));
 
 	Gui::Screen::PushFont("OverlayFont");
 	m_clickableLabels = new Gui::LabelSet();
@@ -409,7 +407,6 @@ void SectorView::Draw3D()
 	m_lineVerts->Clear();
 	m_secLineVerts->Clear();
 	m_clickableLabels->Clear();
-	m_starVerts->Clear();
 
 	m_renderer->SetPerspectiveProjection(40.f, m_renderer->GetDisplayAspect(), 1.f, 300.f);
 
@@ -447,7 +444,8 @@ void SectorView::Draw3D()
 
 	//draw star billboards in one go
 	m_renderer->SetAmbientColor(Color(30));
-	m_renderer->DrawTriangles(m_starVerts.get(), m_solidState, m_starMaterial.Get());
+	if( m_starBuffer.Valid() )
+		m_renderer->DrawBuffer(m_starBuffer.Get(), m_solidState, m_starMaterial.Get());
 
 	//draw sector legs in one go
 	if (m_lineVerts->GetNumVerts() > 2)
@@ -574,7 +572,7 @@ void SectorView::PutSystemLabels(RefCountedPtr<Sector> sec, const vector3f &orig
 	}
 }
 
-void SectorView::AddStarBillboard(const matrix4x4f &trans, const vector3f &pos, const Color &col, float size)
+void SectorView::AddStarBillboard(Graphics::VertexArray &va, const matrix4x4f &trans, const vector3f &pos, const Color &col, float size)
 {
 	const matrix3x3f rot = trans.GetOrient().Transpose();
 
@@ -583,7 +581,6 @@ void SectorView::AddStarBillboard(const matrix4x4f &trans, const vector3f &pos, 
 	const vector3f rotv1 = rot * vector3f(size/2.f, -size/2.f, 0.0f);
 	const vector3f rotv2 = rot * vector3f(size/2.f, size/2.f, 0.0f);
 
-	Graphics::VertexArray &va = *m_starVerts;
 	va.Add(offset-rotv1, col, vector2f(0.f, 0.f)); //top left
 	va.Add(offset-rotv2, col, vector2f(0.f, 1.f)); //bottom left
 	va.Add(offset+rotv2, col, vector2f(1.f, 0.f)); //top right
@@ -722,6 +719,7 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 		m_secLineVerts->Add(vts[0], darkgreen);
 	}
 
+	Graphics::VertexArray starVA(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE | Graphics::ATTRIB_UV0, 500);
 	Uint32 sysIdx = 0;
 	for (std::vector<Sector::System>::iterator i = ps->m_systems.begin(); i != ps->m_systems.end(); ++i, ++sysIdx) {
 		// calculate where the system is in relation the centre of the view...
@@ -813,7 +811,7 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 		m_renderer->SetTransform(systrans);
 
 		const Uint8 *col = StarSystem::starColors[(*i).starType[0]];
-		AddStarBillboard(systrans, vector3f(0.f), Color(col[0], col[1], col[2], 255), 0.5f);
+		AddStarBillboard(starVA, systrans, vector3f(0.f), Color(col[0], col[1], col[2], 255), 0.5f);
 
 		// player location indicator
 		if (m_inSystem && bIsCurrentSystem) {
@@ -837,6 +835,24 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 			m_disk->Draw(m_renderer);
 		}
 	}
+
+	if( starVA.GetNumVerts()>0 )
+	{
+		//create buffer and upload data
+		Graphics::VertexBufferDesc vbd;
+		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+		vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+		vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+		vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
+		vbd.numVertices = starVA.GetNumVerts();
+		vbd.usage = Graphics::BUFFER_USAGE_STATIC;	// we could be updating this per-frame
+		m_starMaterial->SetupVertexBufferDesc( vbd );
+		m_starBuffer.Reset( m_renderer->CreateVertexBuffer(vbd) );
+		m_starBuffer->Populate( starVA );
+	} else {
+		m_starBuffer.Reset();
+	}
+	
 }
 
 void SectorView::OnSwitchTo()

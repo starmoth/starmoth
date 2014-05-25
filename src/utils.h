@@ -156,4 +156,12 @@ static inline Uint32 ceil_pow2(Uint32 v)
 
 void hexdump(const unsigned char *buf, int bufsz);
 
+namespace Graphics
+{
+	class VertexBuffer;
+	class Material;
+	class Renderer;
+}
+Graphics::VertexBuffer* CreatePosUVVB(const Uint32, Graphics::Material *, Graphics::Renderer *);
+
 #endif /* _UTILS_H */

@@ -6,6 +6,7 @@
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 #include "FileSystem.h"
+#include "utils.h"
 
 namespace UI {
 
@@ -117,21 +118,6 @@ struct SkinPosOnlyVert {
 	vector3f pos;
 };
 #pragma pack(pop)
-
-Graphics::VertexBuffer* CreatePosUVVB(const Uint32 numVertices, Graphics::Material *mat, Graphics::Renderer *renderer)
-{
-	//create buffer and upload data
-	Graphics::VertexBufferDesc vbd;
-	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
-	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
-	vbd.attrib[1].semantic = Graphics::ATTRIB_UV0;
-	vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_FLOAT2;
-	vbd.numVertices = numVertices;
-	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-	mat->SetupVertexBufferDesc( vbd );
-
-	return renderer->CreateVertexBuffer(vbd);
-}
 
 Graphics::VertexBuffer* CreatePosVB(const Uint32 numVertices, Graphics::Material *mat, Graphics::Renderer *renderer)
 {
@@ -309,7 +295,6 @@ void Skin::DrawVerticalEdgedRectElement(const EdgedRectElement &element, const P
 
 void Skin::DrawHorizontalEdgedRectElement(const EdgedRectElement &element, const Point &pos, const Point &size, Graphics::BlendMode blendMode) const
 {
-
 	Graphics::Renderer::MatrixTicket mt(m_renderer, Graphics::MatrixMode::MODELVIEW);
 
 	matrix4x4f local(m_renderer->GetCurrentModelView());

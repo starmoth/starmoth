@@ -264,8 +264,21 @@ void StaticGeometry::DrawBoundingBox(const Aabb &bb)
 	Graphics::RenderStateDesc rsd;
 	rsd.cullMode = Graphics::CULL_NONE;
 
+	RefCountedPtr<Graphics::VertexBuffer> vb;
+	//create buffer and upload data
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+	vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
+	vbd.numVertices = vts->GetNumVerts();
+	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+	Graphics::vtxColorMaterial->SetupVertexBufferDesc( vbd );
+	vb.Reset( m_renderer->CreateVertexBuffer(vbd) );
+	vb->Populate( *vts );
+
 	r->SetWireFrameMode(true);
-	r->DrawTriangles(vts.get(), r->CreateRenderState(rsd), Graphics::vtxColorMaterial);
+	r->DrawBuffer(vb.Get(), r->CreateRenderState(rsd), Graphics::vtxColorMaterial);
 	r->SetWireFrameMode(false);
 }
 

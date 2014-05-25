@@ -19,14 +19,6 @@ namespace Text {
 
 int TextureFont::s_glyphCount = 0;
 
-#pragma pack(push, 4)
-struct GlyphVert {
-	vector3f pos;
-	Color4ub col;
-	vector2f uv;
-};
-#pragma pack(pop)
-
 void TextureFont::AddGlyphGeometry(Graphics::VertexArray &va, const Glyph &glyph, float x, float y, const Color &c)
 {
 	const float offX = x + float(glyph.offX);
@@ -236,15 +228,7 @@ void TextureFont::RenderString(const std::string &str, float x, float y, const C
 		}
 	}
 
-	GlyphVert* vtxPtr = m_vertexBuffer->Map<GlyphVert>(Graphics::BUFFER_MAP_WRITE);
-	assert(m_vertexBuffer->GetDesc().stride == sizeof(GlyphVert));
-	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
-	{
-		vtxPtr[i].pos	= va.position[i];
-		vtxPtr[i].col	= va.diffuse[i];
-		vtxPtr[i].uv	= va.uv0[i];
-	}
-	m_vertexBuffer->Unmap();
+	m_vertexBuffer->Populate(va);
 
 	m_renderer->DrawBuffer(m_vertexBuffer.get(), m_renderState, m_mat.get());
 }
@@ -328,15 +312,7 @@ Color TextureFont::RenderMarkup(const std::string &str, float x, float y, const 
 		}
 	}
 
-	GlyphVert* vtxPtr = m_vertexBuffer->Map<GlyphVert>(Graphics::BUFFER_MAP_WRITE);
-	assert(m_vertexBuffer->GetDesc().stride == sizeof(GlyphVert));
-	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
-	{
-		vtxPtr[i].pos	= va.position[i];
-		vtxPtr[i].col	= va.diffuse[i];
-		vtxPtr[i].uv	= va.uv0[i];
-	}
-	m_vertexBuffer->Unmap();
+	m_vertexBuffer->Populate(va);
 
 	m_renderer->DrawBuffer(m_vertexBuffer.get(), m_renderState, m_mat.get());
 	return c;
