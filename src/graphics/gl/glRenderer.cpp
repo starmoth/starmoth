@@ -250,10 +250,8 @@ bool RendererGL::SetTransform(const matrix4x4f &m)
 {
 	PROFILE_SCOPED()
 	//same as above
-	m_modelViewStack.top() = m;
 	SetMatrixMode(MatrixMode::MODELVIEW);
-	LoadMatrix(&m[0]);
-	CheckRenderErrors();
+	LoadMatrix(m);
 	return true;
 }
 
@@ -288,10 +286,8 @@ bool RendererGL::SetProjection(const matrix4x4f &m)
 {
 	PROFILE_SCOPED()
 	//same as above
-	m_projectionStack.top() = m;
 	SetMatrixMode(MatrixMode::PROJECTION);
-	LoadMatrix(&m[0]);
-	CheckRenderErrors();
+	LoadMatrix(m);
 	return true;
 }
 
@@ -307,13 +303,6 @@ bool RendererGL::SetLights(const int numlights, const Light *lights)
 	if (numlights < 1) return false;
 
 	const int NumLights = std::min(numlights, int(TOTAL_NUM_LIGHTS));
-
-	// XXX move lighting out to shaders
-
-	//glLight depends on the current transform, but we have always
-	//relied on it being identity when setting lights.
-	Graphics::Renderer::MatrixTicket ticket(this, MatrixMode::MODELVIEW);
-	SetTransform(matrix4x4f::Identity());
 
 	m_numLights = NumLights;
 	m_numDirLights = 0;
@@ -521,7 +510,6 @@ bool RendererGL::DrawBuffer(VertexBuffer* vb, RenderState* state, Material* mat,
 	EnableVertexAttributes(gvb);
 
 	glDrawArrays(pt, 0, gvb->GetVertexCount());
-	CheckRenderErrors();
 	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -556,38 +544,6 @@ bool RendererGL::DrawBufferIndexed(VertexBuffer *vb, IndexBuffer *ib, RenderStat
 	return true;
 }
 
-
-void RendererGL::EnableClientStates(const VertexArray *v, const Material *m)
-{
-	PROFILE_SCOPED();
-
-	/*if (!v) return;
-	assert(v->position.size() > 0); //would be strange
-
-	m->GetDescriptor().
-
-	// XXX could be 3D or 2D
-	glEnableVertexAttribArray(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 0, reinterpret_cast<const GLvoid *>(&v->position[0]));
-
-	if (v->HasAttrib(ATTRIB_DIFFUSE)) {
-		assert(! v->diffuse.empty());
-		glEnableVertexAttribArray(GL_COLOR_ARRAY);
-		glColorPointer(4, GL_UNSIGNED_BYTE, 0, reinterpret_cast<const GLvoid *>(&v->diffuse[0]));
-	}
-	if (v->HasAttrib(ATTRIB_NORMAL)) {
-		assert(! v->normal.empty());
-		glEnableVertexAttribArray(GL_NORMAL_ARRAY);
-		glNormalPointer(GL_FLOAT, 0, reinterpret_cast<const GLvoid *>(&v->normal[0]));
-	}
-	if (v->HasAttrib(ATTRIB_UV0)) {
-		assert(! v->uv0.empty());
-		glEnableVertexAttribArray(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(2, GL_FLOAT, 0, reinterpret_cast<const GLvoid *>(&v->uv0[0]));
-	}*/
-	CheckRenderErrors();
-}
-
 void RendererGL::EnableVertexAttributes(const VertexBuffer* gvb)
 {
 	// Enable the Vertex attributes
@@ -598,11 +554,12 @@ void RendererGL::EnableVertexAttributes(const VertexBuffer* gvb)
 		case ATTRIB_NORMAL:
 		case ATTRIB_DIFFUSE:
 		case ATTRIB_UV0:
+			assert(attr.location != -1);
 			glEnableVertexAttribArray(attr.location);	// Enable the attribute at that location
 			break;
 		case ATTRIB_NONE:
 		default:
-			break;
+			return;
 		}
 	}
 }
