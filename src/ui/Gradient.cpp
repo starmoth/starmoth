@@ -49,16 +49,19 @@ void Gradient::Draw()
 		m_vbuffer.Reset( r->CreateVertexBuffer(vbd) );
 		m_vbuffer->Populate( va );
 	}
-	Graphics::Renderer::MatrixTicket mt(r, Graphics::MatrixMode::MODELVIEW);
 
-	matrix4x4f local(r->GetCurrentModelView());
-	local.Translate(x, y, 0.0f);
-	local.Scale(sx, sy, 0.0f);
-	r->SetTransform(local);
+	{
+		Graphics::Renderer::MatrixTicket mt(r, Graphics::MatrixMode::MODELVIEW);
 
-	auto renderState = GetContext()->GetSkin().GetAlphaBlendState();
-	m_material->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, GetContext()->GetOpacity()*Color::WHITE.a);
-	r->DrawBuffer(m_vbuffer.Get(), renderState, m_material.get(), Graphics::TRIANGLE_STRIP);
+		matrix4x4f local(r->GetCurrentModelView());
+		local.Translate(x, y, 0.0f);
+		local.Scale(sx, sy, 0.0f);
+		r->SetTransform(local);
+
+		auto renderState = GetContext()->GetSkin().GetAlphaBlendState();
+		m_material->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, GetContext()->GetOpacity()*Color::WHITE.a);
+		r->DrawBuffer(m_vbuffer.Get(), renderState, m_material.get(), Graphics::TRIANGLE_STRIP);
+	}
 
 	Container::Draw();
 }

@@ -89,8 +89,8 @@ void Image::Draw()
 	Graphics::Renderer::MatrixTicket mt(r, Graphics::MatrixMode::MODELVIEW);
 
 	matrix4x4f local(r->GetCurrentModelView());
-	local.Translate(offset.x, offset.y, 0.0f);
-	local.Scale(area.x, area.y, 0.0f);
+	local.Translate(x, y, 0.0f);
+	local.Scale(sx, sy, 0.0f);
 	r->SetTransform(local);
 	
 	auto renderState = GetContext()->GetSkin().GetAlphaBlendState();
