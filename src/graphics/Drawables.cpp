@@ -265,6 +265,7 @@ TexturedQuad::TexturedQuad(Graphics::Renderer *r, Graphics::Texture *texture, co
 	vbd.stride = sizeof(QuadVertex);
 	vbd.numVertices = vertices.GetNumVerts();
 	vbd.usage = BUFFER_USAGE_STATIC;
+	m_material->SetupVertexBufferDesc( vbd );
 	m_vertexBuffer.reset(r->CreateVertexBuffer(vbd));
 	QuadVertex* vtxPtr = m_vertexBuffer->Map<QuadVertex>(Graphics::BUFFER_MAP_WRITE);
 	assert(m_vertexBuffer->GetDesc().stride == sizeof(QuadVertex));
