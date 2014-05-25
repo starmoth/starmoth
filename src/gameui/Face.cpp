@@ -82,15 +82,17 @@ void Face::Draw()
 
 		m_vbuffer.Reset( CreatePosUVVB( va.GetNumVerts(), s_material.Get(), r) );
 	}
-	Graphics::Renderer::MatrixTicket mt(r, Graphics::MatrixMode::MODELVIEW);
+	{
+		Graphics::Renderer::MatrixTicket mt(r, Graphics::MatrixMode::MODELVIEW);
 
-	matrix4x4f local(r->GetCurrentModelView());
-	local.Translate(x, y, 0.0f);
-	local.Scale(sx, sy, 0.0f);
-	r->SetTransform(local);
+		matrix4x4f local(r->GetCurrentModelView());
+		local.Translate(x, y, 0.0f);
+		local.Scale(sx, sy, 0.0f);
+		r->SetTransform(local);
 
-	s_material->texture0 = m_texture.get();
-	r->DrawBuffer(m_vbuffer.Get(), GetContext()->GetSkin().GetAlphaBlendState(), s_material.Get(), Graphics::TRIANGLE_STRIP);
+		s_material->texture0 = m_texture.get();
+		r->DrawBuffer(m_vbuffer.Get(), GetContext()->GetSkin().GetAlphaBlendState(), s_material.Get(), Graphics::TRIANGLE_STRIP);
+	}
 
 	Single::Draw();
 }
