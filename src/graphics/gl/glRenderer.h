@@ -112,15 +112,11 @@ protected:
 
 	//figure out states from a vertex array and enable them
 	//also sets vertex pointers
-	void EnableClientStates(const VertexArray*, const Material *);
 	void EnableVertexAttributes(const VertexBuffer*);
 	int m_numLights;
 	int m_numDirLights;
 	float m_minZNear;
 	float m_maxZFar;
-
-	matrix4x4f& GetCurrentTransform() { return m_currentTransform; }
-	matrix4x4f m_currentTransform;
 
 	void SetMaterialShaderTransforms(Material *);
 	void SetProgramShaderTransforms(PiGL::Program *);
