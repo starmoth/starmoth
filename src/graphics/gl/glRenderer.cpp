@@ -546,16 +546,17 @@ bool RendererGL::DrawBufferIndexed(VertexBuffer *vb, IndexBuffer *ib, RenderStat
 
 void RendererGL::EnableVertexAttributes(const VertexBuffer* gvb)
 {
+	const auto &desc = gvb->GetDesc();
 	// Enable the Vertex attributes
 	for (Uint8 i = 0; i < MAX_ATTRIBS; i++) {
-		const auto& attr  = gvb->GetDesc().attrib[i];
+		const auto& attr = desc.attrib[i];
 		switch (attr.semantic) {
 		case ATTRIB_POSITION:
 		case ATTRIB_NORMAL:
 		case ATTRIB_DIFFUSE:
 		case ATTRIB_UV0:
-			assert(attr.location != -1);
-			glEnableVertexAttribArray(attr.location);	// Enable the attribute at that location
+			if(attr.location != -1)
+				glEnableVertexAttribArray(attr.location);	// Enable the attribute at that location
 			break;
 		case ATTRIB_NONE:
 		default:
@@ -739,13 +740,11 @@ void RendererGL::PushState()
 	SetMatrixMode(MatrixMode::MODELVIEW);
 	PushMatrix();
 	m_viewportStack.push( m_viewportStack.top() );
-	//glPushAttrib(GL_ALL_ATTRIB_BITS & (~GL_POINT_BIT));
 	CheckRenderErrors();
 }
 
 void RendererGL::PopState()
 {
-	//glPopAttrib();
 	m_viewportStack.pop();
 	assert(!m_viewportStack.empty());
 	SetMatrixMode(MatrixMode::PROJECTION);

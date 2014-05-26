@@ -71,11 +71,11 @@ void Billboard::Render(const matrix4x4f &trans, const RenderData *rd)
 		Graphics::VertexBufferDesc vbd;
 		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
 		vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
-		vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
-		vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
+		vbd.attrib[1].semantic = Graphics::ATTRIB_UV0;
+		vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_FLOAT2;
 		vbd.numVertices = va.GetNumVerts();
 		vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;	// we could be updating this per-frame
-		Graphics::vtxColorMaterial->SetupVertexBufferDesc( vbd );
+		m_material->SetupVertexBufferDesc( vbd );
 		m_vbuffer.Reset( r->CreateVertexBuffer(vbd) );
 	}
 	m_vbuffer->Populate( va );

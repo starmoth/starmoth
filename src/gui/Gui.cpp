@@ -225,7 +225,7 @@ namespace Theme {
 		return vb;
 	}
 
-	Graphics::IndexBuffer* CreateIndexBuffer(const GLubyte indices[], const Uint32 IndexStart, const Uint32 IndexEnd, const Uint32 NumIndices)
+	Graphics::IndexBuffer* CreateIndexBuffer(const GLushort indices[], const Uint32 IndexStart, const Uint32 IndexEnd, const Uint32 NumIndices)
 	{
 		Graphics::IndexBuffer *ib = (Screen::GetRenderer()->CreateIndexBuffer(NumIndices, Graphics::BUFFER_USAGE_STATIC));
 		Uint16* idxPtr = ib->Map(Graphics::BUFFER_MAP_WRITE);
@@ -249,7 +249,7 @@ namespace Theme {
 	/* 6 */	vector3f(size.x-BORDER_WIDTH,size.y-BORDER_WIDTH,0),
 	/* 7 */	vector3f(size.x-BORDER_WIDTH,BORDER_WIDTH, 0)
 		};
-		const GLubyte indices[] = {
+		const GLushort indices[] = {
 			0,1,5, 0,5,4, 0,4,7, 0,7,3,
 			3,7,6, 3,6,2, 1,2,6, 1,6,5,
 			4,5,6, 4,6,7 };
@@ -303,7 +303,7 @@ namespace Theme {
 	/* 6 */	vector3f(size.x-BORDER_WIDTH,size.y-BORDER_WIDTH,0),
 	/* 7 */	vector3f(size.x-BORDER_WIDTH,BORDER_WIDTH, 0)
 		};
-		const GLubyte indices[] = {
+		const GLushort indices[] = {
 			0,1,5, 0,5,4, 0,4,7, 0,7,3,
 			3,7,6, 3,6,2, 1,2,6, 1,6,5,
 			4,5,6, 4,6,7 };
@@ -357,7 +357,7 @@ namespace Theme {
 	/* 6 */	vector3f(size.x-BORDER_WIDTH,size.y-BORDER_WIDTH,0),
 	/* 7 */	vector3f(size.x-BORDER_WIDTH,BORDER_WIDTH, 0)
 		};
-		const GLubyte indicesTri[] = {
+		const GLushort indices[] = {
 			0,1,5, 0,5,4, 0,4,7, 0,7,3,
 			3,7,6, 3,6,2, 1,2,6, 1,6,5 };
 
@@ -383,7 +383,7 @@ namespace Theme {
 		ib.Reset(Screen::GetRenderer()->CreateIndexBuffer(24, Graphics::BUFFER_USAGE_STATIC));
 		Uint16* idxPtr = ib->Map(Graphics::BUFFER_MAP_WRITE);
 		for (Uint32 j = 0; j < 24; j++) {
-			idxPtr[j] = indicesTri[j];
+			idxPtr[j] = indices[j];
 		}
 		ib->Unmap();
 	}

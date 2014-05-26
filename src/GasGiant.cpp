@@ -308,6 +308,8 @@ public:
 		vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
 		vbd.numVertices = ctx->NUMVERTICES();
 		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+		Graphics::Material *mat = gasSphere->GetSurfaceMaterial();
+		mat->SetupVertexBufferDesc( vbd );
 		m_vertexBuffer.reset(Pi::renderer->CreateVertexBuffer(vbd));
 
 		GasPatchContext::VBOVertex* vtxPtr = m_vertexBuffer->Map<GasPatchContext::VBOVertex>(Graphics::BUFFER_MAP_WRITE);
