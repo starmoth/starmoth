@@ -12,7 +12,7 @@ TextEntry::TextEntry()
 {
 	m_eventMask = EVENT_MOUSEDOWN;
 	m_cursPos = 0;
-	m_scroll = 0;
+	m_scrollPrevFrame = m_scroll = 0;
 	m_font = Gui::Screen::GetFont();
 	m_newlineMode = IgnoreNewline;
 	m_newlineCount = 0;
@@ -236,7 +236,17 @@ void TextEntry::Draw()
 
 	//text
 	SetScissor(true);
-	Gui::Screen::RenderString(m_text, 1.0f - m_scroll, 0.0f, c, m_font.Get());
+	{
+		Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE | Graphics::ATTRIB_UV0);
+		m_font->PopulateString(va, m_text, 1.0f - m_scroll, 0.0f, c);
+		if( (!m_textVB.Valid() || m_textVB->GetVertexCount() != va.GetNumVerts()) || m_scrollPrevFrame != m_scroll )
+		{
+			m_textVB.Reset(m_font->CreateVertexBuffer(va));
+			m_scrollPrevFrame = m_scroll;
+		}
+		m_font->RenderBuffer( m_textVB.Get(), c );
+		//Gui::Screen::RenderString(m_text, 1.0f - m_scroll, 0.0f, c, m_font.Get());
+	}
 	SetScissor(false);
 
 	//cursor

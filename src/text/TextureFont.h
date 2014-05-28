@@ -26,11 +26,14 @@ public:
 	TextureFont(const FontConfig &config, Graphics::Renderer *renderer, float scale = 1.0f);
 	~TextureFont();
 
-	void RenderString(const std::string &str, float x, float y, const Color &color = Color::WHITE);
-	Color RenderMarkup(const std::string &str, float x, float y, const Color &color = Color::WHITE);
+	void RenderBuffer(const Graphics::VertexBuffer *vb, const Color &color = Color::WHITE);
 	void MeasureString(const std::string &str, float &w, float &h);
 	void MeasureCharacterPos(const std::string &str, int charIndex, float &x, float &y);
 	int PickCharacter(const std::string &str, float mouseX, float mouseY);
+
+	void PopulateString(Graphics::VertexArray &va, const std::string &str, float x, float y, const Color &color = Color::WHITE);
+	Color PopulateMarkup(Graphics::VertexArray &va, const std::string &str, float x, float y, const Color &color = Color::WHITE);
+	Graphics::VertexBuffer* CreateVertexBuffer(const Graphics::VertexArray &va) const;
 
 	// general baseline-to-baseline height
 	float GetHeight() const { return m_height; }
@@ -52,7 +55,8 @@ public:
 	static int GetGlyphCount() { return s_glyphCount; }
 	static void ClearGlyphCount() { s_glyphCount = 0; }
 
-	RefCountedPtr<Graphics::Texture> GetTexture() { return m_texture; }
+	RefCountedPtr<Graphics::Texture> GetTexture() const  { return m_texture; }
+	Graphics::Material* GetMaterial() const { return m_mat.get(); }
 
 private:
 	TextureFont(const TextureFont &);

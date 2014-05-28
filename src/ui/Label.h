@@ -9,6 +9,9 @@
 
 // single line of text
 
+namespace Text { class TextureFont; }
+namespace Graphics { class VertexBuffer; }
+
 namespace UI {
 
 class Label: public Widget {
@@ -29,9 +32,12 @@ protected:
 private:
 	void BindText(PropertyMap &p, const std::string &k);
 
+	bool m_bNeedsUpdating;
 	std::string m_text;
 	Color m_color;
 	Point m_preferredSize;
+	RefCountedPtr<Text::TextureFont> m_font;
+	RefCountedPtr<Graphics::VertexBuffer> m_vbuffer;
 };
 
 }

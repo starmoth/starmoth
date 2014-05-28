@@ -3,6 +3,9 @@
 
 #include "Gui.h"
 
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
+
 namespace Gui {
 
 LabelSet::LabelSet() : Widget()
@@ -60,8 +63,16 @@ void LabelSet::Draw()
 {
 	PROFILE_SCOPED()
 	if (!m_labelsVisible) return;
-	for (std::vector<LabelSetItem>::iterator i = m_items.begin(); i != m_items.end(); ++i)
-		Gui::Screen::RenderString((*i).text, (*i).screenx, (*i).screeny - Gui::Screen::GetFontHeight()*0.5f, (*i).hasOwnColor ? (*i).color : m_labelColor, m_font.Get());
+	for (std::vector<LabelSetItem>::iterator i = m_items.begin(); i != m_items.end(); ++i) 
+	{
+		if( !(*i).m_vbuffer.Valid() )
+		{
+			Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE | Graphics::ATTRIB_UV0);
+			m_font->PopulateString(va, (*i).text, (*i).screenx, (*i).screeny - Gui::Screen::GetFontHeight()*0.5f, (*i).hasOwnColor ? (*i).color : m_labelColor);
+			(*i).m_vbuffer.Reset(m_font->CreateVertexBuffer(va));
+		}
+		m_font->RenderBuffer( (*i).m_vbuffer.Get(), (*i).hasOwnColor ? (*i).color : m_labelColor );
+	}
 }
 
 void LabelSet::GetSizeRequested(float size[2])

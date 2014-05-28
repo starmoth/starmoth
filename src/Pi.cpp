@@ -112,7 +112,7 @@ std::unique_ptr<AsyncJobQueue> Pi::asyncJobQueue;
 std::unique_ptr<SyncJobQueue> Pi::syncJobQueue;
 
 // XXX enabling this breaks UI gauge rendering. see #2627
-#define USE_RTT 0
+#define USE_RTT 1
 
 //static
 void Pi::CreateRenderTarget(const Uint16 width, const Uint16 height) {

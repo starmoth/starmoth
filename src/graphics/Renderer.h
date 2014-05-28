@@ -101,8 +101,8 @@ public:
 	//high amount of textured quads for particles etc
 	virtual bool DrawPointSprites(int count, const vector3f *positions, RenderState *rs, Material *material, float size) = 0;
 	//complex unchanging geometry that is worthwhile to store in VBOs etc.
-	virtual bool DrawBuffer(VertexBuffer*, RenderState*, Material*, const PrimitiveType type=TRIANGLES) = 0;
-	virtual bool DrawBufferIndexed(VertexBuffer*, IndexBuffer*, RenderState*, Material*, const PrimitiveType=TRIANGLES) = 0;
+	virtual bool DrawBuffer(const VertexBuffer*, RenderState*, Material*, const PrimitiveType type=TRIANGLES) = 0;
+	virtual bool DrawBufferIndexed(const VertexBuffer*, IndexBuffer*, RenderState*, Material*, const PrimitiveType=TRIANGLES) = 0;
 
 	//creates a unique material based on the descriptor. It will not be deleted automatically.
 	virtual Material *CreateMaterial(const MaterialDescriptor &descriptor) = 0;

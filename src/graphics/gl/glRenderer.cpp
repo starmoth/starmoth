@@ -125,7 +125,10 @@ RendererGL::RendererGL(WindowSDL *window, const Graphics::Settings &vs)
 
 RendererGL::~RendererGL()
 {
-	while (!m_programs.empty()) delete m_programs.back().second, m_programs.pop_back();
+	while (!m_programs.empty()) {
+		delete m_programs.back().second;
+		m_programs.pop_back();
+	}
 	for (auto state : m_renderStates)
 		delete state.second;
 }
@@ -495,41 +498,38 @@ bool RendererGL::DrawPointSprites(int count, const vector3f *positions, RenderSt
 	return true;
 }
 
-bool RendererGL::DrawBuffer(VertexBuffer* vb, RenderState* state, Material* mat, const PrimitiveType pt)
+bool RendererGL::DrawBuffer(const VertexBuffer* vb, RenderState* state, Material* mat, const PrimitiveType pt)
 {
 	SetRenderState(state);
 	mat->Apply();
 
 	SetMaterialShaderTransforms(mat);
 
-	auto gvb = static_cast<PiGL::VertexBuffer*>(vb);
+	const auto gvb = static_cast<const PiGL::VertexBuffer*>(vb);
 
 	glBindVertexArray(gvb->GetVAO());
-	glBindBuffer(GL_ARRAY_BUFFER, gvb->GetBuffer());
 
 	EnableVertexAttributes(gvb);
 
 	glDrawArrays(pt, 0, gvb->GetVertexCount());
 	
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	CheckRenderErrors();
 
 	return true;
 }
 
-bool RendererGL::DrawBufferIndexed(VertexBuffer *vb, IndexBuffer *ib, RenderState *state, Material *mat, const PrimitiveType pt)
+bool RendererGL::DrawBufferIndexed(const VertexBuffer *vb, IndexBuffer *ib, RenderState *state, Material *mat, const PrimitiveType pt)
 {
 	SetRenderState(state);
 	mat->Apply();
 
 	SetMaterialShaderTransforms(mat);
 
-	auto gvb = static_cast<PiGL::VertexBuffer*>(vb);
-	auto gib = static_cast<PiGL::IndexBuffer*>(ib);
+	const auto gvb = static_cast<const PiGL::VertexBuffer*>(vb);
+	const auto gib = static_cast<const PiGL::IndexBuffer*>(ib);
 
 	glBindVertexArray(gvb->GetVAO());
-	glBindBuffer(GL_ARRAY_BUFFER, gvb->GetBuffer());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gib->GetBuffer());
 
 	EnableVertexAttributes(gvb);
@@ -537,7 +537,6 @@ bool RendererGL::DrawBufferIndexed(VertexBuffer *vb, IndexBuffer *ib, RenderStat
 	glDrawElements(pt, ib->GetIndexCount(), GL_UNSIGNED_SHORT, 0);
 	
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	CheckRenderErrors();
 

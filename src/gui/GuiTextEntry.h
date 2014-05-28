@@ -44,13 +44,15 @@ namespace Gui {
 		std::string m_text;
 		int m_cursPos;
 		int m_scroll;
+		int m_scrollPrevFrame;
 		RefCountedPtr<Text::TextureFont> m_font;
 		NewlineMode m_newlineMode;
 		int m_newlineCount;
 
 		bool m_justFocused;
 		sigc::connection m_clickout;
-
+		
+		RefCountedPtr<Graphics::VertexBuffer> m_textVB;
 		RefCountedPtr<Graphics::VertexBuffer> m_rectVB;
 	};
 }

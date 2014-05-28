@@ -169,31 +169,20 @@ int TextureFont::PickCharacter(const std::string &str, float mouseX, float mouse
 	return i2;
 }
 
-void TextureFont::RenderString(const std::string &str, float x, float y, const Color &color)
+void TextureFont::RenderBuffer(const Graphics::VertexBuffer *vb, const Color &color)
+{
+	if( vb && vb->GetVertexCount() > 0 )
+	{
+		m_mat->diffuse = color;
+		m_renderer->DrawBuffer(vb, m_renderState, m_mat.get());
+	}
+}
+
+void TextureFont::PopulateString(Graphics::VertexArray &va, const std::string &str, float x, float y, const Color &color)
 {
 	PROFILE_SCOPED()
 
 	if(str.empty()) return;
-
-	// 2 tringles per character, 3 vertices per triangle = 6 vertices per character
-	const size_t NewNumVertices = str.size() * 6;
-
-	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE | Graphics::ATTRIB_UV0);
-
-	if( !m_vertexBuffer.get() || m_vertexBuffer->GetVertexCount() != NewNumVertices ) {
-		//create buffer and upload data
-		Graphics::VertexBufferDesc vbd;
-		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
-		vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
-		vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
-		vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
-		vbd.attrib[2].semantic = Graphics::ATTRIB_UV0;
-		vbd.attrib[2].format   = Graphics::ATTRIB_FORMAT_FLOAT2;
-		vbd.numVertices = str.size() * 6;	// 2 tringles per character, 3 vertices per triangle = 6 vertices per character
-		vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;	// we could be updating this per-frame
-		m_mat->SetupVertexBufferDesc( vbd );
-		m_vertexBuffer.reset( m_renderer->CreateVertexBuffer(vbd) );
-	}
 
 	float alpha_f = color.a / 255.0f;
 	const Color premult_color = Color(color.r * alpha_f, color.g * alpha_f, color.b * alpha_f, color.a);
@@ -202,16 +191,17 @@ void TextureFont::RenderString(const std::string &str, float x, float y, const C
 	float py = y;
 
 	Uint32 i = 0;
-	for (const auto &ch : str) {
+	while (str[i]) {
+		const auto ch = str[i];
 		if (ch == '\n') {
 			px = x;
 			py += GetHeight();
-		}
-
-		else {
+			i++;
+		} else {
 			Uint32 chr;
 			int n = utf8_decode_char(&chr, &ch);
 			assert(n);
+			i += n;
 
 			const Glyph &glyph = GetGlyph(chr);
 			AddGlyphGeometry(va, glyph, roundf(px), py, premult_color);
@@ -227,37 +217,13 @@ void TextureFont::RenderString(const std::string &str, float x, float y, const C
 			px += glyph.advX;
 		}
 	}
-
-	m_vertexBuffer->Populate(va);
-
-	m_renderer->DrawBuffer(m_vertexBuffer.get(), m_renderState, m_mat.get());
 }
 
-Color TextureFont::RenderMarkup(const std::string &str, float x, float y, const Color &color)
+Color TextureFont::PopulateMarkup(Graphics::VertexArray &va, const std::string &str, float x, float y, const Color &color)
 {
 	PROFILE_SCOPED()
 
 	if(str.empty()) return Color::BLACK;
-
-	// 2 tringles per character, 3 vertices per triangle = 6 vertices per character
-	const size_t NewNumVertices = str.size() * 6;
-
-	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE | Graphics::ATTRIB_UV0);
-	
-	if( !m_vertexBuffer.get() || m_vertexBuffer->GetVertexCount() != NewNumVertices ) {
-		//create buffer and upload data
-		Graphics::VertexBufferDesc vbd;
-		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
-		vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
-		vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
-		vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
-		vbd.attrib[2].semantic = Graphics::ATTRIB_UV0;
-		vbd.attrib[2].format   = Graphics::ATTRIB_FORMAT_FLOAT2;
-		vbd.numVertices = NewNumVertices;	// 2 tringles per character, 3 vertices per triangle = 6 vertices per character
-		vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;	// we could be updating this per-frame
-		m_mat->SetupVertexBufferDesc( vbd );
-		m_vertexBuffer.reset( m_renderer->CreateVertexBuffer(vbd) );
-	}
 
 	float px = x;
 	float py = y;
@@ -268,7 +234,8 @@ Color TextureFont::RenderMarkup(const std::string &str, float x, float y, const 
 
 	int i = 0;
 	Uint32 idx = 0;
-	for (auto &ch : str) {
+	while (str[i]) {
+		const auto ch = str[i];
 		if (ch == '#') {
 			int hexcol;
 			if (sscanf((&str[0])+i, "#%3x", &hexcol)==1) {
@@ -288,9 +255,7 @@ Color TextureFont::RenderMarkup(const std::string &str, float x, float y, const 
 			px = x;
 			py += GetHeight();
 			i++;
-		}
-
-		else {
+		} else {
 			Uint32 chr;
 			int n = utf8_decode_char(&chr, &ch);
 			assert(n);
@@ -312,10 +277,30 @@ Color TextureFont::RenderMarkup(const std::string &str, float x, float y, const 
 		}
 	}
 
-	m_vertexBuffer->Populate(va);
-
-	m_renderer->DrawBuffer(m_vertexBuffer.get(), m_renderState, m_mat.get());
 	return c;
+}
+
+Graphics::VertexBuffer* TextureFont::CreateVertexBuffer(const Graphics::VertexArray &va) const 
+{
+	if( va.GetNumVerts() > 0 )
+	{
+		//create buffer and upload data
+		Graphics::VertexBufferDesc vbd;
+		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+		vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+		vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+		vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
+		vbd.attrib[2].semantic = Graphics::ATTRIB_UV0;
+		vbd.attrib[2].format   = Graphics::ATTRIB_FORMAT_FLOAT2;
+		vbd.numVertices = va.GetNumVerts();
+		vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;	// we could be updating this per-frame
+		m_mat->SetupVertexBufferDesc( vbd );
+		Graphics::VertexBuffer *vbuffer = m_renderer->CreateVertexBuffer(vbd);
+		vbuffer->Populate( va );
+
+		return vbuffer;
+	}
+	return nullptr;
 }
 
 const TextureFont::Glyph &TextureFont::GetGlyph(Uint32 chr)

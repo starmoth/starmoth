@@ -59,7 +59,6 @@ namespace Gui {
 		static void MeasureString(const std::string &s, float &w, float &h, Text::TextureFont *font = 0);
 		static int PickCharacterInString(const std::string &s, float x, float y, Text::TextureFont *font = 0);
 		static void MeasureCharacterPos(const std::string &s, int charIndex, float &x, float &y, Text::TextureFont *font = 0);
-		static void RenderMarkup(const std::string &s, const Color &color = Color::WHITE, Text::TextureFont *font = 0);
 
 		static Graphics::Renderer *GetRenderer() { return s_renderer; }
 
