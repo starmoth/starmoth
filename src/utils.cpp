@@ -310,3 +310,16 @@ Graphics::VertexBuffer* CreatePosUVVB(const Uint32 numVertices, Graphics::Materi
 
 	return r->CreateVertexBuffer(vbd);
 }
+
+Graphics::VertexBuffer* CreatePosVB(const Uint32 numVertices, Graphics::Material *mat, Graphics::Renderer *r)
+{
+	//create buffer and upload data
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.numVertices = numVertices;
+	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+	mat->SetupVertexBufferDesc( vbd );
+
+	return r->CreateVertexBuffer(vbd);
+}

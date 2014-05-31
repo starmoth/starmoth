@@ -227,10 +227,10 @@ namespace Theme {
 
 	Graphics::IndexBuffer* CreateIndexBuffer(const GLushort indices[], const Uint32 IndexStart, const Uint32 IndexEnd, const Uint32 NumIndices)
 	{
-		Graphics::IndexBuffer *ib = (Screen::GetRenderer()->CreateIndexBuffer(NumIndices, Graphics::BUFFER_USAGE_STATIC));
+		Graphics::IndexBuffer *ib = Screen::GetRenderer()->CreateIndexBuffer(NumIndices, Graphics::BUFFER_USAGE_STATIC);
 		Uint16* idxPtr = ib->Map(Graphics::BUFFER_MAP_WRITE);
-		for (Uint32 j = IndexStart; j < IndexEnd; j++) {
-			idxPtr[j] = indices[j];
+		for (Uint32 j = 0; j < NumIndices; j++) {
+			idxPtr[j] = indices[j + IndexStart];
 		}
 		ib->Unmap();
 
@@ -388,7 +388,7 @@ namespace Theme {
 		ib->Unmap();
 	}
 
-	void DrawRect(Graphics::VertexBuffer* vb, const vector2f &pos, const vector2f &size, const Color &c, Graphics::RenderState *state)
+	void DrawRect(Graphics::VertexBuffer* vb, const vector2f &pos, const vector2f &size, const Color &c, Graphics::RenderState *state,const  Graphics::PrimitiveType pt)
 	{
 		Graphics::Renderer* r = Screen::GetRenderer();
 		Graphics::Renderer::MatrixTicket mt(r, Graphics::MatrixMode::MODELVIEW);
@@ -399,7 +399,7 @@ namespace Theme {
 		r->SetTransform(local);
 
 		Screen::flatColorMaterial->diffuse = c;
-		r->DrawBuffer(vb, state, Screen::flatColorMaterial, Graphics::TRIANGLE_FAN);
+		r->DrawBuffer(vb, state, Screen::flatColorMaterial, pt);
 	}
 
 	void DrawRoundEdgedRect(Graphics::VertexBuffer* vb, const Color &color, Graphics::RenderState *state)

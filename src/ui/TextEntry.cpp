@@ -36,13 +36,21 @@ void TextEntry::Layout()
 
 	SetWidgetDimensions(m_label, innerPos, innerSize);
 
-	// XXX see ::Draw. after Container::Draw we're still translated to the
-	// label origin so we calculate the cursor from there
-	const float cursorBottom = m_label->GetSize().y;
-	const float cursorTop    = cursorBottom - GetContext()->GetFont(GetFont())->GetHeight();
+	//cursor
+	if( !m_cursorMat.Valid() ) {
+		Graphics::Renderer *r = GetContext()->GetRenderer();
+		Graphics::MaterialDescriptor desc;
+		m_cursorMat.Reset(r->CreateMaterial(desc));
+		m_cursorMat->diffuse = Color::WHITE;
+		m_cursorVB.Reset( CreatePosVB(2, m_cursorMat.Get(), r) );
 
-	m_cursorVertices[0] = vector3f(0.0f, cursorTop,    0.0f);
-	m_cursorVertices[1] = vector3f(0.0f, cursorBottom, 0.0f);
+		struct LineVertex {	vector3f pos; };
+		LineVertex* vtxPtr = m_cursorVB->Map<LineVertex>(Graphics::BUFFER_MAP_WRITE);
+		assert(m_cursorVB->GetDesc().stride == sizeof(LineVertex));
+		vtxPtr[0].pos	= vector3f(0.0f, 0.0f, 0.0f);
+		vtxPtr[1].pos	= vector3f(0.0f, 1.0f, 0.0f);
+		m_cursorVB->Unmap();
+	}
 
 	m_label->Layout();
 }
@@ -78,8 +86,19 @@ void TextEntry::Draw()
 	Container::Draw();
 
 	if (IsSelected()) {
-		GetContext()->GetRenderer()->DrawLines(2, m_cursorVertices,
-			Color::WHITE, GetContext()->GetSkin().GetAlphaBlendState());
+		// XXX see ::Draw. after Container::Draw we're still translated to the
+		// label origin so we calculate the cursor from there
+		const float cursorBottom = m_label->GetSize().y;
+		const float cursorTop    = cursorBottom - GetContext()->GetFont(GetFont())->GetHeight();
+
+		const float yscale = cursorBottom - cursorTop;
+
+		Graphics::Renderer *r = GetContext()->GetRenderer();
+		Graphics::Renderer::MatrixTicket mt( r, Graphics::MatrixMode::MODELVIEW );
+		matrix4x4f cursorMT = r->GetCurrentModelView();
+		cursorMT.Scale( 0.0f, yscale, 0.0f );
+		//GetContext()->GetRenderer()->DrawLines(2, m_cursorVertices, Color::WHITE, GetContext()->GetSkin().GetAlphaBlendState());
+		r->DrawBuffer( m_cursorVB.Get(), GetContext()->GetSkin().GetAlphaBlendState(), m_cursorMat.Get(), Graphics::LINE_SINGLE);
 	}
 }
 

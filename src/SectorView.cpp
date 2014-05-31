@@ -168,7 +168,7 @@ void SectorView::InitObject()
 
 	Graphics::MaterialDescriptor bbMatDesc;
 	bbMatDesc.effect = Graphics::EFFECT_SPHEREIMPOSTOR;
-	m_starMaterial.Reset(m_renderer->CreateMaterial(bbMatDesc));
+	m_starMaterial = m_renderer->CreateMaterial(bbMatDesc);
 
 	m_disk.reset(new Graphics::Drawables::Disk(m_renderer, m_solidState, Color::WHITE, 0.2f));
 
@@ -445,7 +445,7 @@ void SectorView::Draw3D()
 	//draw star billboards in one go
 	m_renderer->SetAmbientColor(Color(30));
 	if( m_starBuffer.Valid() )
-		m_renderer->DrawBuffer(m_starBuffer.Get(), m_solidState, m_starMaterial.Get());
+		m_renderer->DrawBuffer(m_starBuffer.Get(), m_solidState, m_starMaterial);
 
 	//draw sector legs in one go
 	if (m_lineVerts->GetNumVerts() > 2)

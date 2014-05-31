@@ -143,8 +143,7 @@ private:
 	Graphics::RenderState *m_solidState;
 	Graphics::RenderState *m_alphaBlendState;
 	Graphics::RenderState *m_jumpSphereState;
-	RefCountedPtr<Graphics::Material> m_material; //flat colour
-	RefCountedPtr<Graphics::Material> m_starMaterial;
+	Graphics::Material* m_starMaterial;
 
 	std::vector<vector3f> m_farstars;
 	std::vector<Color>    m_farstarsColor;

@@ -184,6 +184,7 @@ private:
 	Graphics::Texture *m_curDecals[MAX_DECAL_MATERIALS];
 
 	// debug support
+	void CreateAabbVB();
 	void DrawAabb();
 	void DrawCollisionMesh();
 	void DrawAxisIndicators(std::vector<Graphics::Drawables::Line3D> &lines);
@@ -193,6 +194,9 @@ private:
 	std::vector<Graphics::Drawables::Line3D> m_tagPoints;
 	std::vector<Graphics::Drawables::Line3D> m_dockingPoints;
 	RefCountedPtr<Graphics::VertexBuffer> m_collisionMeshVB;
+	RefCountedPtr<Graphics::VertexBuffer> m_aabbVB;
+	std::unique_ptr<Graphics::RenderState> m_state;
+	RefCountedPtr<Graphics::Material> m_aabbMat;
 };
 
 }

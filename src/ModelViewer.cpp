@@ -8,6 +8,7 @@
 #include "graphics/TextureBuilder.h"
 #include "graphics/Drawables.h"
 #include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 #include "scenegraph/DumpVisitor.h"
 #include "scenegraph/FindNodeVisitor.h"
 #include "scenegraph/BinaryConverter.h"
@@ -104,6 +105,8 @@ ModelViewer::ModelViewer(Graphics::Renderer *r)
 , m_currentAnimation(0)
 , m_model(0)
 , m_modelName("")
+, m_axes(nullptr)
+, m_bNewGrid(true)
 {
 	m_ui.Reset(new UI::Context(r, Graphics::GetScreenWidth(), Graphics::GetScreenHeight()));
 	m_ui->SetMousePointer("icons/cursors/mouse_cursor_2.png", UI::Point(15, 8));
@@ -216,6 +219,7 @@ bool ModelViewer::OnToggleShowShields(UI::CheckBox *w)
 
 bool ModelViewer::OnToggleGrid(UI::Widget *)
 {
+	m_bNewGrid = true;
 	if (!m_options.showGrid) {
 		m_options.showGrid = true;
 		m_options.gridInterval = 1.0f;
@@ -455,56 +459,70 @@ void ModelViewer::DrawGrid(const matrix4x4f &trans, float radius)
 
 	const float max = std::min(powf(10, ceilf(log10f(dist))), ceilf(radius/m_options.gridInterval)*m_options.gridInterval);
 
-	static std::vector<vector3f> points;
-	points.clear();
+	if( m_bNewGrid )
+	{
+		m_bNewGrid = false;
 
-	for (float x = -max; x <= max; x += m_options.gridInterval) {
-		points.push_back(vector3f(x,0,-max));
-		points.push_back(vector3f(x,0,max));
-		points.push_back(vector3f(0,x,-max));
-		points.push_back(vector3f(0,x,max));
+		Graphics::VertexArray vertices(Graphics::ATTRIB_POSITION);
+		for (float x = -max; x <= max; x += m_options.gridInterval) {
+			vertices.Add(vector3f(x,0,-max));
+			vertices.Add(vector3f(x,0,max));
+			vertices.Add(vector3f(0,x,-max));
+			vertices.Add(vector3f(0,x,max));
+			
+			vertices.Add(vector3f(x,-max,0));
+			vertices.Add(vector3f(x,max,0));
+			vertices.Add(vector3f(0,-max,x));
+			vertices.Add(vector3f(0,max,x));
+			
+			vertices.Add(vector3f(-max,x,0));
+			vertices.Add(vector3f(max,x,0));
+			vertices.Add(vector3f(-max,0,x));
+			vertices.Add(vector3f(max,0,x));
+		}
 
-		points.push_back(vector3f(x,-max,0));
-		points.push_back(vector3f(x,max,0));
-		points.push_back(vector3f(0,-max,x));
-		points.push_back(vector3f(0,max,x));
+		struct LineVertex {
+			vector3f pos;
+		};
 
-		points.push_back(vector3f(-max,x,0));
-		points.push_back(vector3f(max,x,0));
-		points.push_back(vector3f(-max,0,x));
-		points.push_back(vector3f(max,0,x));
+		Graphics::MaterialDescriptor desc;
+		m_gridMaterial.Reset(m_renderer->CreateMaterial(desc));
+		m_gridMaterial->diffuse = Color(128);
+
+		//Create vtx & index buffers and copy data
+		Graphics::VertexBufferDesc vbd;
+		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+		vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+		vbd.attrib[0].offset   = offsetof(LineVertex, pos);
+		vbd.stride = sizeof(LineVertex);
+		vbd.numVertices = vertices.GetNumVerts();
+		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+		m_gridMaterial->SetupVertexBufferDesc( vbd );
+		m_grid.reset(m_renderer->CreateVertexBuffer(vbd));
+		LineVertex* vtxPtr = m_grid->Map<LineVertex>(Graphics::BUFFER_MAP_WRITE);
+		assert(m_grid->GetDesc().stride == sizeof(LineVertex));
+		for(Uint32 i=0 ; i<vertices.GetNumVerts() ; i++)
+		{
+			vtxPtr[i].pos	= vertices.position[i];
+		}
+		m_grid->Unmap();
 	}
 
 	m_renderer->SetTransform(trans);
-	m_renderer->DrawLines(points.size(), &points[0], Color(128), m_bgState);//Color(0.0f,0.2f,0.0f,1.0f));
+	m_renderer->DrawBuffer(m_grid.get(), m_bgState, m_gridMaterial.Get(), Graphics::LINE_SINGLE);
 
-	//industry-standard red/green/blue XYZ axis indiactor
-	const int numAxVerts = 6;
-	const vector3f vts[numAxVerts] = {
-		//X
-		vector3f(0.f, 0.f, 0.f),
-		vector3f(radius, 0.f, 0.f),
+	//industry-standard red/green/blue XYZ axis indicator
+	{
+		Graphics::Renderer::MatrixTicket mt(m_renderer, Graphics::MatrixMode::MODELVIEW);
+		matrix4x4f nowscale = trans;
+		nowscale.Scale(radius);
+		m_renderer->SetTransform(trans);
 
-		//Y
-		vector3f(0.f, 0.f, 0.f),
-		vector3f(0.f, radius, 0.f),
-
-		//Z
-		vector3f(0.f, 0.f, 0.f),
-		vector3f(0.f, 0.f, radius),
-	};
-	const Color col[numAxVerts] = {
-		Color(255, 0, 0),
-		Color(255, 0, 0),
-
-		Color(0, 0, 255),
-		Color(0, 0, 255),
-
-		Color(0, 255, 0),
-		Color(0, 255, 0)
-	};
-
-	m_renderer->DrawLines(numAxVerts, &vts[0], &col[0], m_bgState);
+		if( !m_axes ) {
+			m_axes.reset(new Graphics::Drawables::Axes3D(m_renderer, m_bgState));
+		}
+		m_axes->Draw(m_renderer);
+	}
 }
 
 void ModelViewer::DrawModel()

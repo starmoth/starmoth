@@ -155,11 +155,11 @@ void Model::Render(const matrix4x4f &trans, const RenderData *rd)
 	}
 }
 
-void Model::DrawAabb()
+void Model::CreateAabbVB()
 {
 	if (!m_collMesh) return;
 
-	Aabb aabb = m_collMesh->GetAabb();
+	const Aabb aabb = m_collMesh->GetAabb();
 
 	const vector3f verts[16] = {
 		vector3f(aabb.min.x, aabb.min.y, aabb.min.z),
@@ -181,9 +181,47 @@ void Model::DrawAabb()
 		vector3f(aabb.min.x, aabb.max.y, aabb.max.z),
 	};
 
-	auto state = m_renderer->CreateRenderState(Graphics::RenderStateDesc());
-	m_renderer->DrawLines(8, verts + 0, Color::GREEN, state, Graphics::LINE_STRIP);
-	m_renderer->DrawLines(8, verts + 8, Color::GREEN, state, Graphics::LINE_STRIP);
+	if( !m_aabbVB.Valid() )
+	{
+		Graphics::VertexArray va(Graphics::ATTRIB_POSITION, 28);
+		for(unsigned int i = 0; i < 7; i++) {
+			va.Add(verts[i]);
+			va.Add(verts[i+1]);
+		}
+		
+		for(unsigned int i = 8; i < 15; i++) {
+			va.Add(verts[i]);
+			va.Add(verts[i+1]);
+		}
+
+		Graphics::MaterialDescriptor desc;
+		m_aabbMat.Reset(m_renderer->CreateMaterial(desc));
+		m_aabbMat->diffuse = Color::GREEN;
+
+		//create buffer and upload data
+		Graphics::VertexBufferDesc vbd;
+		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+		vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+		vbd.numVertices = va.GetNumVerts();
+		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+		m_aabbMat->SetupVertexBufferDesc( vbd );
+		m_aabbVB.Reset( m_renderer->CreateVertexBuffer(vbd) );
+		m_aabbVB->Populate( va );
+	}
+
+	m_state.reset( m_renderer->CreateRenderState(Graphics::RenderStateDesc()) );
+}
+
+void Model::DrawAabb()
+{
+	if (!m_collMesh) return;
+
+	if( !m_aabbVB.Valid() ) {
+		CreateAabbVB();
+	}
+
+	m_renderer->DrawBuffer( m_aabbVB.Get(), m_state.get(), m_aabbMat.Get(), Graphics::LINE_SINGLE);
+	
 }
 
 // Draw collision mesh as a wireframe overlay

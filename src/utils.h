@@ -163,5 +163,6 @@ namespace Graphics
 	class Renderer;
 }
 Graphics::VertexBuffer* CreatePosUVVB(const Uint32, Graphics::Material *, Graphics::Renderer *);
+Graphics::VertexBuffer* CreatePosVB(const Uint32, Graphics::Material *, Graphics::Renderer *);
 
 #endif /* _UTILS_H */

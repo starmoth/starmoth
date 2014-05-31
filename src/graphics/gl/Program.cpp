@@ -152,7 +152,13 @@ Program::Program(const std::string &name, const std::string &defines)
 
 Program::~Program()
 {
-	glDeleteProgram(m_program);
+	Unuse();
+	if( glIsProgram(m_program) ) {
+		GLint status;
+		glGetProgramiv(m_program, GL_DELETE_STATUS, &status);
+		assert(GL_FALSE==status);
+		glDeleteProgram(m_program);
+	}
 }
 
 void Program::Reload()

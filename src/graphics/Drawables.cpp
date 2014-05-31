@@ -8,6 +8,48 @@ namespace Graphics {
 
 namespace Drawables {
 
+Circle::Circle(Renderer *renderer, float radius, const vector3f &center, const Color &c, RenderState *state) : m_color(c) {
+	m_renderState = state;
+	VertexArray vertices (ATTRIB_POSITION);
+	for (float theta=0; theta < 2*float(M_PI); theta += 0.05f*float(M_PI)) {
+		vertices.Add(vector3f(radius*sin(theta) + center.x, radius*cos(theta) + center.y, center.z));
+	}
+	SetupVertexBuffer(vertices, renderer);
+}
+
+void Circle::Draw(Renderer *renderer) {
+	m_material->diffuse = m_color;
+	renderer->DrawBuffer(m_vertexBuffer.Get(), m_renderState, m_material.Get(), PrimitiveType::LINE_LOOP);
+}
+
+void Circle::SetupVertexBuffer(const Graphics::VertexArray& vertices, Graphics::Renderer *r)
+{
+	struct CircleVertex {
+		vector3f pos;
+	};
+
+	MaterialDescriptor desc;
+	m_material.Reset(r->CreateMaterial(desc));
+
+	//Create vtx & index buffers and copy data
+	VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = ATTRIB_POSITION;
+	vbd.attrib[0].format   = ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[0].offset   = offsetof(CircleVertex, pos);
+	vbd.stride = sizeof(CircleVertex);
+	vbd.numVertices = vertices.GetNumVerts();
+	vbd.usage = BUFFER_USAGE_STATIC;
+	m_material->SetupVertexBufferDesc(vbd);
+	m_vertexBuffer.Reset(r->CreateVertexBuffer(vbd));
+	CircleVertex* vtxPtr = m_vertexBuffer->Map<CircleVertex>(Graphics::BUFFER_MAP_WRITE);
+	assert(m_vertexBuffer->GetDesc().stride == sizeof(CircleVertex));
+	for(Uint32 i=0 ; i<vertices.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= vertices.position[i];
+	}
+	m_vertexBuffer->Unmap();
+}
+
 Disk::Disk(Graphics::Renderer *r, Graphics::RenderState *state, const Color &c, float rad)
 {
 	m_renderState = state;
@@ -51,6 +93,7 @@ void Disk::SetupVertexBuffer(const Graphics::VertexArray& vertices, Graphics::Re
 	vbd.stride = sizeof(DiskVertex);
 	vbd.numVertices = vertices.GetNumVerts();
 	vbd.usage = BUFFER_USAGE_STATIC;
+	m_material->SetupVertexBufferDesc(vbd);
 	m_vertexBuffer.reset(r->CreateVertexBuffer(vbd));
 	DiskVertex* vtxPtr = m_vertexBuffer->Map<DiskVertex>(Graphics::BUFFER_MAP_WRITE);
 	assert(m_vertexBuffer->GetDesc().stride == sizeof(DiskVertex));
@@ -165,6 +208,7 @@ Sphere3D::Sphere3D(Renderer *renderer, RefCountedPtr<Material> mat, Graphics::Re
 	vbd.stride = sizeof(Sphere3DVertex);
 	vbd.numVertices = vts.GetNumVerts();
 	vbd.usage = BUFFER_USAGE_STATIC;
+	m_material->SetupVertexBufferDesc(vbd);
 	m_vertexBuffer.reset(renderer->CreateVertexBuffer(vbd));
 
 	auto vtxPtr = m_vertexBuffer->Map<Sphere3DVertex>(Graphics::BUFFER_MAP_WRITE);
@@ -280,6 +324,83 @@ TexturedQuad::TexturedQuad(Graphics::Renderer *r, Graphics::Texture *texture, co
 void TexturedQuad::Draw(Graphics::Renderer *r)
 {
 	r->DrawBuffer(m_vertexBuffer.get(), m_renderState, m_material.get(), TRIANGLE_STRIP);
+}
+
+Axes3D::Axes3D(Graphics::Renderer *r, Graphics::RenderState *state)
+{
+	if( state ) {
+		m_renderState = state;
+	} else {
+		Graphics::RenderStateDesc rsd;
+		m_renderState = r->CreateRenderState(rsd);
+	}
+
+	VertexArray vertices(ATTRIB_POSITION | ATTRIB_DIFFUSE);
+	Graphics::MaterialDescriptor desc;
+	desc.vertexColors = true;
+	m_material.Reset(r->CreateMaterial(desc));
+	
+	//Draw plain XYZ axes using the current transform
+	static const vector3f vtsXYZ[] = {
+		vector3f(0.f, 0.f, 0.f),
+		vector3f(1.f, 0.f, 0.f),
+		vector3f(0.f, 0.f, 0.f),
+		vector3f(0.f, 1.f, 0.f),
+		vector3f(0.f, 0.f, 0.f),
+		vector3f(0.f, 0.f, 1.f),
+	};
+	static const Color colors[] = {
+		Color::RED,
+		Color::RED,
+		Color::BLUE,
+		Color::BLUE,
+		Color::GREEN,
+		Color::GREEN,
+	};
+
+	for( int i=0 ; i<6 ; i++ ) {
+		vertices.Add( vtsXYZ[i], colors[i] );
+	}
+
+	struct AxesVertex {
+		vector3f pos;
+		Color col;
+	};
+
+	//Create vtx & index buffers and copy data
+	VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = ATTRIB_POSITION;
+	vbd.attrib[0].format   = ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[0].offset   = offsetof(AxesVertex, pos);
+	vbd.attrib[1].semantic = ATTRIB_DIFFUSE;
+	vbd.attrib[1].format   = ATTRIB_FORMAT_UBYTE4;
+	vbd.attrib[1].offset   = offsetof(AxesVertex, col);
+	vbd.stride = sizeof(AxesVertex);
+	vbd.numVertices = vertices.GetNumVerts();
+	vbd.usage = BUFFER_USAGE_STATIC;
+	m_material->SetupVertexBufferDesc( vbd );
+	m_vertexBuffer.Reset(r->CreateVertexBuffer(vbd));
+	AxesVertex* vtxPtr = m_vertexBuffer->Map<AxesVertex>(Graphics::BUFFER_MAP_WRITE);
+	assert(m_vertexBuffer->GetDesc().stride == sizeof(AxesVertex));
+	for(Uint32 i=0 ; i<vertices.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= vertices.position[i];
+		vtxPtr[i].col	= vertices.diffuse[i];
+	}
+	m_vertexBuffer->Unmap();
+}
+
+void Axes3D::Draw(Graphics::Renderer *r)
+{
+	r->DrawBuffer(m_vertexBuffer.Get(), m_renderState, m_material.Get(), LINE_SINGLE);
+}
+
+static Axes3D *s_axes = nullptr; 
+Axes3D* GetAxes3DDrawable(Graphics::Renderer *r) {
+	if( !s_axes ) {
+		s_axes = new Axes3D(r);
+	}
+	return s_axes;
 }
 
 }

@@ -125,10 +125,14 @@ RendererGL::RendererGL(WindowSDL *window, const Graphics::Settings &vs)
 
 RendererGL::~RendererGL()
 {
-	while (!m_programs.empty()) {
-		delete m_programs.back().second;
-		m_programs.pop_back();
+	for(auto prog : m_programs ) {
+		if( prog.second ) {
+			delete prog.second;
+			prog.second = nullptr;
+		}
 	}
+	m_programs.clear();
+
 	for (auto state : m_renderStates)
 		delete state.second;
 }
@@ -365,7 +369,7 @@ void RendererGL::SetProgramShaderTransforms(PiGL::Program *p)
 	p->uNormalMatrix.Set( NormalMatrix );
 }
 
-bool RendererGL::DrawLines(int count, const vector3f *v, const Color *c, RenderState* state, LineType t)
+bool RendererGL::DrawLines(int count, const vector3f *v, const Color *c, RenderState* state, PrimitiveType t)
 {
 	return false;
 	/*PROFILE_SCOPED()
@@ -390,10 +394,9 @@ bool RendererGL::DrawLines(int count, const vector3f *v, const Color *c, RenderS
 	return true;*/
 }
 
-bool RendererGL::DrawLines(int count, const vector3f *v, const Color &c, RenderState *state, LineType t)
+/*bool RendererGL::DrawLines(int count, const vector3f *v, const Color &c, RenderState *state, PrimitiveType t)
 {
-	return false;
-	/*PROFILE_SCOPED()
+	PROFILE_SCOPED()
 	if (count < 2 || !v) return false;
 
 	SetRenderState(state);
@@ -410,10 +413,10 @@ bool RendererGL::DrawLines(int count, const vector3f *v, const Color &c, RenderS
 	glDisableClientState(GL_VERTEX_ARRAY);
 	CheckRenderErrors();
 
-	return true;*/
-}
+	return true;
+}*/
 
-bool RendererGL::DrawLines2D(int count, const vector2f *v, const Color &c, Graphics::RenderState* state, LineType t)
+bool RendererGL::DrawLines2D(int count, const vector2f *v, const Color &c, Graphics::RenderState* state, PrimitiveType t)
 {
 	return false;
 	/*if (count < 2 || !v) return false;
@@ -437,28 +440,8 @@ bool RendererGL::DrawLines2D(int count, const vector2f *v, const Color &c, Graph
 
 bool RendererGL::DrawPoints(int count, const vector3f *points, const Color *colors, Graphics::RenderState *state, float size)
 {
+	assert(false); // DEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEAD code
 	return false;
-	/*if (count < 1 || !points || !colors) return false;
-
-	vtxColorProg->Use();
-	vtxColorProg->invLogZfarPlus1.Set(m_invLogZfarPlus1);
-
-	SetProgramShaderTransforms( vtxColorProg );
-
-	SetRenderState(state);
-
-	glPointSize(size);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_COLOR_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 0, points);
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-	glDrawArrays(GL_POINTS, 0, count);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_COLOR_ARRAY);
-	glPointSize(1.f); // XXX wont't be necessary
-	CheckRenderErrors();
-
-	return true;*/
 }
 
 bool RendererGL::DrawPointSprites(int count, const vector3f *positions, RenderState *rs, Material *material, float size)

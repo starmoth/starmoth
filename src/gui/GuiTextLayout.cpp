@@ -71,6 +71,9 @@ void TextLayout::MeasureSize(const float width, float outSize[2]) const
 void TextLayout::Render(const float width, const Color &color) const
 {
 	PROFILE_SCOPED()
+	if(words.empty())
+		return;
+
 	float fontScale[2];
 	Gui::Screen::GetCoords2Pixels(fontScale);
 
@@ -92,6 +95,9 @@ void TextLayout::Render(const float width, const Color &color) const
 void TextLayout::Update(const float width, const Color &color)
 {
 	PROFILE_SCOPED()
+	if(words.empty())
+		return;
+
 	float fontScale[2];
 	Gui::Screen::GetCoords2Pixels(fontScale);
 

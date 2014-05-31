@@ -26,30 +26,13 @@ protected:
 
 class Circle : public Drawable {
 public:
-	Circle(float radius, const Color &c, RenderState *state) : m_color(c) {
-		m_renderState = state;
-		for (float theta=0; theta < 2*float(M_PI); theta += 0.05f*float(M_PI)) {
-			m_verts.push_back(vector3f(radius*sin(theta), radius*cos(theta), 0));
-		}
-	}
-	Circle(float radius, float x, float y, float z, const Color &c, RenderState *state) : m_color(c) {
-		m_renderState = state;
-		for (float theta=0; theta < 2*float(M_PI); theta += 0.05f*float(M_PI)) {
-			m_verts.push_back(vector3f(radius*sin(theta) + x, radius*cos(theta) + y, z));
-		}
-	}
-	Circle(float radius, const vector3f &center, const Color &c, RenderState *state) : m_color(c) {
-		m_renderState = state;
-		for (float theta=0; theta < 2*float(M_PI); theta += 0.05f*float(M_PI)) {
-			m_verts.push_back(vector3f(radius*sin(theta) + center.x, radius*cos(theta) + center.y, center.z));
-		}
-	}
-	virtual void Draw(Renderer *renderer) {
-		renderer->DrawLines(m_verts.size(), &m_verts[0], m_color, m_renderState, LINE_LOOP);
-	}
+	Circle(Renderer *renderer, float radius, const vector3f &center, const Color &c, RenderState *state);
+	virtual void Draw(Renderer *renderer);
 
 private:
-	std::vector<vector3f> m_verts;
+	void SetupVertexBuffer(const Graphics::VertexArray&, Graphics::Renderer *);
+	RefCountedPtr<VertexBuffer> m_vertexBuffer;
+	RefCountedPtr<Material> m_material;
 	Color m_color;
 };
 
@@ -117,6 +100,18 @@ private:
 	std::unique_ptr<Graphics::Material> m_material;
 	std::unique_ptr<VertexBuffer> m_vertexBuffer;
 };
+
+//industry-standard red/green/blue XYZ axis indicator
+class Axes3D : public Drawable {
+public:
+	Axes3D(Graphics::Renderer *r, Graphics::RenderState *state = nullptr);
+	virtual void Draw(Graphics::Renderer *r);
+private:
+	RefCountedPtr<Graphics::Material> m_material;
+	RefCountedPtr<VertexBuffer> m_vertexBuffer;
+};
+
+Axes3D* GetAxes3DDrawable(Graphics::Renderer *r);
 
 }
 

@@ -54,6 +54,8 @@ namespace Gui {
 		
 		RefCountedPtr<Graphics::VertexBuffer> m_textVB;
 		RefCountedPtr<Graphics::VertexBuffer> m_rectVB;
+		RefCountedPtr<Graphics::VertexBuffer> m_lineVB;
+		RefCountedPtr<Graphics::Material> m_mat;
 	};
 }
 

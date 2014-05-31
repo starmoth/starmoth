@@ -6,6 +6,7 @@
 
 #include "libs.h"
 #include "Color.h"
+#include "graphics/Types.h"
 
 namespace Graphics {
 	class Renderer;
@@ -27,7 +28,7 @@ namespace Gui {
 		void GenerateOutdent(IndentData &id, const vector2f& size);
 		void GenerateHollowRect(RefCountedPtr<Graphics::VertexBuffer> &vb, RefCountedPtr<Graphics::IndexBuffer> &ib, const vector2f& size);
 
-		void DrawRect(Graphics::VertexBuffer* vb, const vector2f &pos, const vector2f &size, const Color&, Graphics::RenderState*);
+		void DrawRect(Graphics::VertexBuffer* vb, const vector2f &pos, const vector2f &size, const Color&, Graphics::RenderState*, const Graphics::PrimitiveType pt = Graphics::TRIANGLE_FAN);
 		void DrawRoundEdgedRect(Graphics::VertexBuffer* vb, const Color&, Graphics::RenderState*);
 		void DrawIndent(const IndentData &id, Graphics::RenderState*);
 		void DrawOutdent(const IndentData &id, Graphics::RenderState*);

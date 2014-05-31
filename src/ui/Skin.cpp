@@ -119,19 +119,6 @@ struct SkinPosOnlyVert {
 };
 #pragma pack(pop)
 
-Graphics::VertexBuffer* CreatePosVB(const Uint32 numVertices, Graphics::Material *mat, Graphics::Renderer *renderer)
-{
-	//create buffer and upload data
-	Graphics::VertexBufferDesc vbd;
-	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
-	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
-	vbd.numVertices = numVertices;
-	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-	mat->SetupVertexBufferDesc( vbd );
-
-	return renderer->CreateVertexBuffer(vbd);
-}
-
 void Skin::RectElement::GenerateVertexBuffer(Graphics::Renderer* renderer, Graphics::Material* material)
 {
 	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_UV0);

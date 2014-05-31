@@ -106,6 +106,11 @@ private:
 	RefCountedPtr<UI::Context> m_ui;
 	Graphics::RenderState *m_bgState;
 	std::unique_ptr<Graphics::VertexBuffer> m_bgVB;
+	std::unique_ptr<Graphics::Drawables::Axes3D> m_axes;
+
+	bool m_bNewGrid;
+	std::unique_ptr<Graphics::VertexBuffer> m_grid;
+	RefCountedPtr<Graphics::Material> m_gridMaterial;
 
 	//undecided on this input stuff
 	//updating the states of all inputs during PollEvents
