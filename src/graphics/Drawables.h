@@ -54,14 +54,20 @@ private:
 class Line3D : public Drawable {
 public:
 	Line3D();
+	virtual ~Line3D();
 	void SetStart(const vector3f &);
 	void SetEnd(const vector3f &);
 	void SetColor(const Color &);
 	virtual void Draw(Renderer*, RenderState*);
 private:
-	vector3f m_points[2];
-	Color m_colors[2];
+	void CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size);
+	void FillVertexBuffer();
+
+	bool m_refreshVertexBuffer;
 	float m_width;
+	RefCountedPtr<Material> m_material;
+	RefCountedPtr<VertexBuffer> m_vertexBuffer;
+	VertexArray* m_va;
 };
 
 //Three dimensional sphere (subdivided icosahedron) with normals

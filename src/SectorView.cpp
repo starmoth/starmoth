@@ -447,12 +447,13 @@ void SectorView::Draw3D()
 	if( m_starBuffer.Valid() )
 		m_renderer->DrawBuffer(m_starBuffer.Get(), m_solidState, m_starMaterial);
 
+	assert(false && "This needs updating to use vertex buffers but I couldn't be arsed! AndyC");
 	//draw sector legs in one go
-	if (m_lineVerts->GetNumVerts() > 2)
+	/*if (m_lineVerts->GetNumVerts() > 2)
 		m_renderer->DrawLines(m_lineVerts->GetNumVerts(), &m_lineVerts->position[0], &m_lineVerts->diffuse[0], m_alphaBlendState);
 
 	if (m_secLineVerts->GetNumVerts() > 2)
-		m_renderer->DrawLines(m_secLineVerts->GetNumVerts(), &m_secLineVerts->position[0], &m_secLineVerts->diffuse[0], m_alphaBlendState);
+		m_renderer->DrawLines(m_secLineVerts->GetNumVerts(), &m_secLineVerts->position[0], &m_secLineVerts->diffuse[0], m_alphaBlendState);*/
 
 	UIView::Draw3D();
 }

@@ -93,7 +93,7 @@ public:
 	//drawing functions
 	//2d drawing is generally understood to be for gui use (unlit, ortho projection)
 	//per-vertex colour lines
-	virtual bool DrawLines(int vertCount, const vector3f *vertices, const Color *colors, RenderState*, PrimitiveType type=LINE_SINGLE) = 0;
+	//virtual bool DrawLines(int vertCount, const vector3f *vertices, const Color *colors, RenderState*, PrimitiveType type=LINE_SINGLE) = 0;
 	//flat colour lines
 	//virtual bool DrawLines(int vertCount, const vector3f *vertices, const Color &color, RenderState*, PrimitiveType type=LINE_SINGLE) = 0;
 	virtual bool DrawLines2D(int vertCount, const vector2f *vertices, const Color &color, RenderState*, PrimitiveType type=LINE_SINGLE) = 0;

@@ -1198,6 +1198,13 @@ void NavTunnelWidget::Draw() {
 	}
 }
 
+#pragma pack(push, 4)
+struct TunnelVert {
+	vector3f pos;
+	Color4ub col;
+};
+#pragma pack(pop)
+
 void NavTunnelWidget::DrawTargetGuideSquare(const vector2f &pos, const float size, const Color &c)
 {
 	const float x1 = pos.x - size;
@@ -1205,33 +1212,51 @@ void NavTunnelWidget::DrawTargetGuideSquare(const vector2f &pos, const float siz
 	const float y1 = pos.y - size;
 	const float y2 = pos.y + size;
 
-	const vector3f vts[] = {
-		vector3f(x1,    y1,    0.f),
-		vector3f(pos.x, y1,    0.f),
-		vector3f(x2,    y1,    0.f),
-		vector3f(x2,    pos.y, 0.f),
-		vector3f(x2,    y2,    0.f),
-		vector3f(pos.x, y2,    0.f),
-		vector3f(x1,    y2,    0.f),
-		vector3f(x1,    pos.y, 0.f)
-	};
 	Color black(c);
 	black.a = c.a / 6;
-	const Color col[] = {
-		c,
-		black,
-		c,
-		black,
-		c,
-		black,
-		c,
-		black
-	};
-	assert(COUNTOF(col) == COUNTOF(vts));
-	m_worldView->m_renderer->DrawLines(COUNTOF(vts), vts, col, m_renderState, Graphics::LINE_LOOP);
+	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, 8);
+	va.Set(0, vector3f(x1,    y1,    0.f),	c);
+	va.Set(1, vector3f(pos.x, y1,    0.f),	black);
+	va.Set(2, vector3f(x2,    y1,    0.f),	c);
+	va.Set(3, vector3f(x2,    pos.y, 0.f),	black);
+	va.Set(4, vector3f(x2,    y2,    0.f),	c);
+	va.Set(5, vector3f(pos.x, y2,    0.f),	black);
+	va.Set(6, vector3f(x1,    y2,    0.f),	c);
+	va.Set(7, vector3f(x1,    pos.y, 0.f),	black);
+
+	if( !m_vbuffer.get() ) {
+		CreateVertexBuffer( 8 );
+	}
+
+	assert(sizeof(TunnelVert) == 16);
+	assert(m_vbuffer->GetDesc().stride == sizeof(TunnelVert));
+	auto vtxPtr = m_vbuffer->Map<TunnelVert>(Graphics::BUFFER_MAP_WRITE);
+	m_vbuffer->Populate( va );
+	m_vbuffer->Unmap();
+	
+	m_worldView->m_renderer->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get(), Graphics::LINE_LOOP);
 }
 
 void NavTunnelWidget::GetSizeRequested(float size[2]) {
 	size[0] = Gui::Screen::GetWidth();
 	size[1] = Gui::Screen::GetHeight();
+}
+
+void NavTunnelWidget::CreateVertexBuffer(const Uint32 size)
+{
+	Graphics::Renderer *r = m_worldView->m_renderer;
+
+	Graphics::MaterialDescriptor desc;
+	desc.vertexColors = true;
+	m_material.Reset(r->CreateMaterial(desc));
+
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+	vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
+	vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;
+	vbd.numVertices = size;
+	m_material->SetupVertexBufferDesc( vbd );
+	m_vbuffer.reset(r->CreateVertexBuffer(vbd));
 }

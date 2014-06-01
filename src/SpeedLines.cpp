@@ -25,13 +25,14 @@ SpeedLines::SpeedLines(Ship *s)
 		}
 	}
 
-	m_vertices.resize(m_points.size() * 2);
-	m_vtxColors.resize(m_vertices.size());
+	m_varray.reset(new Graphics::VertexArray(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, (m_points.size() * 2)));
 
 	Graphics::RenderStateDesc rsd;
 	rsd.blendMode = Graphics::BLEND_ALPHA_ONE;
 	rsd.depthWrite = false;
 	m_renderState = Pi::renderer->CreateRenderState(rsd);
+
+	CreateVertexBuffer( Pi::renderer, m_points.size() );
 }
 
 void SpeedLines::Update(float time)
@@ -93,6 +94,13 @@ void SpeedLines::Update(float time)
 	}
 }
 
+#pragma pack(push, 4)
+struct SpeedPosColVert {
+	vector3f pos;
+	Color4ub col;
+};
+#pragma pack(pop)
+
 void SpeedLines::Render(Graphics::Renderer *r)
 {
 	if (!m_visible) return;
@@ -100,19 +108,40 @@ void SpeedLines::Render(Graphics::Renderer *r)
 	const vector3f dir = m_dir * m_lineLength;
 
 	Uint16 vtx = 0;
+	//distance fade
+	Color col(Color::GRAY);
 	for (auto it = m_points.begin(); it != m_points.end(); ++it) {
-		m_vertices[vtx]   = *it - dir;
-		m_vertices[vtx+1] = *it + dir;
+		col.a = Clamp((1.f - it->Length() / BOUNDS),0.f,1.f) * 255;	
 
-		//distance fade
-		const Color col = Color(Color::GRAY.r, Color::GRAY.g, Color::GRAY.b,
-				Clamp((1.f - it->Length() / BOUNDS),0.f,1.f) * 255);
-		m_vtxColors[vtx]   = col;
-		m_vtxColors[vtx+1] = col;
+		m_varray->Set(vtx, *it - dir, col);
+		m_varray->Set(vtx+1,*it + dir, col);
 
 		vtx += 2;
 	}
 
+	assert(sizeof(SpeedPosColVert) == 16);
+	assert(m_vbuffer->GetDesc().stride == sizeof(SpeedPosColVert));
+	auto vtxPtr = m_vbuffer->Map<SpeedPosColVert>(Graphics::BUFFER_MAP_WRITE);
+	m_vbuffer->Populate( *m_varray );
+	m_vbuffer->Unmap();
+
 	r->SetTransform(m_transform);
-	r->DrawLines(m_vertices.size(), &m_vertices[0], &m_vtxColors[0], m_renderState);
+	r->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get(), Graphics::LINE_SINGLE);
+}
+
+void SpeedLines::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
+{
+	Graphics::MaterialDescriptor desc;
+	desc.vertexColors = true;
+	m_material.Reset(r->CreateMaterial(desc));
+
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+	vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
+	vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;
+	vbd.numVertices = size;
+	m_material->SetupVertexBufferDesc( vbd );
+	m_vbuffer.reset(r->CreateVertexBuffer(vbd));
 }

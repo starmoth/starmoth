@@ -369,10 +369,9 @@ void RendererGL::SetProgramShaderTransforms(PiGL::Program *p)
 	p->uNormalMatrix.Set( NormalMatrix );
 }
 
-bool RendererGL::DrawLines(int count, const vector3f *v, const Color *c, RenderState* state, PrimitiveType t)
+/*bool RendererGL::DrawLines(int count, const vector3f *v, const Color *c, RenderState* state, PrimitiveType t)
 {
-	return false;
-	/*PROFILE_SCOPED()
+	PROFILE_SCOPED()
 	if (count < 2 || !v) return false;
 
 	SetRenderState(state);
@@ -391,8 +390,8 @@ bool RendererGL::DrawLines(int count, const vector3f *v, const Color *c, RenderS
 	glDisableClientState(GL_COLOR_ARRAY);
 	CheckRenderErrors();
 
-	return true;*/
-}
+	return true;
+}*/
 
 /*bool RendererGL::DrawLines(int count, const vector3f *v, const Color &c, RenderState *state, PrimitiveType t)
 {

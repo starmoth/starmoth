@@ -104,39 +104,83 @@ void Disk::SetupVertexBuffer(const Graphics::VertexArray& vertices, Graphics::Re
 	m_vertexBuffer->Unmap();
 }
 
-Line3D::Line3D()
+Line3D::Line3D() : m_refreshVertexBuffer(true), m_width(2.0f), m_va(new VertexArray(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, 2))
 {
-	m_points[0] = vector3f(0.f);
-	m_points[1] = vector3f(0.f);
-	m_colors[0] = Color(0);
-	m_colors[1] = Color(255);
-	m_width     = 2.f; // XXX bug in Radeon drivers will cause crash in glLineWidth if width >= 3
+	// XXX bug in Radeon drivers will cause crash in glLineWidth if width >= 3
+	m_va->Set(0, vector3f(0.f), Color(0));
+	m_va->Set(1, vector3f(0.f), Color(255));
+}
+
+Line3D::~Line3D()
+{
+	if( m_va ) {
+		delete m_va;
+		m_va = nullptr;
+	}
 }
 
 void Line3D::SetStart(const vector3f &s)
 {
-	m_points[0] = s;
+	m_va->Set(0, s);
 }
 
 void Line3D::SetEnd(const vector3f &e)
 {
-	m_points[1] = e;
+	m_va->Set(1, e);
 }
 
 void Line3D::SetColor(const Color &c)
 {
-	m_colors[0]  = c;
-	m_colors[1]  = c;
-	m_colors[1]  *= 0.5; //XXX hardcoded appearance
+	m_va->Set(0, m_va->position[0], c);
+	m_va->Set(1, m_va->position[1], c * 0.5);
 }
 
-void Line3D::Draw(Renderer *renderer, RenderState *rs)
+void Line3D::Draw(Renderer *r, RenderState *rs)
 {
+	if( !m_vertexBuffer.Valid() ) {
+		CreateVertexBuffer(r, 2);
+	}
+	if( m_refreshVertexBuffer ) {
+		m_refreshVertexBuffer = false;
+		FillVertexBuffer();
+	}
 	// XXX would be nicer to draw this as a textured triangle strip
 	// can't guarantee linewidth support
 	glLineWidth(m_width);
-	renderer->DrawLines(2, m_points, m_colors, rs);
+	r->DrawBuffer(m_vertexBuffer.Get(), rs, m_material.Get(), Graphics::LINE_SINGLE);
 	glLineWidth(1.f);
+}
+
+void Line3D::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
+{
+	Graphics::MaterialDescriptor desc;
+	desc.vertexColors = true;
+	m_material.Reset(r->CreateMaterial(desc));
+
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+	vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
+	vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;
+	vbd.numVertices = size;
+	m_material->SetupVertexBufferDesc( vbd );
+	m_vertexBuffer.Reset(r->CreateVertexBuffer(vbd));
+}
+
+#pragma pack(push, 4)
+struct Line3DVert {
+	vector3f pos;
+	Color4ub col;
+};
+#pragma pack(pop)
+void Line3D::FillVertexBuffer()
+{
+	assert(sizeof(Line3DVert) == 16);
+	assert(m_vertexBuffer->GetDesc().stride == sizeof(Line3DVert));
+	auto vtxPtr = m_vertexBuffer->Map<Line3DVert>(Graphics::BUFFER_MAP_WRITE);
+	m_vertexBuffer->Populate( *m_va );
+	m_vertexBuffer->Unmap();
 }
 
 static const float ICOSX = 0.525731112119133f;
@@ -155,11 +199,13 @@ static const int icosahedron_faces[20][3] = {
 	{6,1,10}, {9,0,11}, {9,11,2}, {9,2,5}, {7,2,11}
 };
 
+#pragma pack(push, 4)
 struct Sphere3DVertex {
 	vector3f pos;
 	vector3f nrm;
 	vector2f uv;
 };
+#pragma pack(pop)
 
 Sphere3D::Sphere3D(Renderer *renderer, RefCountedPtr<Material> mat, Graphics::RenderState *state, int subdivs, float scale)
 {
@@ -292,11 +338,13 @@ TexturedQuad::TexturedQuad(Graphics::Renderer *r, Graphics::Texture *texture, co
 	vertices.Add(vector3f(pos.x,        pos.y+size.y, 0.0f), vector2f(texPos.x,           texPos.y));
 	vertices.Add(vector3f(pos.x+size.x, pos.y,        0.0f), vector2f(texPos.x+texSize.x, texPos.y+texSize.y));
 	vertices.Add(vector3f(pos.x+size.x, pos.y+size.y, 0.0f), vector2f(texPos.x+texSize.x, texPos.y));
-
+	
+	#pragma pack(push, 4)
 	struct QuadVertex {
 		vector3f pos;
 		vector2f uv;
 	};
+	#pragma pack(pop)
 
 	//Create vtx & index buffers and copy data
 	VertexBufferDesc vbd;
@@ -311,6 +359,7 @@ TexturedQuad::TexturedQuad(Graphics::Renderer *r, Graphics::Texture *texture, co
 	vbd.usage = BUFFER_USAGE_STATIC;
 	m_material->SetupVertexBufferDesc( vbd );
 	m_vertexBuffer.reset(r->CreateVertexBuffer(vbd));
+
 	QuadVertex* vtxPtr = m_vertexBuffer->Map<QuadVertex>(Graphics::BUFFER_MAP_WRITE);
 	assert(m_vertexBuffer->GetDesc().stride == sizeof(QuadVertex));
 	for(Uint32 i=0 ; i<vertices.GetNumVerts() ; i++)
