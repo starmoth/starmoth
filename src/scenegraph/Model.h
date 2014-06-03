@@ -195,8 +195,8 @@ private:
 	std::vector<Graphics::Drawables::Line3D> m_dockingPoints;
 	RefCountedPtr<Graphics::VertexBuffer> m_collisionMeshVB;
 	RefCountedPtr<Graphics::VertexBuffer> m_aabbVB;
-	std::unique_ptr<Graphics::RenderState> m_state;
 	RefCountedPtr<Graphics::Material> m_aabbMat;
+	Graphics::RenderState* m_state;
 };
 
 }

@@ -209,7 +209,7 @@ void Model::CreateAabbVB()
 		m_aabbVB->Populate( va );
 	}
 
-	m_state.reset( m_renderer->CreateRenderState(Graphics::RenderStateDesc()) );
+	m_state = m_renderer->CreateRenderState(Graphics::RenderStateDesc());
 }
 
 void Model::DrawAabb()
@@ -220,7 +220,7 @@ void Model::DrawAabb()
 		CreateAabbVB();
 	}
 
-	m_renderer->DrawBuffer( m_aabbVB.Get(), m_state.get(), m_aabbMat.Get(), Graphics::LINE_SINGLE);
+	m_renderer->DrawBuffer( m_aabbVB.Get(), m_state, m_aabbMat.Get(), Graphics::LINE_SINGLE);
 	
 }
 
