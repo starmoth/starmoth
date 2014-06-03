@@ -148,6 +148,11 @@ private:
 	vector2f m_indicatorMousedirSize;
 
 	Graphics::RenderState *m_blendState;
+
+	Graphics::Drawables::Line3D m_edgeMarker;
+	Graphics::Drawables::Lines m_crossHair;
+	Graphics::Drawables::Lines m_targetSquare;
+	Graphics::Drawables::Lines m_velocityIndicator;
 };
 
 class NavTunnelWidget: public Gui::Widget {

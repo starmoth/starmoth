@@ -58,16 +58,31 @@ public:
 	void SetStart(const vector3f &);
 	void SetEnd(const vector3f &);
 	void SetColor(const Color &);
-	virtual void Draw(Renderer*, RenderState*);
+	void Draw(Renderer*, RenderState*);
 private:
 	void CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size);
-	void FillVertexBuffer();
 
 	bool m_refreshVertexBuffer;
 	float m_width;
 	RefCountedPtr<Material> m_material;
 	RefCountedPtr<VertexBuffer> m_vertexBuffer;
 	VertexArray* m_va;
+};
+
+//Three dimensional line segments between two points
+class Lines : public Drawable {
+public:
+	Lines();
+	void SetData(const int vertCount, const vector3f *vertices, const Color &color);
+	void Draw(Renderer*, RenderState*, const PrimitiveType pt = Graphics::LINE_SINGLE);
+private:
+	void CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size);
+
+	bool m_refreshVertexBuffer;
+	float m_width;
+	RefCountedPtr<Material> m_material;
+	RefCountedPtr<VertexBuffer> m_vertexBuffer;
+	std::unique_ptr<VertexArray> m_va;
 };
 
 //Three dimensional sphere (subdivided icosahedron) with normals

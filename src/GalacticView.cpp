@@ -125,7 +125,8 @@ void GalacticView::Draw3D()
 	// "you are here" dot
 	//Color green(0, 255, 0, 255);
 	vector3f offs(offset_x, offset_y, 0.f);
-	m_renderer->DrawPoints(1, &offs, &Color::GREEN, m_renderState, 3.f);
+	assert(false && "This needs updating to use vertex buffers but I couldn't be arsed! AndyC"); 
+	//m_renderer->DrawPoints(1, &offs, &Color::GREEN, m_renderState, 3.f);
 
 	// scale at the top
 	m_renderer->SetTransform(matrix4x4f::Identity());
@@ -136,7 +137,8 @@ void GalacticView::Draw3D()
 		vector2f(0.25f,-0.94f),
 		vector2f(0.25f,-0.93f)
 	};
-	m_renderer->DrawLines2D(4, vts, Color::WHITE, m_renderState, LINE_STRIP);
+	assert(false && "This needs updating to use vertex buffers but I couldn't be arsed! AndyC"); 
+	//m_renderer->DrawLines2D(4, vts, Color::WHITE, m_renderState, LINE_STRIP);
 
 	m_labels->Clear();
 	PutLabels(-vector3d(offset_x, offset_y, 0.0));

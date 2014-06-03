@@ -434,7 +434,8 @@ void SystemInfoView::BodyIcon::Draw()
 		    vector2f(size[0], size[1]),
 		    vector2f(0.f, size[1]),
 	    };
-	    m_renderer->DrawLines2D(COUNTOF(vts), vts, m_selectColor, m_renderState, Graphics::LINE_LOOP);
+		assert(false && "This needs updating to use vertex buffers but I couldn't be arsed! AndyC"); 
+		//m_renderer->DrawLines2D(COUNTOF(vts), vts, m_selectColor, m_renderState, Graphics::LINE_LOOP);
 	}
 }
 

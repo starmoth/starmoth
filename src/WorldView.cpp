@@ -1015,7 +1015,6 @@ void WorldView::Draw()
 	// don't draw crosshairs etc in hyperspace
 	if (Pi::player->GetFlightState() == Ship::HYPERSPACE) return;
 
-	//glPushAttrib(GL_CURRENT_BIT | GL_LINE_BIT);
 	glLineWidth(2.0f);
 
 	Color white(255, 255, 255, 204);
@@ -1051,23 +1050,22 @@ void WorldView::Draw()
 				break;
 		}
 	}
-
-	//glPopAttrib();
 }
 
 void WorldView::DrawCrosshair(float px, float py, float sz, const Color &c)
 {
-	const vector2f vts[] = {
-		vector2f(px-sz, py),
-		vector2f(px-0.5f*sz, py),
-		vector2f(px+sz, py),
-		vector2f(px+0.5f*sz, py),
-		vector2f(px, py-sz),
-		vector2f(px, py-0.5f*sz),
-		vector2f(px, py+sz),
-		vector2f(px, py+0.5f*sz)
+	const vector3f vts[] = {
+		vector3f(px-sz,			py,			0.0f),
+		vector3f(px-0.5f*sz,	py,			0.0f),
+		vector3f(px+sz,			py,			0.0f),
+		vector3f(px+0.5f*sz,	py,			0.0f),
+		vector3f(px,			py-sz,		0.0f),
+		vector3f(px,			py-0.5f*sz, 0.0f),
+		vector3f(px,			py+sz,		0.0f),
+		vector3f(px,			py+0.5f*sz, 0.0f)
 	};
-	m_renderer->DrawLines2D(COUNTOF(vts), vts, c, m_blendState);
+	m_crossHair.SetData(COUNTOF(vts), vts, c);
+	m_crossHair.Draw(m_renderer, m_blendState);
 }
 
 void WorldView::DrawTargetSquare(const Indicator &marker, const Color &c)
@@ -1085,13 +1083,14 @@ void WorldView::DrawTargetSquare(const Indicator &marker, const Color &c)
 	const float y1 = float(marker.pos.y - sz);
 	const float y2 = float(marker.pos.y + sz);
 
-	const vector2f vts[] = {
-		vector2f(x1, y1),
-		vector2f(x2, y1),
-		vector2f(x2, y2),
-		vector2f(x1, y2)
+	const vector3f vts[] = {
+		vector3f(x1, y1, 0.0f),
+		vector3f(x2, y1, 0.0f),
+		vector3f(x2, y2, 0.0f),
+		vector3f(x1, y2, 0.0f)
 	};
-	m_renderer->DrawLines2D(COUNTOF(vts), vts, c, m_blendState, Graphics::LINE_LOOP);
+	m_targetSquare.SetData(COUNTOF(vts), vts, c);
+	m_targetSquare.Draw(m_renderer, m_blendState, Graphics::LINE_LOOP);
 }
 
 void WorldView::DrawVelocityIndicator(const Indicator &marker, const Color &c)
@@ -1102,17 +1101,18 @@ void WorldView::DrawVelocityIndicator(const Indicator &marker, const Color &c)
 	if (marker.side == INDICATOR_ONSCREEN) {
 		const float posx = marker.pos.x;
 		const float posy = marker.pos.y;
-		const vector2f vts[] = {
-			vector2f(posx-sz, posy-sz),
-			vector2f(posx-0.5f*sz, posy-0.5f*sz),
-			vector2f(posx+sz, posy-sz),
-			vector2f(posx+0.5f*sz, posy-0.5f*sz),
-			vector2f(posx+sz, posy+sz),
-			vector2f(posx+0.5f*sz, posy+0.5f*sz),
-			vector2f(posx-sz, posy+sz),
-			vector2f(posx-0.5f*sz, posy+0.5f*sz)
+		const vector3f vts[] = {
+			vector3f(posx-sz, posy-sz, 0.0f),
+			vector3f(posx-0.5f*sz, posy-0.5f*sz, 0.0f),
+			vector3f(posx+sz, posy-sz, 0.0f),
+			vector3f(posx+0.5f*sz, posy-0.5f*sz, 0.0f),
+			vector3f(posx+sz, posy+sz, 0.0f),
+			vector3f(posx+0.5f*sz, posy+0.5f*sz, 0.0f),
+			vector3f(posx-sz, posy+sz, 0.0f),
+			vector3f(posx-0.5f*sz, posy+0.5f*sz, 0.0f)
 		};
-		m_renderer->DrawLines2D(COUNTOF(vts), vts, c, m_blendState);
+		m_velocityIndicator.SetData(COUNTOF(vts), vts, c);
+		m_velocityIndicator.Draw(m_renderer, m_blendState);
 	} else
 		DrawEdgeMarker(marker, c);
 
@@ -1138,7 +1138,10 @@ void WorldView::DrawEdgeMarker(const Indicator &marker, const Color &c)
 	float len = dir.Length();
 	dir *= sz/len;
 	const vector2f vts[] = { marker.pos, marker.pos + dir };
-	m_renderer->DrawLines2D(2, vts, c, m_blendState);
+	m_edgeMarker.SetColor(c);
+	m_edgeMarker.SetStart(vector3f(marker.pos, 0.0f));
+	m_edgeMarker.SetEnd(vector3f(marker.pos + dir, 0.0f));
+	m_edgeMarker.Draw(m_renderer, m_blendState);
 }
 
 void WorldView::MouseWheel(bool up)

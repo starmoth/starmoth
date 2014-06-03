@@ -107,8 +107,8 @@ void Disk::SetupVertexBuffer(const Graphics::VertexArray& vertices, Graphics::Re
 Line3D::Line3D() : m_refreshVertexBuffer(true), m_width(2.0f), m_va(new VertexArray(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, 2))
 {
 	// XXX bug in Radeon drivers will cause crash in glLineWidth if width >= 3
-	m_va->Set(0, vector3f(0.f), Color(0));
-	m_va->Set(1, vector3f(0.f), Color(255));
+	m_va->Add(vector3f(0.f), Color(0));
+	m_va->Add(vector3f(0.f), Color(255));
 }
 
 Line3D::~Line3D()
@@ -142,7 +142,7 @@ void Line3D::Draw(Renderer *r, RenderState *rs)
 	}
 	if( m_refreshVertexBuffer ) {
 		m_refreshVertexBuffer = false;
-		FillVertexBuffer();
+		m_vertexBuffer->Populate( *m_va );
 	}
 	// XXX would be nicer to draw this as a textured triangle strip
 	// can't guarantee linewidth support
@@ -168,19 +168,63 @@ void Line3D::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
 	m_vertexBuffer.Reset(r->CreateVertexBuffer(vbd));
 }
 
-#pragma pack(push, 4)
-struct Line3DVert {
-	vector3f pos;
-	Color4ub col;
-};
-#pragma pack(pop)
-void Line3D::FillVertexBuffer()
+Lines::Lines() : m_refreshVertexBuffer(true), m_width(2.0f), m_va(new VertexArray(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE))
 {
-	assert(sizeof(Line3DVert) == 16);
-	assert(m_vertexBuffer->GetDesc().stride == sizeof(Line3DVert));
-	auto vtxPtr = m_vertexBuffer->Map<Line3DVert>(Graphics::BUFFER_MAP_WRITE);
-	m_vertexBuffer->Populate( *m_va );
-	m_vertexBuffer->Unmap();
+	// XXX bug in Radeon drivers will cause crash in glLineWidth if width >= 3
+}
+
+void Lines::SetData(const int vertCount, const vector3f *vertices, const Color &color)
+{
+	assert( (vertCount & 1) == 0 ); // ensure vertCount is a multiple of 2
+	assert( vertices );
+
+	// somethings changed so even if the number of verts is constant the data must be uploaded
+	m_refreshVertexBuffer = true;
+
+	// if the number of vert mismatches then clear the current vertex buffer
+	if( m_vertexBuffer.Valid() && m_vertexBuffer->GetVertexCount() != vertCount ) {
+		// a new one will be created when it is drawn
+		m_vertexBuffer.Reset();
+	}
+
+	// populate the VertexArray
+	m_va->Clear();
+	for( int i=0; i<vertCount; i++ ) {
+		m_va->Add(vertices[i], color);
+	}
+}
+
+void Lines::Draw(Renderer *r, RenderState *rs, const PrimitiveType pt)
+{
+	if( !m_vertexBuffer.Valid() ) {
+		CreateVertexBuffer(r, m_va->GetNumVerts());
+	}
+	if( m_refreshVertexBuffer ) {
+		m_refreshVertexBuffer = false;
+		m_vertexBuffer->Populate( *m_va );
+	}
+	// XXX would be nicer to draw this as a textured triangle strip
+	// can't guarantee linewidth support
+	glLineWidth(m_width);
+	r->DrawBuffer(m_vertexBuffer.Get(), rs, m_material.Get(), pt);
+	glLineWidth(1.f);
+}
+
+void Lines::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
+{
+	Graphics::MaterialDescriptor desc;
+	desc.vertexColors = true;
+	m_material.Reset(r->CreateMaterial(desc));
+
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+	vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
+	vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;
+	vbd.numVertices = size;
+	m_material->SetupVertexBufferDesc( vbd );
+	m_vertexBuffer.Reset(r->CreateVertexBuffer(vbd));
 }
 
 static const float ICOSX = 0.525731112119133f;

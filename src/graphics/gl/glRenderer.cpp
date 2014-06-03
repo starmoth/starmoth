@@ -125,13 +125,10 @@ RendererGL::RendererGL(WindowSDL *window, const Graphics::Settings &vs)
 
 RendererGL::~RendererGL()
 {
-	for(auto prog : m_programs ) {
-		if( prog.second ) {
-			delete prog.second;
-			prog.second = nullptr;
-		}
+	while (!m_programs.empty()) {
+		delete m_programs.back().second;
+		m_programs.pop_back();
 	}
-	m_programs.clear();
 
 	for (auto state : m_renderStates)
 		delete state.second;
@@ -415,10 +412,9 @@ void RendererGL::SetProgramShaderTransforms(PiGL::Program *p)
 	return true;
 }*/
 
-bool RendererGL::DrawLines2D(int count, const vector2f *v, const Color &c, Graphics::RenderState* state, PrimitiveType t)
+/*bool RendererGL::DrawLines2D(int count, const vector2f *v, const Color &c, Graphics::RenderState* state, PrimitiveType t)
 {
-	return false;
-	/*if (count < 2 || !v) return false;
+	if (count < 2 || !v) return false;
 
 	SetRenderState(state);
 
@@ -434,14 +430,14 @@ bool RendererGL::DrawLines2D(int count, const vector2f *v, const Color &c, Graph
 	glDisableClientState(GL_VERTEX_ARRAY);
 	CheckRenderErrors();
 
-	return true;*/
-}
+	return true;
+}*/
 
-bool RendererGL::DrawPoints(int count, const vector3f *points, const Color *colors, Graphics::RenderState *state, float size)
+/*bool RendererGL::DrawPoints(int count, const vector3f *points, const Color *colors, Graphics::RenderState *state, float size)
 {
 	assert(false); // DEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEAD code
 	return false;
-}
+}*/
 
 bool RendererGL::DrawPointSprites(int count, const vector3f *positions, RenderState *rs, Material *material, float size)
 {

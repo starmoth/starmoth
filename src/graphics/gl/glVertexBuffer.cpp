@@ -237,6 +237,7 @@ void CopyPosColUV0(Graphics::VertexBuffer *vb, const Graphics::VertexArray &va)
 // copies the contents of the VertexArray into the buffer
 bool VertexBuffer::Populate(const VertexArray &va)
 {
+	assert(va.GetNumVerts()>0);
 	bool result = false;
 	const Graphics::AttributeSet as = va.GetAttributeSet();
 	switch( as ) {
