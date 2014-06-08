@@ -439,7 +439,7 @@ void RendererGL::SetProgramShaderTransforms(PiGL::Program *p)
 	return false;
 }*/
 
-bool RendererGL::DrawPointSprites(int count, const vector3f *positions, RenderState *rs, Material *material, float size)
+/*bool RendererGL::DrawPointSprites(int count, const vector3f *positions, RenderState *rs, Material *material, float size)
 {
 	if (count < 1 || !material || !material->texture0) return false;
 
@@ -470,11 +470,11 @@ bool RendererGL::DrawPointSprites(int count, const vector3f *positions, RenderSt
 		va.Add(pos+rotv2, vector2f(1.f, 1.f)); //bottom right
 	}
 
-	//DrawTriangles(&va, rs, material);
+	DrawTriangles(&va, rs, material);
 	CheckRenderErrors();
 
 	return true;
-}
+}*/
 
 bool RendererGL::DrawBuffer(const VertexBuffer* vb, RenderState* state, Material* mat, const PrimitiveType pt)
 {

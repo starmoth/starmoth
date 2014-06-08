@@ -112,6 +112,8 @@ void Sfx::Render(Renderer *renderer, const matrix4x4d &ftransform)
 	vector3d fpos = ftransform * GetPosition();
 	vector3f pos(&fpos.x);
 
+	const matrix4x4f mt = renderer->GetCurrentModelView();
+
 	switch (m_type) 
 	{
 		case TYPE_NONE: break;
@@ -123,14 +125,16 @@ void Sfx::Render(Renderer *renderer, const matrix4x4d &ftransform)
 			explosionParticle->texture0 = explosionTextures[spriteframe];
 			//face camera
 			renderer->SetTransform(matrix4x4f::Identity());
-			renderer->DrawPointSprites(1, &pos, alphaOneState, explosionParticle.get(), m_speed);
+			m_explosion.SetData(1, &pos, matrix4x4f::Identity(), m_speed);
+			m_explosion.Draw(renderer, alphaOneState, explosionParticle.get());
 			break;
 		} 
 		case TYPE_DAMAGE: 
 		{
 			renderer->SetTransform(matrix4x4d::Translation(fpos));
 			damageParticle->diffuse = Color(255, 255, 0, (1.0f-(m_age/2.0f))*255);
-			renderer->DrawPointSprites(1, &pos, additiveAlphaState, damageParticle.get(), 20.f);
+			m_damage.SetData(1, &pos, matrix4x4f::Translation(vector3f(fpos)), 20.f);
+			m_damage.Draw(renderer, additiveAlphaState, damageParticle.get());
 			break;
 		} 
 		case TYPE_SMOKE: 
@@ -145,7 +149,9 @@ void Sfx::Render(Renderer *renderer, const matrix4x4d &ftransform)
 			renderer->SetTransform(matrix4x4d::Translation(fpos));
 
 			damageParticle->diffuse*=0.05;
-			renderer->DrawPointSprites(1, &pos, alphaState, smokeParticle.get(), (m_speed*m_age));
+			m_smoke.SetData(1, &pos, matrix4x4f::Translation(vector3f(fpos)), (m_speed*m_age));
+			m_smoke.Draw(renderer, alphaState, smokeParticle.get());
+			//renderer->DrawPointSprites(1, &pos, alphaState, smokeParticle.get(), (m_speed*m_age));
 			break;
 		}
 	}

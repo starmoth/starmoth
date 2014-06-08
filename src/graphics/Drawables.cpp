@@ -49,6 +49,7 @@ void Circle::SetupVertexBuffer(const Graphics::VertexArray& vertices, Graphics::
 	}
 	m_vertexBuffer->Unmap();
 }
+//------------------------------------------------------------
 
 Disk::Disk(Graphics::Renderer *r, Graphics::RenderState *state, const Color &c, float rad)
 {
@@ -103,6 +104,7 @@ void Disk::SetupVertexBuffer(const Graphics::VertexArray& vertices, Graphics::Re
 	}
 	m_vertexBuffer->Unmap();
 }
+//------------------------------------------------------------
 
 Line3D::Line3D() : m_refreshVertexBuffer(true), m_width(2.0f), m_va(new VertexArray(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, 2))
 {
@@ -167,6 +169,7 @@ void Line3D::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
 	m_material->SetupVertexBufferDesc( vbd );
 	m_vertexBuffer.Reset(r->CreateVertexBuffer(vbd));
 }
+//------------------------------------------------------------
 
 Lines::Lines() : m_refreshVertexBuffer(true), m_width(2.0f), m_va(new VertexArray(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE))
 {
@@ -226,6 +229,76 @@ void Lines::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
 	m_material->SetupVertexBufferDesc( vbd );
 	m_vertexBuffer.Reset(r->CreateVertexBuffer(vbd));
 }
+
+//------------------------------------------------------------
+PointSprites::PointSprites() : m_refreshVertexBuffer(true)
+{
+}
+
+void PointSprites::SetData(const int count, const vector3f *positions, const matrix4x4f &trans, const float size)
+{
+	if (count < 1 ) 
+		return;
+
+	assert(positions);
+
+	m_va.reset( new VertexArray(ATTRIB_POSITION | ATTRIB_UV0, count * 6) );
+
+	matrix4x4f rot(trans);
+	rot.ClearToRotOnly();
+	rot = rot.Inverse();
+
+	const float sz = 0.5f * size;
+	const vector3f rotv1 = rot * vector3f(sz, sz, 0.0f);
+	const vector3f rotv2 = rot * vector3f(sz, -sz, 0.0f);
+	const vector3f rotv3 = rot * vector3f(-sz, -sz, 0.0f);
+	const vector3f rotv4 = rot * vector3f(-sz, sz, 0.0f);
+
+	//do two-triangle quads. Could also do indexed surfaces.
+	//PiGL renderer should use actual point sprites
+	//(see history of Render.cpp for point code remnants)
+	for (int i=0; i<count; i++) {
+		const vector3f &pos = positions[i];
+
+		m_va->Add(pos+rotv4, vector2f(0.f, 0.f)); //top left
+		m_va->Add(pos+rotv3, vector2f(0.f, 1.f)); //bottom left
+		m_va->Add(pos+rotv1, vector2f(1.f, 0.f)); //top right
+
+		m_va->Add(pos+rotv1, vector2f(1.f, 0.f)); //top right
+		m_va->Add(pos+rotv3, vector2f(0.f, 1.f)); //bottom left
+		m_va->Add(pos+rotv2, vector2f(1.f, 1.f)); //bottom right
+	}
+
+	m_refreshVertexBuffer = true;
+}
+
+void PointSprites::Draw(Renderer *r, RenderState *rs, Material *mat)
+{
+	if( !m_vertexBuffer.Valid() ) {
+		CreateVertexBuffer(r, mat, m_va->GetNumVerts());
+	}
+	if( m_refreshVertexBuffer ) {
+		m_refreshVertexBuffer = false;
+		m_vertexBuffer->Populate( *m_va );
+	}
+
+	// XXX would be nicer to draw this as a textured triangle strip
+	r->DrawBuffer(m_vertexBuffer.Get(), rs, mat, Graphics::TRIANGLES);
+}
+
+void PointSprites::CreateVertexBuffer(Graphics::Renderer *r, Material *mat, const Uint32 size)
+{
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[1].semantic = Graphics::ATTRIB_UV0;
+	vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_FLOAT2;
+	vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;
+	vbd.numVertices = size;
+	mat->SetupVertexBufferDesc( vbd );
+	m_vertexBuffer.Reset(r->CreateVertexBuffer(vbd));
+}
+//------------------------------------------------------------
 
 static const float ICOSX = 0.525731112119133f;
 static const float ICOSZ = 0.850650808352039f;
@@ -360,6 +433,7 @@ void Sphere3D::Subdivide(VertexArray &vts, std::vector<Uint16> &indices,
 	Subdivide(vts, indices, trans, v3, v31, v23, i3, i31, i23, depth-1);
 	Subdivide(vts, indices, trans, v12, v23, v31, i12, i23, i31, depth-1);
 }
+//------------------------------------------------------------
 
 // a textured quad with reversed winding
 TexturedQuad::TexturedQuad(Graphics::Renderer *r, Graphics::Texture *texture, const vector2f &pos, const vector2f &size, RenderState *state)
@@ -418,6 +492,7 @@ void TexturedQuad::Draw(Graphics::Renderer *r)
 {
 	r->DrawBuffer(m_vertexBuffer.get(), m_renderState, m_material.get(), TRIANGLE_STRIP);
 }
+//------------------------------------------------------------
 
 Axes3D::Axes3D(Graphics::Renderer *r, Graphics::RenderState *state)
 {

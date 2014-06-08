@@ -23,6 +23,7 @@ protected:
 	virtual ~Drawable() { }
 	Graphics::RenderState *m_renderState;
 };
+//------------------------------------------------------------
 
 class Circle : public Drawable {
 public:
@@ -35,6 +36,7 @@ private:
 	RefCountedPtr<Material> m_material;
 	Color m_color;
 };
+//------------------------------------------------------------
 
 // Two-dimensional filled circle
 class Disk : public Drawable {
@@ -49,8 +51,9 @@ private:
 	std::unique_ptr<VertexBuffer> m_vertexBuffer;
 	RefCountedPtr<Material> m_material;
 };
+//------------------------------------------------------------
 
-//A three dimensional line between two points
+// A three dimensional line between two points
 class Line3D : public Drawable {
 public:
 	Line3D();
@@ -68,8 +71,9 @@ private:
 	RefCountedPtr<VertexBuffer> m_vertexBuffer;
 	VertexArray* m_va;
 };
+//------------------------------------------------------------
 
-//Three dimensional line segments between two points
+// Three dimensional line segments between two points
 class Lines : public Drawable {
 public:
 	Lines();
@@ -84,9 +88,25 @@ private:
 	RefCountedPtr<VertexBuffer> m_vertexBuffer;
 	std::unique_ptr<VertexArray> m_va;
 };
+//------------------------------------------------------------
 
-//Three dimensional sphere (subdivided icosahedron) with normals
-//and spherical texture coordinates.
+// Screen aligned quad / billboard / pointsprite
+class PointSprites : public Drawable {
+public:
+	PointSprites();
+	void SetData(const int count, const vector3f *positions, const matrix4x4f &trans, const float size);
+	void Draw(Renderer*, RenderState*, Material*);
+private:
+	void CreateVertexBuffer(Graphics::Renderer *r, Material *mat, const Uint32 size);
+
+	bool m_refreshVertexBuffer;
+	RefCountedPtr<VertexBuffer> m_vertexBuffer;
+	std::unique_ptr<VertexArray> m_va;
+};
+//------------------------------------------------------------
+
+// Three dimensional sphere (subdivided icosahedron) with normals
+// and spherical texture coordinates.
 class Sphere3D : public Drawable {
 public:
 	//subdivisions must be 0-4
@@ -109,6 +129,7 @@ private:
 		const matrix4x4f &trans, const vector3f &v1, const vector3f &v2, const vector3f &v3,
 		int i1, int i2, int i3, int depth);
 };
+//------------------------------------------------------------
 
 // a textured quad with reversed winding
 class TexturedQuad : public Drawable {
@@ -121,6 +142,7 @@ private:
 	std::unique_ptr<Graphics::Material> m_material;
 	std::unique_ptr<VertexBuffer> m_vertexBuffer;
 };
+//------------------------------------------------------------
 
 //industry-standard red/green/blue XYZ axis indicator
 class Axes3D : public Drawable {
