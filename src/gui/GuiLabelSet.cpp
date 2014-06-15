@@ -20,10 +20,10 @@ LabelSet::LabelSet() : Widget()
 bool LabelSet::OnMouseDown(Gui::MouseButtonEvent *e)
 {
 	if ((e->button == SDL_BUTTON_LEFT) && (m_labelsClickable)) {
-		for (std::vector<LabelSetItem>::iterator i = m_items.begin(); i != m_items.end(); ++i) {
-			if ((fabs(e->x - (*i).screenx) < 10.0f) &&
-			    (fabs(e->y - (*i).screeny) < 10.0f)) {
-				(*i).onClick();
+		for (auto i : m_items) {
+			if ((fabs(e->x - i.screenx) < 10.0f) &&
+			    (fabs(e->y - i.screeny) < 10.0f)) {
+				i.onClick();
 				return false;
 			}
 		}
@@ -33,9 +33,9 @@ bool LabelSet::OnMouseDown(Gui::MouseButtonEvent *e)
 
 bool LabelSet::CanPutItem(float x, float y)
 {
-	for (std::vector<LabelSetItem>::iterator i = m_items.begin(); i != m_items.end(); ++i) {
-		if ((fabs(x-(*i).screenx) < 5.0f) &&
-		    (fabs(y-(*i).screeny) < 5.0f)) return false;
+	for (auto i : m_items) {
+		if ((fabs(x-i.screenx) < 5.0f) &&
+		    (fabs(y-i.screeny) < 5.0f)) return false;
 	}
 	return true;
 }
@@ -63,15 +63,35 @@ void LabelSet::Draw()
 {
 	PROFILE_SCOPED()
 	if (!m_labelsVisible) return;
-	for (std::vector<LabelSetItem>::iterator i = m_items.begin(); i != m_items.end(); ++i) 
+	
+	Graphics::Renderer *r = Gui::Screen::GetRenderer();
+	const matrix4x4f modelMatrix_ = r->GetCurrentModelView();
+
+	const float scaleX = Screen::GetCoords2Pixels()[0];
+	const float scaleY = Screen::GetCoords2Pixels()[1];
+	const float halfFontHeight = Gui::Screen::GetFontHeight() * 0.5f;
+
+	for (auto i : m_items) 
 	{
-		if( !(*i).m_vbuffer.Valid() )
+		if( !i.m_vbuffer.Valid() )
 		{
 			Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE | Graphics::ATTRIB_UV0);
-			m_font->PopulateString(va, (*i).text, (*i).screenx, (*i).screeny - Gui::Screen::GetFontHeight()*0.5f, (*i).hasOwnColor ? (*i).color : m_labelColor);
-			(*i).m_vbuffer.Reset(m_font->CreateVertexBuffer(va));
+			m_font->PopulateString(va, i.text, 0, 0, i.hasOwnColor ? i.color : m_labelColor);
+			i.m_vbuffer.Reset(m_font->CreateVertexBuffer(va));
 		}
-		m_font->RenderBuffer( (*i).m_vbuffer.Get(), (*i).hasOwnColor ? (*i).color : m_labelColor );
+
+		{
+			Graphics::Renderer::MatrixTicket ticket(r, Graphics::MatrixMode::MODELVIEW);
+
+			const float x = modelMatrix_[12] + i.screenx;
+			const float y = modelMatrix_[13] + i.screeny - halfFontHeight;
+
+			r->LoadIdentity();
+			r->Translate(floor(x/scaleX)*scaleX, floor(y/scaleY)*scaleY, 0);
+			r->Scale(scaleX, scaleY, 1);
+
+			m_font->RenderBuffer( i.m_vbuffer.Get(), i.hasOwnColor ? i.color : m_labelColor );
+		}
 	}
 }
 

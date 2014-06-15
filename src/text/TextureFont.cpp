@@ -19,7 +19,7 @@ namespace Text {
 
 int TextureFont::s_glyphCount = 0;
 
-void TextureFont::AddGlyphGeometry(Graphics::VertexArray &va, const Glyph &glyph, float x, float y, const Color &c)
+void TextureFont::AddGlyphGeometry(Graphics::VertexArray &va, const Glyph &glyph, const float x, const float y, const Color &c)
 {
 	const float offX = x + float(glyph.offX);
 	const float offY = y + GetHeight() - float(glyph.offY);
@@ -39,6 +39,7 @@ void TextureFont::AddGlyphGeometry(Graphics::VertexArray &va, const Glyph &glyph
 	va.Add(p0, c, t0);
 	va.Add(p1, c, t1);
 	va.Add(p2, c, t2);
+
 	va.Add(p2, c, t2);
 	va.Add(p1, c, t1);
 	va.Add(p3, c, t3);
@@ -178,7 +179,7 @@ void TextureFont::RenderBuffer(const Graphics::VertexBuffer *vb, const Color &co
 	}
 }
 
-void TextureFont::PopulateString(Graphics::VertexArray &va, const std::string &str, float x, float y, const Color &color)
+void TextureFont::PopulateString(Graphics::VertexArray &va, const std::string &str, const float x, const float y, const Color &color)
 {
 	PROFILE_SCOPED()
 
@@ -219,7 +220,7 @@ void TextureFont::PopulateString(Graphics::VertexArray &va, const std::string &s
 	}
 }
 
-Color TextureFont::PopulateMarkup(Graphics::VertexArray &va, const std::string &str, float x, float y, const Color &color)
+Color TextureFont::PopulateMarkup(Graphics::VertexArray &va, const std::string &str, const float x, const float y, const Color &color)
 {
 	PROFILE_SCOPED()
 

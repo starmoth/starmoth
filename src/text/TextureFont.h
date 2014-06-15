@@ -31,8 +31,8 @@ public:
 	void MeasureCharacterPos(const std::string &str, int charIndex, float &x, float &y);
 	int PickCharacter(const std::string &str, float mouseX, float mouseY);
 
-	void PopulateString(Graphics::VertexArray &va, const std::string &str, float x, float y, const Color &color = Color::WHITE);
-	Color PopulateMarkup(Graphics::VertexArray &va, const std::string &str, float x, float y, const Color &color = Color::WHITE);
+	void PopulateString(Graphics::VertexArray &va, const std::string &str, const float x, const float y, const Color &color = Color::WHITE);
+	Color PopulateMarkup(Graphics::VertexArray &va, const std::string &str, const float x, const float y, const Color &color = Color::WHITE);
 	Graphics::VertexBuffer* CreateVertexBuffer(const Graphics::VertexArray &va) const;
 
 	// general baseline-to-baseline height
@@ -76,7 +76,7 @@ private:
 
 	float GetKern(const Glyph &a, const Glyph &b);
 
-	void AddGlyphGeometry(Graphics::VertexArray &va, const Glyph &glyph, float x, float y, const Color &color);
+	void AddGlyphGeometry(Graphics::VertexArray &va, const Glyph &glyph, const float x, const float y, const Color &color);
 	float m_height;
 	float m_descender;
 	std::unique_ptr<Graphics::Material> m_mat;
