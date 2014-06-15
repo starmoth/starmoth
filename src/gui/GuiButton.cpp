@@ -84,8 +84,8 @@ void SolidButton::Draw()
 	PROFILE_SCOPED()
 	vector2f size; GetSize(size);
 	if( !m_prevSize.ExactlyEqual(size) ) {
-		Theme::GenerateIndent(m_indent, m_prevSize);
-		Theme::GenerateOutdent(m_outdent, m_prevSize);
+		Theme::GenerateIndent(m_indent, size);
+		Theme::GenerateOutdent(m_outdent, size);
 		m_prevSize = size;
 	}
 	
@@ -128,8 +128,8 @@ void LabelButton::Draw()
 	PROFILE_SCOPED()
 	vector2f size; GetSize(size);
 	if( !m_prevSize.ExactlyEqual(size) ) {
-		Theme::GenerateIndent(m_indent, m_prevSize);
-		Theme::GenerateOutdent(m_outdent, m_prevSize);
+		Theme::GenerateIndent(m_indent, size);
+		Theme::GenerateOutdent(m_outdent, size);
 		m_prevSize = size;
 	}
 	

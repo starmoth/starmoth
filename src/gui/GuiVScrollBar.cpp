@@ -72,7 +72,7 @@ void ScrollBar::Draw()
 	vector2f size; GetSize(size);
 	if( !m_prevSize.ExactlyEqual(size) ) {
 		m_prevSize = size;
-		Theme::GenerateIndent(m_indent, m_prevSize);
+		Theme::GenerateIndent(m_indent, size);
 	}
 	Theme::DrawIndent(m_indent, Screen::alphaBlendState);
 	const float pos = m_adjustment->GetValue();
