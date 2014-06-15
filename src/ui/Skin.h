@@ -145,14 +145,9 @@ public:
 	struct RectElement {
 		RectElement() {}
 		RectElement(unsigned int x, unsigned int y, unsigned int w, unsigned int h) : pos(x,y), size(w,h) {}
-		void GenerateVertexBuffer(Graphics::Renderer*, Graphics::Material*);
-		Graphics::VertexBuffer* GetVertexBuffer() const { return vbuffer.Get(); }
 
 		Point pos;
 		Point size;
-	
-	protected:
-		RefCountedPtr<Graphics::VertexBuffer> vbuffer;
 	};
 
 	struct BorderedRectElement : public RectElement {
@@ -160,7 +155,6 @@ public:
 		BorderedRectElement(unsigned int x, unsigned int y, unsigned int w, unsigned int h,
 				            unsigned int _borderWidth, unsigned int _borderHeight, unsigned int _paddingX, unsigned int _paddingY) :
 			RectElement(x, y, w, h), borderWidth(_borderWidth), borderHeight(_borderHeight), paddingX(_paddingX), paddingY(_paddingY) {}
-		void GenerateVertexBuffer(Graphics::Renderer*, Graphics::Material*);
 
 		unsigned int borderWidth;
 		unsigned int borderHeight;
@@ -172,7 +166,6 @@ public:
 		EdgedRectElement() : edgeWidth(0) {}
 		EdgedRectElement(unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int _edgeWidth) :
 			RectElement(x, y, w, h), edgeWidth(_edgeWidth) {}
-		void GenerateVertexBuffer(Graphics::Renderer*, Graphics::Material*, const EdgedOrientation);
 
 		unsigned int edgeWidth;
 	};
