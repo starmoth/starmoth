@@ -419,12 +419,12 @@ void SystemInfoView::BodyIcon::Draw()
 	float size[2];
 	GetSize(size);
 	if (HasStarport()) {
-	    Color portColor = Color(64, 128, 128, 255);
+	    const Color portColor = Color(64, 128, 128, 255);
+		const vector3f centre(size[0]*0.5f-0.1f, size[1]*0.5f, 0.f);
+		const float radius = size[0]*0.5f;
 	    // The -0.1f offset seems to be the best compromise to make the circles closed (e.g. around Mars), symmetric, fitting with selection
 	    // and not overlapping to much with asteroids
-	    Graphics::Drawables::Circle circle =
-			Graphics::Drawables::Circle(size[0]*0.5f, size[0]*0.5f-0.1f, size[1]*0.5f, 0.f,
-			portColor, m_renderState);
+	    Graphics::Drawables::Circle circle = Graphics::Drawables::Circle(m_renderer, radius, centre, portColor, m_renderState);
 	    circle.Draw(m_renderer);
 	}
 	if (GetSelected()) {
@@ -434,7 +434,8 @@ void SystemInfoView::BodyIcon::Draw()
 		    vector2f(size[0], size[1]),
 		    vector2f(0.f, size[1]),
 	    };
-	    m_renderer->DrawLines2D(COUNTOF(vts), vts, m_selectColor, m_renderState, Graphics::LINE_LOOP);
+		assert(false && "This needs updating to use vertex buffers but I couldn't be arsed! AndyC"); 
+		//m_renderer->DrawLines2D(COUNTOF(vts), vts, m_selectColor, m_renderState, Graphics::LINE_LOOP);
 	}
 }
 

@@ -36,6 +36,8 @@ private:
 
 	Uint32 m_cursor;
 	vector3f m_cursorVertices[2];
+	RefCountedPtr<Graphics::VertexBuffer> m_cursorVB;
+	RefCountedPtr<Graphics::Material> m_cursorMat;
 };
 
 }

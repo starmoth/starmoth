@@ -3,6 +3,7 @@
 
 #include "libs.h"
 #include "Gui.h"
+#include "utils.h"
 #include "text/TextureFont.h"
 #include "text/TextSupport.h"
 
@@ -12,10 +13,11 @@ TextEntry::TextEntry()
 {
 	m_eventMask = EVENT_MOUSEDOWN;
 	m_cursPos = 0;
-	m_scroll = 0;
+	m_scrollPrevFrame = m_scroll = 0;
 	m_font = Gui::Screen::GetFont();
 	m_newlineMode = IgnoreNewline;
 	m_newlineCount = 0;
+	m_rectVB.Reset( Theme::GenerateRectVB() );
 }
 
 TextEntry::~TextEntry()
@@ -221,29 +223,49 @@ void TextEntry::Draw()
 	}
 
 	//background
-	Theme::DrawRect(vector2f(0.f), vector2f(size[0], size[1]), Color(0,0,0,192), Screen::alphaBlendState);
+	Theme::DrawRect(m_rectVB.Get(), vector2f(0.f), vector2f(size[0], size[1]), Color(0,0,0,192), Screen::alphaBlendState);
 
 	//outline
 	const Color c = IsFocused() ? Color::WHITE : Color(192, 192, 192, 255);
-	const vector3f boxVts[] = {
-		vector3f(0.f, 0.f, 0.f),
-		vector3f(size[0],0.f, 0.f),
-		vector3f(size[0],size[1], 0.f),
-		vector3f(0,size[1], 0.f)
-	};
-	Screen::GetRenderer()->DrawLines(4, &boxVts[0], c, Screen::alphaBlendState, Graphics::LINE_LOOP);
+	Theme::DrawRect(m_rectVB.Get(), vector2f(0.f), vector2f(size[0], size[1]), c, Screen::alphaBlendState, Graphics::LINE_LOOP);
 
 	//text
 	SetScissor(true);
-	Gui::Screen::RenderString(m_text, 1.0f - m_scroll, 0.0f, c, m_font.Get());
+	{
+		Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE | Graphics::ATTRIB_UV0);
+		m_font->PopulateString(va, m_text, 1.0f - m_scroll, 0.0f, c);
+		if( (!m_textVB.Valid() || m_textVB->GetVertexCount() != va.GetNumVerts()) || m_scrollPrevFrame != m_scroll )
+		{
+			m_textVB.Reset(m_font->CreateVertexBuffer(va));
+			m_scrollPrevFrame = m_scroll;
+		}
+		m_font->RenderBuffer( m_textVB.Get(), c );
+	}
 	SetScissor(false);
 
 	//cursor
-	const vector3f cursorVts[] = {
-		vector3f(curs_x + 1.0f - m_scroll, curs_y + Gui::Screen::GetFontDescender(m_font.Get()) - Gui::Screen::GetFontHeight(m_font.Get()), 0.f),
-		vector3f(curs_x + 1.0f - m_scroll, curs_y + Gui::Screen::GetFontDescender(m_font.Get()), 0.f),
-	};
-	Screen::GetRenderer()->DrawLines(2, &cursorVts[0], Color(128), Screen::alphaBlendState);
+	Graphics::Renderer *r = Screen::GetRenderer();
+	if( !m_mat.Valid() ) {
+		Graphics::MaterialDescriptor desc;
+		m_mat.Reset(r->CreateMaterial(desc));
+		m_mat->diffuse = Color(128);
+		m_lineVB.Reset( CreatePosVB(2, m_mat.Get(), r) );
+
+		struct LineVertex {	vector3f pos; };
+		LineVertex* vtxPtr = m_lineVB->Map<LineVertex>(Graphics::BUFFER_MAP_WRITE);
+		assert(m_lineVB->GetDesc().stride == sizeof(LineVertex));
+		vtxPtr[0].pos	= vector3f(0.0f, 0.0f, 0.0f);
+		vtxPtr[1].pos	= vector3f(0.0f, 1.0f, 0.0f);
+		m_lineVB->Unmap();
+	}
+	const float xpos = (curs_x + 1.0f - m_scroll);
+	const float ypos = curs_y + Gui::Screen::GetFontDescender(m_font.Get()) - Gui::Screen::GetFontHeight(m_font.Get());
+	const float yscale = (curs_y + Gui::Screen::GetFontDescender(m_font.Get())) - ypos;
+	Graphics::Renderer::MatrixTicket mt( r, Graphics::MatrixMode::MODELVIEW );
+	matrix4x4f cursorMT = r->GetCurrentModelView();
+	cursorMT.Translate( xpos, ypos, 0.0f);
+	cursorMT.Scale( 0.0f, yscale, 0.0f );
+	r->DrawBuffer( m_lineVB.Get(), Screen::alphaBlendState, m_mat.Get(), Graphics::LINE_SINGLE);
 }
 
 } /* namespace Gui */

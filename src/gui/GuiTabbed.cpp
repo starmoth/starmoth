@@ -155,7 +155,7 @@ void Tabbed::Draw()
 	float xpos = 0;
 	unsigned int index = 0;
 
-	Theme::DrawRect(vector2f(0.f), vector2f(size[0], TAB_BAR_HEIGHT), Theme::Colors::bgShadow, Screen::alphaBlendState);
+	Theme::DrawRect(m_rectVB.Get(), vector2f(0.f), vector2f(size[0], TAB_BAR_HEIGHT), Theme::Colors::bgShadow, Screen::alphaBlendState);
 
 	for (pagecontainer_t::iterator i = m_pages.begin(); i!=m_pages.end();
 			++i, index++) {
@@ -163,7 +163,7 @@ void Tabbed::Draw()
 		(*i).first->GetSize(csize);
 		csize[0] += 2*LABEL_PADDING;
 		if (index == m_page) {
-			Theme::DrawRect(vector2f(xpos, 0.f), vector2f(xpos+csize[0], TAB_BAR_HEIGHT), Theme::Colors::bg, Screen::alphaBlendState);
+			Theme::DrawRect(m_rectVB.Get(), vector2f(xpos, 0.f), vector2f(xpos+csize[0], TAB_BAR_HEIGHT), Theme::Colors::bg, Screen::alphaBlendState);
 		}
 		xpos += csize[0];
 	}

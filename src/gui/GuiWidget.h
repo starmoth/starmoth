@@ -22,6 +22,7 @@ namespace Gui {
 		virtual void GetMinimumSize(float size[2]) { GetSizeRequested(size); }
 		void GetAbsolutePosition(float pos[2]) const;
 		void GetSize(float size[2]) { size[0] = m_size.w; size[1] = m_size.h; }
+		void GetSize(vector2f &size) { size.x = m_size.w; size.y = m_size.h; }
 		void SetSize(float w, float h) { m_size.w = w; m_size.h = h; onSetSize.emit(); }
 		void ResizeRequest();
 		void SetShortcut(SDL_Keycode key, SDL_Keymod mod);

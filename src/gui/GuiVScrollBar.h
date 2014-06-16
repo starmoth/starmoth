@@ -6,6 +6,12 @@
 
 #include "GuiWidget.h"
 
+namespace Graphics
+{
+	class VertexBuffer;
+	class Material;
+}
+
 namespace Gui {
 	class ScrollBar: public Widget {
 	public:
@@ -23,8 +29,15 @@ namespace Gui {
 	private:
 		void OnRawMouseUp(MouseButtonEvent *e);
 		void OnRawMouseMotion(MouseMotionEvent *e);
-		bool m_isPressed, m_isHoriz;
+		void SetupVertexBuffer(const vector2f &size, const float pos);
+		bool m_isPressed;
+		const bool m_isHoriz;
 		sigc::connection _m_release, _m_motion;
+		vector2f m_prevSize;
+		float m_prevPos;
+		Theme::IndentData m_indent;
+		RefCountedPtr<Graphics::VertexBuffer> m_line;
+		RefCountedPtr<Graphics::Material> m_lineMaterial;
 	};
 
 	class VScrollBar: public ScrollBar {

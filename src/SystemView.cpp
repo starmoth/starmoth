@@ -150,11 +150,12 @@ void SystemView::PutOrbit(const Orbit *orbit, const vector3d &offset, const Colo
 	}
 
 	if (num_vertices > 1) {
+		assert(false);
 		// don't close the loop for hyperbolas and parabolas and crashed ellipses
-		if ((orbit->GetEccentricity() > 1.0) || (num_vertices < int(COUNTOF(vts))))
+		/*if ((orbit->GetEccentricity() > 1.0) || (num_vertices < int(COUNTOF(vts))))
 			m_renderer->DrawLines(num_vertices, vts, color, m_lineState, LINE_STRIP);
 		else
-			m_renderer->DrawLines(num_vertices, vts, color, m_lineState, LINE_LOOP);
+			m_renderer->DrawLines(num_vertices, vts, color, m_lineState, LINE_LOOP);*/
 	}
 }
 
@@ -301,7 +302,8 @@ void SystemView::PutSelectionBox(const vector3d &worldPos, const Color &col)
                 vector3f(x2, y2, 0.f),
                 vector3f(x1, y2, 0.f)
         };
-		m_renderer->DrawLines(4, &verts[0], col, m_lineState, Graphics::LINE_LOOP);
+		assert(false);
+		//m_renderer->DrawLines(4, &verts[0], col, m_lineState, Graphics::LINE_LOOP);
 	}
 
 	Gui::Screen::LeaveOrtho();

@@ -17,6 +17,7 @@ namespace Graphics {
 	class Renderer; 
 	class RenderState;
 	class Material;
+	class VertexBuffer;
 }
 class SystemBody;
 
@@ -69,6 +70,9 @@ protected:
 
 	//special parameters for shaders
 	MaterialParameters m_materialParameters;
+
+	static RefCountedPtr<Graphics::VertexBuffer> m_vLongBuffer;
+	static RefCountedPtr<Graphics::VertexBuffer> m_vLatBuffer;
 };
 
 #endif /* _GEOSPHERE_H */

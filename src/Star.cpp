@@ -5,6 +5,7 @@
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
 #include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 #include "gui/Gui.h"
 #include "Pi.h"
 #include <SDL_stdinc.h>
@@ -57,7 +58,7 @@ void Star::Render(Graphics::Renderer *renderer, const Camera *camera, const vect
 		len *= 0.25;
 	}
 
-	matrix4x4d trans = mat4x4::Identityd();
+	matrix4x4d trans = matrix4x4d::Identity();
 	trans.Translate(float(fpos.x), float(fpos.y), float(fpos.z));
 
 	// face the camera dammit
@@ -83,7 +84,22 @@ void Star::Render(Graphics::Renderer *renderer, const Camera *camera, const vect
 	}
 	va.Add(vector3f(0.f, rad, 0.f), dark);
 
-	renderer->DrawTriangles(&va, m_haloState, Graphics::vtxColorMaterial, TRIANGLE_FAN);
+	if( !m_vbuffer.Valid() || m_vbuffer->GetVertexCount() != va.GetNumVerts() )
+	{
+		//create buffer and upload data
+		Graphics::VertexBufferDesc vbd;
+		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+		vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+		vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+		vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
+		vbd.numVertices = va.GetNumVerts();
+		vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;	// we could be updating this per-frame
+		Graphics::vtxColorMaterial->SetupVertexBufferDesc( vbd );
+		m_vbuffer.Reset( renderer->CreateVertexBuffer(vbd) );
+	}
+	m_vbuffer->Populate( va );
+
+	renderer->DrawBuffer(m_vbuffer.Get(), m_haloState, Graphics::vtxColorMaterial, TRIANGLE_FAN);
 
 	TerrainBody::Render(renderer, camera, viewCoords, viewTransform);
 }

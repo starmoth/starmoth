@@ -83,6 +83,8 @@ void GeoPatch::_UpdateVBOs(Graphics::Renderer *renderer)
 		vbd.attrib[2].format   = Graphics::ATTRIB_FORMAT_UBYTE4;
 		vbd.numVertices = ctx->NUMVERTICES();
 		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+		Graphics::Material *mat = geosphere->GetSurfaceMaterial();
+		mat->SetupVertexBufferDesc( vbd );
 		m_vertexBuffer.reset(renderer->CreateVertexBuffer(vbd));
 
 		GeoPatchContext::VBOVertex* vtxPtr = m_vertexBuffer->Map<GeoPatchContext::VBOVertex>(Graphics::BUFFER_MAP_WRITE);

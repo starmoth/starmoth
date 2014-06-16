@@ -14,6 +14,7 @@ namespace Graphics {
 	class Renderer;
 	namespace Drawables {
 		class Sphere3D;
+		class PointSprites;
 	}
 }
 
@@ -59,6 +60,9 @@ private:
 	float m_age;
 	float m_speed;
 	enum TYPE m_type;
+
+	Graphics::Drawables::PointSprites m_explosion, m_damage, m_smoke;
+	
 };
 
 #endif /* _SFX_H */

@@ -72,14 +72,13 @@ public:
 
 	virtual bool SetScissor(bool enabled, const vector2f &pos = vector2f(0.0f), const vector2f &size = vector2f(0.0f));
 
-	virtual bool DrawLines(int vertCount, const vector3f *vertices, const Color *colors, RenderState*, LineType type=LINE_SINGLE) override;
-	virtual bool DrawLines(int vertCount, const vector3f *vertices, const Color &color, RenderState*, LineType type=LINE_SINGLE) override;
-	virtual bool DrawLines2D(int vertCount, const vector2f *vertices, const Color &color, RenderState*, LineType type=LINE_SINGLE) override;
-	virtual bool DrawPoints(int count, const vector3f *points, const Color *colors, RenderState*, float pointSize=1.f) override;
-	virtual bool DrawTriangles(const VertexArray *vertices, RenderState *state, Material *material, PrimitiveType type=TRIANGLES) override;
-	virtual bool DrawPointSprites(int count, const vector3f *positions, RenderState *rs, Material *material, float size) override;
-	virtual bool DrawBuffer(VertexBuffer*, RenderState*, Material*, const PrimitiveType) override;
-	virtual bool DrawBufferIndexed(VertexBuffer*, IndexBuffer*, RenderState*, Material*, const PrimitiveType) override;
+	//virtual bool DrawLines(int vertCount, const vector3f *vertices, const Color *colors, RenderState*, PrimitiveType type=LINE_SINGLE) override;
+	//virtual bool DrawLines(int vertCount, const vector3f *vertices, const Color &color, RenderState*, PrimitiveType type=LINE_SINGLE) override;
+	//virtual bool DrawLines2D(int vertCount, const vector2f *vertices, const Color &color, RenderState*, PrimitiveType type=LINE_SINGLE) override;
+	//virtual bool DrawPoints(int count, const vector3f *points, const Color *colors, RenderState*, float pointSize=1.f) override;
+	//virtual bool DrawPointSprites(int count, const vector3f *positions, RenderState *rs, Material *material, float size) override;
+	virtual bool DrawBuffer(const VertexBuffer*, RenderState*, Material*, const PrimitiveType) override;
+	virtual bool DrawBufferIndexed(const VertexBuffer*, IndexBuffer*, RenderState*, Material*, const PrimitiveType) override;
 
 	virtual Material *CreateMaterial(const MaterialDescriptor &descriptor) override;
 	virtual Texture *CreateTexture(const TextureDescriptor &descriptor) override;
@@ -113,15 +112,11 @@ protected:
 
 	//figure out states from a vertex array and enable them
 	//also sets vertex pointers
-	void EnableClientStates(const VertexArray*, const Material *);
 	void EnableVertexAttributes(const VertexBuffer*);
 	int m_numLights;
 	int m_numDirLights;
 	float m_minZNear;
 	float m_maxZFar;
-
-	matrix4x4f& GetCurrentTransform() { return m_currentTransform; }
-	matrix4x4f m_currentTransform;
 
 	void SetMaterialShaderTransforms(Material *);
 	void SetProgramShaderTransforms(PiGL::Program *);

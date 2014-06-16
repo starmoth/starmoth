@@ -9,10 +9,8 @@ static const float BORDER = 2.f;
 
 namespace Gui {
 
-ScrollBar::ScrollBar(bool isHoriz)
+ScrollBar::ScrollBar(bool isHoriz) : m_isPressed(false), m_isHoriz(isHoriz), m_prevSize(vector2f(0)), m_prevPos(0.0f)
 {
-	m_isHoriz = isHoriz;
-	m_isPressed = false;
 	m_eventMask = EVENT_MOUSEDOWN;
 	SetSize(SCROLLBAR_SIZE, SCROLLBAR_SIZE);
 }
@@ -71,18 +69,58 @@ void ScrollBar::OnRawMouseMotion(MouseMotionEvent *e)
 void ScrollBar::Draw()
 {
 	PROFILE_SCOPED()
-	float size[2]; GetSize(size);
-	Theme::DrawIndent(size, Screen::alphaBlendState);
-	float pos = m_adjustment->GetValue();
+	vector2f size; GetSize(size);
+	if( !m_prevSize.ExactlyEqual(size) ) {
+		m_prevSize = size;
+		Theme::GenerateIndent(m_indent, size);
+	}
+	Theme::DrawIndent(m_indent, Screen::alphaBlendState);
+	const float pos = m_adjustment->GetValue();
+	if( !m_line.Valid() || pos != m_prevPos ) {
+		SetupVertexBuffer(size, pos);
+	}
+	Screen::GetRenderer()->DrawBuffer(m_line.Get(), Screen::alphaBlendState, m_lineMaterial.Get(), Graphics::LINE_SINGLE);
+}
+
+void ScrollBar::SetupVertexBuffer(const vector2f &size, const float pos)
+{
+	Graphics::Renderer *r = Screen::GetRenderer();
+
+	Graphics::VertexArray vertices(Graphics::ATTRIB_POSITION);
 	vector3f lines[2];
 	if (m_isHoriz) {
-		lines[0] = vector3f(BORDER+(size[0]-2*BORDER)*pos, BORDER, 0.f);
-		lines[1] = vector3f(BORDER+(size[0]-2*BORDER)*pos, size[1]-BORDER, 0.f);
+		vertices.Add(vector3f(BORDER+(size.x-2*BORDER)*pos, BORDER, 0.f));
+		vertices.Add(vector3f(BORDER+(size.x-2*BORDER)*pos, size.y-BORDER, 0.f));
 	} else {
-		lines[0] = vector3f(BORDER, BORDER+(size[1]-2*BORDER)*pos, 0.f);
-		lines[1] = vector3f(size[0]-BORDER, BORDER+(size[1]-2*BORDER)*pos, 0.f);
+		vertices.Add(vector3f(BORDER, BORDER+(size.y-2*BORDER)*pos, 0.f));
+		vertices.Add(vector3f(size.x-BORDER, BORDER+(size.y-2*BORDER)*pos, 0.f));
 	}
-	Screen::GetRenderer()->DrawLines(2, &lines[0], Color::WHITE, Screen::alphaBlendState);
+
+	struct LineVertex {
+		vector3f pos;
+	};
+
+	Graphics::MaterialDescriptor desc;
+	m_lineMaterial.Reset(r->CreateMaterial(desc));
+	m_lineMaterial->diffuse = Color::WHITE;
+
+	//Create vtx & index buffers and copy data
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[0].offset   = offsetof(LineVertex, pos);
+	vbd.stride = sizeof(LineVertex);
+	vbd.numVertices = vertices.GetNumVerts();
+	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+	m_lineMaterial->SetupVertexBufferDesc( vbd );
+	m_line.Reset(r->CreateVertexBuffer(vbd));
+	LineVertex* vtxPtr = m_line->Map<LineVertex>(Graphics::BUFFER_MAP_WRITE);
+	assert(m_line->GetDesc().stride == sizeof(LineVertex));
+	for(Uint32 i=0 ; i<vertices.GetNumVerts() ; i++)
+	{
+		vtxPtr[i].pos	= vertices.position[i];
+	}
+	m_line->Unmap();
 }
 
 void ScrollBar::GetSizeRequested(float size[2])

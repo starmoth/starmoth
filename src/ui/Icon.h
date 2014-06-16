@@ -11,6 +11,10 @@
 #include "graphics/Material.h"
 #include "graphics/Texture.h"
 
+namespace Graphics {
+	class VertexBuffer;
+}
+
 namespace UI {
 
 class Icon: public Widget {
@@ -34,6 +38,8 @@ private:
 
 	Point m_texPos;
 	Color m_color;
+
+	RefCountedPtr<Graphics::VertexBuffer> m_vbuffer;
 };
 
 }

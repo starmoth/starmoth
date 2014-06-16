@@ -61,8 +61,8 @@ Renderer* Init(Settings vs)
 
 	CheckRenderErrors();
 
-	glewExperimental=1;
-	GLenum err=glewInit();
+	glewExperimental = true;
+	const GLenum err = glewInit();
 	if(err!=GLEW_OK)
 	{
 		//Problem: glewInit failed, something is seriously wrong.

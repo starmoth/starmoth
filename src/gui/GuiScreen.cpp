@@ -34,6 +34,14 @@ void Screen::Init(Graphics::Renderer *renderer, int real_width, int real_height,
 {
     s_renderer = renderer;
 
+	Graphics::RenderStateDesc rsd;
+	rsd.blendMode = Graphics::BLEND_ALPHA;
+	rsd.depthWrite = false;
+	alphaBlendState = renderer->CreateRenderState(rsd);
+
+	Graphics::MaterialDescriptor mdesc;
+	flatColorMaterial = renderer->CreateMaterial(mdesc);
+
 	Screen::width = ui_width;
 	Screen::height = ui_height;
 	Screen::realWidth = real_width;
@@ -51,14 +59,6 @@ void Screen::Init(Graphics::Renderer *renderer, int real_width, int real_height,
 	Screen::baseContainer = new Gui::Fixed();
 	Screen::baseContainer->SetSize(float(Screen::width), float(Screen::height));
 	Screen::baseContainer->Show();
-
-	Graphics::RenderStateDesc rsd;
-	rsd.blendMode = Graphics::BLEND_ALPHA;
-	rsd.depthWrite = false;
-	alphaBlendState = renderer->CreateRenderState(rsd);
-
-	Graphics::MaterialDescriptor mdesc;
-	flatColorMaterial = renderer->CreateMaterial(mdesc);
 }
 
 void Screen::Uninit()
@@ -307,27 +307,7 @@ void Screen::RenderString(const std::string &s, float xoff, float yoff, const Co
 	r->Translate(floor(x/Screen::fontScale[0])*Screen::fontScale[0], floor(y/Screen::fontScale[1])*Screen::fontScale[1], 0);
 	r->Scale(Screen::fontScale[0], Screen::fontScale[1], 1);
 
-	font->RenderString(s, 0, 0, color);
-}
-
-void Screen::RenderMarkup(const std::string &s, const Color &color, Text::TextureFont *font)
-{
-	PROFILE_SCOPED()
-    if (!font) font = GetFont().Get();
-
-	Graphics::Renderer *r = Gui::Screen::GetRenderer();
-
-	const matrix4x4f &modelMatrix_ = r->GetCurrentModelView();
-	Graphics::Renderer::MatrixTicket ticket(r, Graphics::MatrixMode::MODELVIEW);
-
-	const float x = modelMatrix_[12];
-	const float y = modelMatrix_[13];
-
-	r->LoadIdentity();
-	r->Translate(floor(x/Screen::fontScale[0])*Screen::fontScale[0], floor(y/Screen::fontScale[1])*Screen::fontScale[1], 0);
-	r->Scale(Screen::fontScale[0], Screen::fontScale[1], 1);
-
-	font->RenderMarkup(s.c_str(), 0, 0, color);
+	//font->RenderString(s, 0, 0, color);
 }
 
 void Screen::AddShortcutWidget(Widget *w)

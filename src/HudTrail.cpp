@@ -12,6 +12,7 @@ HudTrail::HudTrail(Body *b, const Color& c)
 : m_body(b)
 , m_updateTime(0.f)
 , m_color(c)
+, m_refreshVB(true)
 {
 	m_currentFrame = b->GetFrame();
 
@@ -28,13 +29,24 @@ void HudTrail::Update(float time)
 	if (m_updateTime > UPDATE_INTERVAL) {
 		m_updateTime = 0.f;
 		const Frame *bodyFrame = m_body->GetFrame();
-		if( bodyFrame==m_currentFrame )
+		if( bodyFrame==m_currentFrame ) {
 			m_trailPoints.push_back(m_body->GetInterpPosition());
+			m_refreshVB = true;
+		}
 	}
 
-	while (m_trailPoints.size() > MAX_POINTS)
+	while (m_trailPoints.size() > MAX_POINTS) {
 		m_trailPoints.pop_front();
+		m_refreshVB = true;
+	}
 }
+
+#pragma pack(push, 4)
+struct HudPosColVert {
+	vector3f pos;
+	Color4ub col;
+};
+#pragma pack(pop)
 
 void HudTrail::Render(Graphics::Renderer *r)
 {
@@ -46,25 +58,29 @@ void HudTrail::Render(Graphics::Renderer *r)
 		m_transform[14] = vpos.z;
 		m_transform[15] = 1.0;
 
-		static std::vector<vector3f> tvts;
-		static std::vector<Color> colors;
-		tvts.clear();
-		colors.clear();
+		Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE);
 		const vector3d curpos = m_body->GetInterpPosition();
-		tvts.push_back(vector3f(0.f));
-		colors.push_back(Color(0.f));
 		float alpha = 1.f;
 		const float decrement = 1.f / m_trailPoints.size();
-		const Color tcolor = m_color;
+		va.Add(vector3f(0.f), Color(0.f));
 		for (Uint16 i = m_trailPoints.size()-1; i > 0; i--) {
-			tvts.push_back(-vector3f(curpos - m_trailPoints[i]));
 			alpha -= decrement;
-			colors.push_back(tcolor);
-			colors.back().a = Uint8(alpha * 255);
+			va.Add(-vector3f(curpos - m_trailPoints[i]), Color(m_color.r, m_color.g, m_color.b, alpha * 255));
 		}
 
+		if(m_refreshVB) {
+			m_refreshVB = false;
+			RefreshVertexBuffer( r, va.GetNumVerts() );
+		}
+
+		assert(sizeof(HudPosColVert) == 16);
+		assert(m_vbuffer->GetDesc().stride == sizeof(HudPosColVert));
+		auto vtxPtr = m_vbuffer->Map<HudPosColVert>(Graphics::BUFFER_MAP_WRITE);
+		m_vbuffer->Populate( va );
+		m_vbuffer->Unmap();
+
 		r->SetTransform(m_transform);
-		r->DrawLines(tvts.size(), &tvts[0], &colors[0], m_renderState, Graphics::LINE_STRIP);
+		r->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get(), Graphics::LINE_STRIP);
 	}
 }
 
@@ -72,4 +88,22 @@ void HudTrail::Reset(const Frame *newFrame)
 {
 	m_currentFrame = newFrame;
 	m_trailPoints.clear();
+	m_refreshVB = true;
+}
+
+void HudTrail::RefreshVertexBuffer(Graphics::Renderer *r, const Uint32 size)
+{
+	Graphics::MaterialDescriptor desc;
+	desc.vertexColors = true;
+	m_material.Reset(r->CreateMaterial(desc));
+
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+	vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
+	vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;
+	vbd.numVertices = size;
+	m_material->SetupVertexBufferDesc( vbd );
+	m_vbuffer.reset(r->CreateVertexBuffer(vbd));
 }

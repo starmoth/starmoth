@@ -23,6 +23,8 @@ namespace Gui {
 		std::string m_text;
 		TextLayout *m_layout;
 		Uint32 m_createdTime;
+
+		RefCountedPtr<Graphics::VertexBuffer> m_rectVB;
 	};
 }
 

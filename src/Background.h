@@ -61,11 +61,12 @@ namespace Background
 	private:
 		void Init();
 		static const int BG_STAR_MAX = 10000;
-		std::unique_ptr<Graphics::VertexBuffer> m_vertexBuffer;
+		std::unique_ptr<Graphics::VertexBuffer> m_staticBuffer;
 
 		//hyperspace animation vertex data
 		vector3f m_hyperVtx[BG_STAR_MAX*3];
 		Color m_hyperCol[BG_STAR_MAX*3];
+		std::unique_ptr<Graphics::VertexBuffer> m_animBuffer;
 	};
 
 	class MilkyWay : public BackgroundElement

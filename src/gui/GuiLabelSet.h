@@ -7,6 +7,11 @@
 #include "GuiWidget.h"
 #include <vector>
 
+namespace Graphics
+{
+	class VertexBuffer;
+}
+
 /*
  * Collection of clickable labels. Used by the WorldView for clickable
  * bodies, and SystemView, SectorView etc.
@@ -16,26 +21,20 @@ class LabelSet: public Widget {
 public:
 	class LabelSetItem {
 	public:
-		LabelSetItem(std::string text_, sigc::slot<void> onClick_, float screenx_, float screeny_) {
-			this->text = text_;
-			this->onClick = onClick_;
-			this->screenx = screenx_;
-			this->screeny = screeny_;
-			this->hasOwnColor = false;
+		LabelSetItem(std::string text_, sigc::slot<void> onClick_, float screenx_, float screeny_)
+			: text(text_), hasOwnColor(false), onClick(onClick_), screenx(screenx_), screeny(screeny_)
+		{
 		}
-		LabelSetItem(std::string text_, sigc::slot<void> onClick_, float screenx_, float screeny_, const Color &c) {
-			this->text = text_;
-			this->onClick = onClick_;
-			this->screenx = screenx_;
-			this->screeny = screeny_;
-			this->color = c;
-			this->hasOwnColor = true;
+		LabelSetItem(std::string text_, sigc::slot<void> onClick_, float screenx_, float screeny_, const Color &c)
+			: text(text_), color(c), hasOwnColor(true), onClick(onClick_), screenx(screenx_), screeny(screeny_)
+		{
 		}
 		std::string text;
 		Color color;
 		bool hasOwnColor;
 		sigc::slot<void> onClick;
 		float screenx, screeny;
+		RefCountedPtr<Graphics::VertexBuffer> m_vbuffer;
 	};
 
 	LabelSet();

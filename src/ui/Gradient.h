@@ -8,6 +8,10 @@
 #include "Color.h"
 #include "graphics/Material.h"
 
+namespace Graphics {
+	class VertexBuffer;
+}
+
 namespace UI {
 
 class Gradient : public Single {
@@ -30,6 +34,7 @@ private:
 	Direction m_direction;
 
 	std::unique_ptr<Graphics::Material> m_material;
+	RefCountedPtr<Graphics::VertexBuffer> m_vbuffer;
 };
 
 }

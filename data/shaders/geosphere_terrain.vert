@@ -18,7 +18,7 @@ void main(void)
 	gl_Position = logarithmicTransform();
 	vertexColor = a_color;
 	varyingEyepos = vec3(uViewMatrix * a_vertex);
-	varyingNormal = uNormalMatrix * a_normal;
+	varyingNormal = vec3(uNormalMatrix * vec4(a_normal, 1.0));
 
 #ifdef TERRAIN_WITH_LAVA
 	varyingEmission = material.emission;

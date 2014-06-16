@@ -41,12 +41,17 @@ void RadioButton::GetSizeRequested(float size[2])
 void RadioButton::Draw()
 {
 	PROFILE_SCOPED()
-	float size[2];
-	GetSize(size);
+	vector2f size; GetSize(size);
+	if( !m_prevSize.ExactlyEqual(size) ) {
+		Theme::GenerateIndent(m_indent, size);
+		Theme::GenerateOutdent(m_outdent, size);
+		m_prevSize = size;
+	}
+	
 	if (m_pressed) {
-		Theme::DrawIndent(size, Screen::alphaBlendState);
+		Theme::DrawIndent(m_indent, Screen::alphaBlendState);
 	} else {
-		Theme::DrawOutdent(size, Screen::alphaBlendState);
+		Theme::DrawOutdent(m_outdent, Screen::alphaBlendState);
 	}
 }
 }

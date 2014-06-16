@@ -14,6 +14,7 @@ ToolTip::ToolTip(Widget *owner, const char *text)
 	m_layout = 0;
 	SetText(text);
 	m_createdTime = SDL_GetTicks();
+	m_rectVB.Reset( Theme::GenerateRectVB() );
 }
 
 ToolTip::ToolTip(Widget *owner, std::string &text)
@@ -22,6 +23,7 @@ ToolTip::ToolTip(Widget *owner, std::string &text)
 	m_layout = 0;
 	SetText(text.c_str());
 	m_createdTime = SDL_GetTicks();
+	m_rectVB.Reset( Theme::GenerateRectVB() );
 }
 
 ToolTip::~ToolTip()
@@ -56,30 +58,30 @@ void ToolTip::Draw()
 	if (m_owner && !m_owner->IsVisible())
 		return;
 
-	float size[2];
-	int age = SDL_GetTicks() - m_createdTime;
-	float alpha = std::min(age / FADE_TIME_MS, 0.75f);
+	const int age = SDL_GetTicks() - m_createdTime;
+	const float alpha = std::min(age / FADE_TIME_MS, 0.75f);
 
 	Graphics::Renderer *r = Gui::Screen::GetRenderer();
 	r->SetRenderState(Gui::Screen::alphaBlendState);
 
-	GetSize(size);
+	vector2f size; GetSize(size);
 	const Color color(Color4f(0.2f, 0.2f, 0.6f, alpha));
-	Theme::DrawRect(vector2f(0.f), vector2f(size[0], size[1]), color, Screen::alphaBlendState);
+	Theme::DrawRect(m_rectVB.Get(), vector2f(0.0f), size, color, Screen::alphaBlendState);
 
-	const vector3f outlineVts[] = {
+	/*const vector3f outlineVts[] = {
 		vector3f(size[0], 0, 0),
 		vector3f(size[0], size[1], 0),
 		vector3f(0, size[1], 0),
 		vector3f(0, 0, 0)
-	};
-	const Color outlineColor(Color4f(0,0,.8f,alpha));
-	r->DrawLines(4, &outlineVts[0], outlineColor, Screen::alphaBlendState, Graphics::LINE_LOOP);
+	};*/
+	const Color outlineColor(Color4f(0, 0, 0.8f, alpha));
+	Theme::DrawRect(m_rectVB.Get(), vector2f(0.f), size, outlineColor, Screen::alphaBlendState, Graphics::LINE_LOOP);
 
-	Graphics::Renderer::MatrixTicket ticket(r, Graphics::MatrixMode::MODELVIEW);
-
-	r->Translate(TOOLTIP_PADDING,0,0);
-	m_layout->Render(size[0]-2*TOOLTIP_PADDING);
+	{
+		Graphics::Renderer::MatrixTicket ticket(r, Graphics::MatrixMode::MODELVIEW);
+		r->Translate(TOOLTIP_PADDING, 0, 0);
+		m_layout->Render(size.x - 2.0f * TOOLTIP_PADDING);
+	}
 }
 
 void ToolTip::GetSizeRequested(float size[2])

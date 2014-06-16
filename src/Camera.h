@@ -111,6 +111,7 @@ private:
 	Graphics::Renderer *m_renderer;
 
 	std::unique_ptr<Graphics::Material> m_billboardMaterial;
+	Graphics::Drawables::PointSprites m_billboard;
 
 	// temp attrs for sorting and drawing
 	struct BodyAttrs {

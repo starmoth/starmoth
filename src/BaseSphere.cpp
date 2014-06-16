@@ -7,6 +7,11 @@
 #include "GeoSphere.h"
 #include "GasGiant.h"
 #include "graphics/Material.h"
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
+
+RefCountedPtr<Graphics::VertexBuffer> BaseSphere::m_vLongBuffer;
+RefCountedPtr<Graphics::VertexBuffer> BaseSphere::m_vLatBuffer;
 
 BaseSphere::BaseSphere(const SystemBody *body) : m_sbody(body), m_terrain(Terrain::InstanceTerrain(body)) {}
 
@@ -74,7 +79,21 @@ void BaseSphere::DrawAtmosphereSurface(Graphics::Renderer *renderer,
 			cos(latDiff),
 			-sin(latDiff)*sinCosTable[i][1]));
 	}
-	renderer->DrawTriangles(&va, rs, mat, Graphics::TRIANGLE_FAN);
+
+	if( !m_vLongBuffer.Valid() && va.GetNumVerts()>0 )
+	{
+		//create buffer and upload data
+		Graphics::VertexBufferDesc vbd;
+		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+		vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+		vbd.numVertices = va.GetNumVerts();
+		vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;	// we could be updating this per-frame
+		mat->SetupVertexBufferDesc( vbd );
+		m_vLongBuffer.Reset( renderer->CreateVertexBuffer(vbd) );
+	}
+	m_vLongBuffer->Populate( va );
+
+	renderer->DrawBuffer(m_vLongBuffer.Get(), rs, mat, Graphics::TRIANGLE_FAN);
 
 	/* and wound latitudinal strips */
 	double lat = latDiff;
@@ -88,6 +107,18 @@ void BaseSphere::DrawAtmosphereSurface(Graphics::Renderer *renderer,
 			v.Add(vector3f(sinLat*sinCosTable[i][0], cosLat, -sinLat*sinCosTable[i][1]));
 			v.Add(vector3f(sinLat2*sinCosTable[i][0], cosLat2, -sinLat2*sinCosTable[i][1]));
 		}
-		renderer->DrawTriangles(&v, rs, mat, Graphics::TRIANGLE_STRIP);
+		if( !m_vLatBuffer.Valid() && va.GetNumVerts()>0 )
+		{
+			//create buffer and upload data
+			Graphics::VertexBufferDesc vbd;
+			vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+			vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+			vbd.numVertices = va.GetNumVerts();
+			vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;	// we could be updating this per-frame
+			mat->SetupVertexBufferDesc( vbd );
+			m_vLatBuffer.Reset( renderer->CreateVertexBuffer(vbd) );
+		}
+		m_vLatBuffer->Populate( va );
+		renderer->DrawBuffer(m_vLatBuffer.Get(), rs, mat, Graphics::TRIANGLE_STRIP);
 	}
 }

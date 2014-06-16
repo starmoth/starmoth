@@ -9,6 +9,11 @@
 #include "Lang.h"
 #include "FileSystem.h"
 #include "PngWriter.h"
+
+#include "graphics/Renderer.h"
+#include "graphics/Material.h"
+#include "graphics/VertexBuffer.h"
+
 #include <sstream>
 #include <cmath>
 #include <cstdio>
@@ -289,4 +294,32 @@ void hexdump(const unsigned char *buf, int len)
 
 		Output("\n");
 	}
+}
+
+Graphics::VertexBuffer* CreatePosUVVB(const Uint32 numVertices, Graphics::Material *mat, Graphics::Renderer *r)
+{
+	//create buffer and upload data
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[1].semantic = Graphics::ATTRIB_UV0;
+	vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_FLOAT2;
+	vbd.numVertices = numVertices;
+	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+	mat->SetupVertexBufferDesc( vbd );
+
+	return r->CreateVertexBuffer(vbd);
+}
+
+Graphics::VertexBuffer* CreatePosVB(const Uint32 numVertices, Graphics::Material *mat, Graphics::Renderer *r)
+{
+	//create buffer and upload data
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.numVertices = numVertices;
+	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+	mat->SetupVertexBufferDesc( vbd );
+
+	return r->CreateVertexBuffer(vbd);
 }

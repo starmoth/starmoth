@@ -12,6 +12,7 @@ namespace Graphics {
 	class Material;
 	class Renderer;
 	class VertexArray;
+	class VertexBuffer;
 	class RenderState;
 }
 
@@ -49,6 +50,7 @@ private:
 	bool m_isArrival;
 
 	struct Graphic {
+		std::unique_ptr<Graphics::VertexBuffer> vbuffer;
 		std::unique_ptr<Graphics::VertexArray> vertices;
 		std::unique_ptr<Graphics::Material> material;
 		Graphics::RenderState *renderState;

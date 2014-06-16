@@ -16,6 +16,7 @@
 #include "graphics/VertexArray.h"
 #include "graphics/TextureBuilder.h"
 #include "StringF.h"
+#include "utils.h"
 
 #include <SDL_stdinc.h>
 #include <sstream>
@@ -58,10 +59,6 @@ struct MilkyWayVert {
 struct StarVert {
 	vector3f pos;
 	Color4ub col;
-};
-
-struct SkyboxVert {
-	vector3f pos;
 };
 #pragma pack(pop)
 
@@ -149,12 +146,7 @@ void UniverseBox::Init()
 
 	m_vertexBuffer.reset(m_renderer->CreateVertexBuffer(vbd));
 
-	SkyboxVert* vtxPtr = m_vertexBuffer->Map<SkyboxVert>(Graphics::BUFFER_MAP_WRITE);
-	assert(m_vertexBuffer->GetDesc().stride == sizeof(SkyboxVert));
-	for (Uint32 i = 0; i < box->GetNumVerts(); i++) {
-		vtxPtr[i].pos = box->position[i];
-	}
-	m_vertexBuffer->Unmap();
+	m_vertexBuffer->Populate(*box.get());
 
 	SetIntensity(1.0f);
 
@@ -199,6 +191,16 @@ void Starfield::Init()
 	desc.vertexColors = true;
 	m_material.Reset(m_renderer->CreateMaterial(desc));
 	m_material->emissive = Color::WHITE;
+
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+	vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
+	vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;
+	vbd.numVertices = BG_STAR_MAX*2;
+	m_material->SetupVertexBufferDesc( vbd );
+	m_animBuffer.reset(m_renderer->CreateVertexBuffer(vbd));
 }
 
 void Starfield::Fill(Random &rand)
@@ -211,11 +213,11 @@ void Starfield::Fill(Random &rand)
 	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
 	vbd.numVertices = BG_STAR_MAX;
 	m_material->SetupVertexBufferDesc( vbd );
-	m_vertexBuffer.reset(m_renderer->CreateVertexBuffer(vbd));
+	m_staticBuffer.reset(m_renderer->CreateVertexBuffer(vbd));
 
 	assert(sizeof(StarVert) == 16);
-	assert(m_vertexBuffer->GetDesc().stride == sizeof(StarVert));
-	auto vtxPtr = m_vertexBuffer->Map<StarVert>(Graphics::BUFFER_MAP_WRITE);
+	assert(m_staticBuffer->GetDesc().stride == sizeof(StarVert));
+	auto vtxPtr = m_staticBuffer->Map<StarVert>(Graphics::BUFFER_MAP_WRITE);
 	//fill the array
 	for (int i=0; i<BG_STAR_MAX; i++) {
 		const Uint8 col = rand.Double(0.2,0.7)*255;
@@ -236,15 +238,19 @@ void Starfield::Fill(Random &rand)
 
 		vtxPtr++;
 	}
-	m_vertexBuffer->Unmap();
+	m_staticBuffer->Unmap();
 }
 
 void Starfield::Draw(Graphics::RenderState *rs)
 {
 	// XXX would be nice to get rid of the Pi:: stuff here
 	if (!Pi::game || Pi::player->GetFlightState() != Ship::HYPERSPACE) {
-		m_renderer->DrawBuffer(m_vertexBuffer.get(), rs, m_material.Get(), Graphics::POINTS);
+		m_renderer->DrawBuffer(m_staticBuffer.get(), rs, m_material.Get(), Graphics::POINTS);
 	} else {
+		assert(sizeof(StarVert) == 16);
+		assert(m_animBuffer->GetDesc().stride == sizeof(StarVert));
+		auto vtxPtr = m_animBuffer->Map<StarVert>(Graphics::BUFFER_MAP_WRITE);
+
 		// roughly, the multiplier gets smaller as the duration gets larger.
 		// the time-looking bits in this are completely arbitrary - I figured
 		// it out by tweaking the numbers until it looked sort of right
@@ -257,13 +263,14 @@ void Starfield::Draw(Graphics::RenderState *rs)
 			vector3f v = m_hyperVtx[BG_STAR_MAX * 2 + i] + vector3f(pz*hyperspaceProgress*mult);
 			const Color &c = m_hyperCol[BG_STAR_MAX * 2 + i];
 
-			m_hyperVtx[i*2] = m_hyperVtx[BG_STAR_MAX * 2 + i] + v;
-			m_hyperCol[i*2] = c;
+			vtxPtr[i*2].pos = m_hyperVtx[i*2] = m_hyperVtx[BG_STAR_MAX * 2 + i] + v;
+			vtxPtr[i*2].col = m_hyperCol[i*2] = c;
 
-			m_hyperVtx[i*2+1] = v;
-			m_hyperCol[i*2+1] = c;
+			vtxPtr[i*2+1].pos = m_hyperVtx[i*2+1] = v;
+			vtxPtr[i*2+1].col = m_hyperCol[i*2+1] = c;
 		}
-		m_renderer->DrawLines(BG_STAR_MAX*2, m_hyperVtx, m_hyperCol, rs);
+		m_animBuffer->Unmap();
+		m_renderer->DrawBuffer(m_animBuffer.get(), rs, m_material.Get(), Graphics::LINE_SINGLE);
 	}
 }
 
@@ -272,8 +279,8 @@ MilkyWay::MilkyWay(Graphics::Renderer *renderer)
 	m_renderer = renderer;
 
 	//build milky way model in two strips (about 256 verts)
-	std::unique_ptr<Graphics::VertexArray> bottom(new VertexArray(ATTRIB_POSITION | ATTRIB_DIFFUSE));
-	std::unique_ptr<Graphics::VertexArray> top(new VertexArray(ATTRIB_POSITION | ATTRIB_DIFFUSE));
+	Graphics::VertexArray bottom(ATTRIB_POSITION | ATTRIB_DIFFUSE);
+	Graphics::VertexArray top(ATTRIB_POSITION | ATTRIB_DIFFUSE);
 
 	const Color dark(0);
 	const Color bright(13, 13, 13, 13);
@@ -281,34 +288,34 @@ MilkyWay::MilkyWay(Graphics::Renderer *renderer)
 	//bottom
 	float theta;
 	for (theta=0.0; theta < 2.f*float(M_PI); theta+=0.1f) {
-		bottom->Add(
+		bottom.Add(
 				vector3f(100.0f*sin(theta), float(-40.0 - 30.0*noise(sin(theta),1.0,cos(theta))), 100.0f*cos(theta)),
 				dark);
-		bottom->Add(
+		bottom.Add(
 			vector3f(100.0f*sin(theta), float(5.0*noise(sin(theta),0.0,cos(theta))), 100.0f*cos(theta)),
 			bright);
 	}
 	theta = 2.f*float(M_PI);
-	bottom->Add(
+	bottom.Add(
 		vector3f(100.0f*sin(theta), float(-40.0 - 30.0*noise(sin(theta),1.0,cos(theta))), 100.0f*cos(theta)),
 		dark);
-	bottom->Add(
+	bottom.Add(
 		vector3f(100.0f*sin(theta), float(5.0*noise(sin(theta),0.0,cos(theta))), 100.0f*cos(theta)),
 		bright);
 	//top
 	for (theta=0; theta < 2.f*float(M_PI); theta+=0.1f) {
-		top->Add(
+		top.Add(
 			vector3f(100.0f*sin(theta), float(5.0*noise(sin(theta),0.0,cos(theta))), 100.0f*cos(theta)),
 			bright);
-		top->Add(
+		top.Add(
 			vector3f(100.0f*sin(theta), float(40.0 + 30.0*noise(sin(theta),-1.0,cos(theta))), 100.0f*cos(theta)),
 			dark);
 	}
 	theta = 2.f*float(M_PI);
-	top->Add(
+	top.Add(
 		vector3f(100.0f*sin(theta), float(5.0*noise(sin(theta),0.0,cos(theta))), 100.0f*cos(theta)),
 		bright);
-	top->Add(
+	top.Add(
 		vector3f(100.0f*sin(theta), float(40.0 + 30.0*noise(sin(theta),-1.0,cos(theta))), 100.0f*cos(theta)),
 		dark);
 
@@ -323,7 +330,7 @@ MilkyWay::MilkyWay(Graphics::Renderer *renderer)
 	vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
 	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
 	vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
-	vbd.numVertices = bottom->GetNumVerts() + top->GetNumVerts();
+	vbd.numVertices = bottom.GetNumVerts() + top.GetNumVerts();
 	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
 	m_material->SetupVertexBufferDesc( vbd );
 
@@ -331,14 +338,14 @@ MilkyWay::MilkyWay(Graphics::Renderer *renderer)
 	m_vertexBuffer.reset(renderer->CreateVertexBuffer(vbd));
 	assert(m_vertexBuffer->GetDesc().stride == sizeof(MilkyWayVert));
 	auto vtxPtr = m_vertexBuffer->Map<MilkyWayVert>(Graphics::BUFFER_MAP_WRITE);
-	for (Uint32 i = 0; i < top->GetNumVerts(); i++) {
-		vtxPtr->pos = top->position[i];
-		vtxPtr->col = top->diffuse[i];
+	for (Uint32 i = 0; i < top.GetNumVerts(); i++) {
+		vtxPtr->pos = top.position[i];
+		vtxPtr->col = top.diffuse[i];
 		vtxPtr++;
 	}
-	for (Uint32 i = 0; i < bottom->GetNumVerts(); i++) {
-		vtxPtr->pos = bottom->position[i];
-		vtxPtr->col = bottom->diffuse[i];
+	for (Uint32 i = 0; i < bottom.GetNumVerts(); i++) {
+		vtxPtr->pos = bottom.position[i];
+		vtxPtr->col = bottom.diffuse[i];
 		vtxPtr++;
 	}
 	m_vertexBuffer->Unmap();

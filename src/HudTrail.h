@@ -22,6 +22,8 @@ public:
 	void SetTransform(const matrix4x4d &t) { m_transform = t; }
 
 private:
+	void RefreshVertexBuffer(Graphics::Renderer *r, const Uint32 size);
+
 	Body *m_body;
 	const Frame *m_currentFrame;
 	float m_updateTime;
@@ -29,6 +31,9 @@ private:
 	matrix4x4d m_transform;
 	std::deque<vector3d> m_trailPoints;
 	Graphics::RenderState *m_renderState;
+	bool m_refreshVB;
+	RefCountedPtr<Graphics::Material> m_material;
+	std::unique_ptr<Graphics::VertexBuffer> m_vbuffer;
 };
 
 #endif

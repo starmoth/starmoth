@@ -27,7 +27,7 @@ Frustum::Frustum(float width, float height, float fovAng, float znear, float zfa
 	const float right = top * aspect;
 
 	m_projMatrix = matrix4x4d::FrustumMatrix(left, right, bottom, top, znear, zfar);
-	m_modelMatrix = mat4x4::Identityd();
+	m_modelMatrix = matrix4x4d::Identity();
 	InitFromMatrix(m_projMatrix);
 
 	m_translateThresholdSqr = zfar*zfar*TRANSLATE_STEP;

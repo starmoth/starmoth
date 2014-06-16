@@ -412,17 +412,4 @@ static inline void matrix4x4dtof(const matrix4x4d &in, matrix4x4f &out)
 		out[i] = float(in[i]);
 }
 
-namespace mat4x4
-{
-	static const matrix4x4f sIdentityf(matrix4x4f::Identity());
-	static inline const matrix4x4f& Identityf() {
-		return sIdentityf;
-	}
-
-	static const matrix4x4d sIdentityd(matrix4x4d::Identity());
-	static inline const matrix4x4d& Identityd() {
-		return sIdentityd;
-	}
-};
-
 #endif /* _MATRIX4X4_H */

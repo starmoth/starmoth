@@ -308,6 +308,8 @@ public:
 		vbd.attrib[1].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
 		vbd.numVertices = ctx->NUMVERTICES();
 		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+		Graphics::Material *mat = gasSphere->GetSurfaceMaterial();
+		mat->SetupVertexBufferDesc( vbd );
 		m_vertexBuffer.reset(Pi::renderer->CreateVertexBuffer(vbd));
 
 		GasPatchContext::VBOVertex* vtxPtr = m_vertexBuffer->Map<GasPatchContext::VBOVertex>(Graphics::BUFFER_MAP_WRITE);
@@ -547,6 +549,7 @@ void GasGiant::Update()
 
 void GasGiant::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView, vector3d campos, const float radius, const float scale, const std::vector<Camera::Shadow> &shadows)
 {
+	//First draw - create materials (they do not change afterwards)
 	if( !m_surfaceTexture.Valid() )
 	{
 		// Use the fact that we have a patch as a latch to prevent repeat generation requests.
@@ -571,10 +574,6 @@ void GasGiant::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView,
 
 	// no frustum test of entire gasSphere, since Space::Render does this
 	// for each body using its GetBoundingRadius() value
-
-	//First draw - create materials (they do not change afterwards)
-	if (!m_surfaceMaterial)
-		SetUpMaterials();
 
 	{
 		//Update material parameters
@@ -677,6 +676,9 @@ void GasGiant::BuildFirstPatches()
 	if( s_patchContext.Get() == nullptr ) {
 		s_patchContext.Reset(new GasPatchContext(127));
 	}
+	
+	GenerateTexture();
+	SetUpMaterials();
 
 	m_patches[0].reset(new GasPatch(s_patchContext, this, p1, p2, p3, p4));
 	m_patches[1].reset(new GasPatch(s_patchContext, this, p4, p3, p7, p8));
@@ -684,6 +686,4 @@ void GasGiant::BuildFirstPatches()
 	m_patches[3].reset(new GasPatch(s_patchContext, this, p2, p1, p5, p6));
 	m_patches[4].reset(new GasPatch(s_patchContext, this, p3, p2, p6, p7));
 	m_patches[5].reset(new GasPatch(s_patchContext, this, p8, p7, p6, p5));
-
-	GenerateTexture();
 }

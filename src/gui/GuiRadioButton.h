@@ -23,6 +23,9 @@ namespace Gui {
 		bool GetSelected() { return m_pressed; }
 	protected:
 		bool m_pressed;
+		vector2f m_prevSize;
+		Theme::IndentData m_indent;
+		Theme::IndentData m_outdent;
 	};
 
 }

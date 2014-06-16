@@ -1015,7 +1015,6 @@ void WorldView::Draw()
 	// don't draw crosshairs etc in hyperspace
 	if (Pi::player->GetFlightState() == Ship::HYPERSPACE) return;
 
-	//glPushAttrib(GL_CURRENT_BIT | GL_LINE_BIT);
 	glLineWidth(2.0f);
 
 	Color white(255, 255, 255, 204);
@@ -1051,23 +1050,22 @@ void WorldView::Draw()
 				break;
 		}
 	}
-
-	//glPopAttrib();
 }
 
 void WorldView::DrawCrosshair(float px, float py, float sz, const Color &c)
 {
-	const vector2f vts[] = {
-		vector2f(px-sz, py),
-		vector2f(px-0.5f*sz, py),
-		vector2f(px+sz, py),
-		vector2f(px+0.5f*sz, py),
-		vector2f(px, py-sz),
-		vector2f(px, py-0.5f*sz),
-		vector2f(px, py+sz),
-		vector2f(px, py+0.5f*sz)
+	const vector3f vts[] = {
+		vector3f(px-sz,			py,			0.0f),
+		vector3f(px-0.5f*sz,	py,			0.0f),
+		vector3f(px+sz,			py,			0.0f),
+		vector3f(px+0.5f*sz,	py,			0.0f),
+		vector3f(px,			py-sz,		0.0f),
+		vector3f(px,			py-0.5f*sz, 0.0f),
+		vector3f(px,			py+sz,		0.0f),
+		vector3f(px,			py+0.5f*sz, 0.0f)
 	};
-	m_renderer->DrawLines2D(COUNTOF(vts), vts, c, m_blendState);
+	m_crossHair.SetData(COUNTOF(vts), vts, c);
+	m_crossHair.Draw(m_renderer, m_blendState);
 }
 
 void WorldView::DrawTargetSquare(const Indicator &marker, const Color &c)
@@ -1085,13 +1083,14 @@ void WorldView::DrawTargetSquare(const Indicator &marker, const Color &c)
 	const float y1 = float(marker.pos.y - sz);
 	const float y2 = float(marker.pos.y + sz);
 
-	const vector2f vts[] = {
-		vector2f(x1, y1),
-		vector2f(x2, y1),
-		vector2f(x2, y2),
-		vector2f(x1, y2)
+	const vector3f vts[] = {
+		vector3f(x1, y1, 0.0f),
+		vector3f(x2, y1, 0.0f),
+		vector3f(x2, y2, 0.0f),
+		vector3f(x1, y2, 0.0f)
 	};
-	m_renderer->DrawLines2D(COUNTOF(vts), vts, c, m_blendState, Graphics::LINE_LOOP);
+	m_targetSquare.SetData(COUNTOF(vts), vts, c);
+	m_targetSquare.Draw(m_renderer, m_blendState, Graphics::LINE_LOOP);
 }
 
 void WorldView::DrawVelocityIndicator(const Indicator &marker, const Color &c)
@@ -1102,17 +1101,18 @@ void WorldView::DrawVelocityIndicator(const Indicator &marker, const Color &c)
 	if (marker.side == INDICATOR_ONSCREEN) {
 		const float posx = marker.pos.x;
 		const float posy = marker.pos.y;
-		const vector2f vts[] = {
-			vector2f(posx-sz, posy-sz),
-			vector2f(posx-0.5f*sz, posy-0.5f*sz),
-			vector2f(posx+sz, posy-sz),
-			vector2f(posx+0.5f*sz, posy-0.5f*sz),
-			vector2f(posx+sz, posy+sz),
-			vector2f(posx+0.5f*sz, posy+0.5f*sz),
-			vector2f(posx-sz, posy+sz),
-			vector2f(posx-0.5f*sz, posy+0.5f*sz)
+		const vector3f vts[] = {
+			vector3f(posx-sz, posy-sz, 0.0f),
+			vector3f(posx-0.5f*sz, posy-0.5f*sz, 0.0f),
+			vector3f(posx+sz, posy-sz, 0.0f),
+			vector3f(posx+0.5f*sz, posy-0.5f*sz, 0.0f),
+			vector3f(posx+sz, posy+sz, 0.0f),
+			vector3f(posx+0.5f*sz, posy+0.5f*sz, 0.0f),
+			vector3f(posx-sz, posy+sz, 0.0f),
+			vector3f(posx-0.5f*sz, posy+0.5f*sz, 0.0f)
 		};
-		m_renderer->DrawLines2D(COUNTOF(vts), vts, c, m_blendState);
+		m_velocityIndicator.SetData(COUNTOF(vts), vts, c);
+		m_velocityIndicator.Draw(m_renderer, m_blendState);
 	} else
 		DrawEdgeMarker(marker, c);
 
@@ -1138,7 +1138,10 @@ void WorldView::DrawEdgeMarker(const Indicator &marker, const Color &c)
 	float len = dir.Length();
 	dir *= sz/len;
 	const vector2f vts[] = { marker.pos, marker.pos + dir };
-	m_renderer->DrawLines2D(2, vts, c, m_blendState);
+	m_edgeMarker.SetColor(c);
+	m_edgeMarker.SetStart(vector3f(marker.pos, 0.0f));
+	m_edgeMarker.SetEnd(vector3f(marker.pos + dir, 0.0f));
+	m_edgeMarker.Draw(m_renderer, m_blendState);
 }
 
 void WorldView::MouseWheel(bool up)
@@ -1198,6 +1201,13 @@ void NavTunnelWidget::Draw() {
 	}
 }
 
+#pragma pack(push, 4)
+struct TunnelVert {
+	vector3f pos;
+	Color4ub col;
+};
+#pragma pack(pop)
+
 void NavTunnelWidget::DrawTargetGuideSquare(const vector2f &pos, const float size, const Color &c)
 {
 	const float x1 = pos.x - size;
@@ -1205,33 +1215,51 @@ void NavTunnelWidget::DrawTargetGuideSquare(const vector2f &pos, const float siz
 	const float y1 = pos.y - size;
 	const float y2 = pos.y + size;
 
-	const vector3f vts[] = {
-		vector3f(x1,    y1,    0.f),
-		vector3f(pos.x, y1,    0.f),
-		vector3f(x2,    y1,    0.f),
-		vector3f(x2,    pos.y, 0.f),
-		vector3f(x2,    y2,    0.f),
-		vector3f(pos.x, y2,    0.f),
-		vector3f(x1,    y2,    0.f),
-		vector3f(x1,    pos.y, 0.f)
-	};
 	Color black(c);
 	black.a = c.a / 6;
-	const Color col[] = {
-		c,
-		black,
-		c,
-		black,
-		c,
-		black,
-		c,
-		black
-	};
-	assert(COUNTOF(col) == COUNTOF(vts));
-	m_worldView->m_renderer->DrawLines(COUNTOF(vts), vts, col, m_renderState, Graphics::LINE_LOOP);
+	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, 8);
+	va.Set(0, vector3f(x1,    y1,    0.f),	c);
+	va.Set(1, vector3f(pos.x, y1,    0.f),	black);
+	va.Set(2, vector3f(x2,    y1,    0.f),	c);
+	va.Set(3, vector3f(x2,    pos.y, 0.f),	black);
+	va.Set(4, vector3f(x2,    y2,    0.f),	c);
+	va.Set(5, vector3f(pos.x, y2,    0.f),	black);
+	va.Set(6, vector3f(x1,    y2,    0.f),	c);
+	va.Set(7, vector3f(x1,    pos.y, 0.f),	black);
+
+	if( !m_vbuffer.get() ) {
+		CreateVertexBuffer( 8 );
+	}
+
+	assert(sizeof(TunnelVert) == 16);
+	assert(m_vbuffer->GetDesc().stride == sizeof(TunnelVert));
+	auto vtxPtr = m_vbuffer->Map<TunnelVert>(Graphics::BUFFER_MAP_WRITE);
+	m_vbuffer->Populate( va );
+	m_vbuffer->Unmap();
+	
+	m_worldView->m_renderer->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get(), Graphics::LINE_LOOP);
 }
 
 void NavTunnelWidget::GetSizeRequested(float size[2]) {
 	size[0] = Gui::Screen::GetWidth();
 	size[1] = Gui::Screen::GetHeight();
+}
+
+void NavTunnelWidget::CreateVertexBuffer(const Uint32 size)
+{
+	Graphics::Renderer *r = m_worldView->m_renderer;
+
+	Graphics::MaterialDescriptor desc;
+	desc.vertexColors = true;
+	m_material.Reset(r->CreateMaterial(desc));
+
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+	vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
+	vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;
+	vbd.numVertices = size;
+	m_material->SetupVertexBufferDesc( vbd );
+	m_vbuffer.reset(r->CreateVertexBuffer(vbd));
 }
