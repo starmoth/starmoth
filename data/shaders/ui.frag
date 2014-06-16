@@ -13,7 +13,7 @@ out vec4 frag_color;
 
 void main(void)
 {
-	frag_color = vertexColor * texture2D(texture0, texCoord0).x;
+	frag_color = vertexColor * texture(texture0, texCoord0).x;
 	
 	SetFragDepth();
 }

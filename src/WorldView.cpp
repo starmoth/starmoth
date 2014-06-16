@@ -1201,13 +1201,6 @@ void NavTunnelWidget::Draw() {
 	}
 }
 
-#pragma pack(push, 4)
-struct TunnelVert {
-	vector3f pos;
-	Color4ub col;
-};
-#pragma pack(pop)
-
 void NavTunnelWidget::DrawTargetGuideSquare(const vector2f &pos, const float size, const Color &c)
 {
 	const float x1 = pos.x - size;
@@ -1231,8 +1224,6 @@ void NavTunnelWidget::DrawTargetGuideSquare(const vector2f &pos, const float siz
 		CreateVertexBuffer( 8 );
 	}
 
-	assert(sizeof(TunnelVert) == 16);
-	assert(m_vbuffer->GetDesc().stride == sizeof(TunnelVert));
 	m_vbuffer->Populate( va );
 	
 	m_worldView->m_renderer->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get(), Graphics::LINE_LOOP);

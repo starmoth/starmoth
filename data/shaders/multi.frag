@@ -39,7 +39,7 @@ void ads(in int lightNum, in vec3 pos, in vec3 n, inout vec4 light, inout vec4 s
 	vec3 h = normalize(v + s);
 	light += uLight[lightNum].diffuse * material.diffuse * max(dot(s, n), 0.0);
 #ifdef MAP_SPECULAR
-	specular += texture2D(texture1, texCoord0) * material.specular * uLight[lightNum].diffuse * pow(max(dot(h, n), 0.0), material.shininess);
+	specular += texture(texture1, texCoord0) * material.specular * uLight[lightNum].diffuse * pow(max(dot(h, n), 0.0), material.shininess);
 #else
 	specular += material.specular * uLight[lightNum].diffuse * pow(max(dot(h, n), 0.0), material.shininess);
 #endif
@@ -56,12 +56,12 @@ void main(void)
 	vec4 color = material.diffuse;
 #endif
 #ifdef TEXTURE0
-	color *= texture2D(texture0, texCoord0);
+	color *= texture(texture0, texCoord0);
 #endif
 //patterns - simple lookup
 #ifdef MAP_COLOR
-	vec4 pat = texture2D(texture4, texCoord0);
-	vec4 mapColor = texture2D(texture5, vec2(pat.r, 0.0));
+	vec4 pat = texture(texture4, texCoord0);
+	vec4 mapColor = texture(texture5, vec2(pat.r, 0.0));
 	vec4 tint = mix(vec4(1.0),mapColor,pat.a);
 	color *= tint;
 #endif
@@ -83,12 +83,12 @@ void main(void)
 #ifdef MAP_AMBIENT
 	// this is crude "baked ambient occulsion" - basically multiply everything by the ambient texture
 	// scaling whatever we've decided the lighting contribution is by 0.0 to 1.0 to account for sheltered/hidden surfaces
-	light *= texture2D(texture3, texCoord0);
+	light *= texture(texture3, texCoord0);
 #endif
 
 	//emissive only make sense with lighting
 #ifdef MAP_EMISSIVE
-	light += texture2D(texture2, texCoord0); //glow map
+	light += texture(texture2, texCoord0); //glow map
 #else
 	light += material.emission; //just emissive parameter
 #endif
@@ -100,7 +100,7 @@ void main(void)
 		{
 			float dphNn = clamp(dot(heatingDir, normal), 0.0, 1.0);
 			float heatDot = heatingAmount * (dphNn * dphNn * dphNn);
-			vec4 heatColour = texture2D(heatGradient, vec2(heatDot, 0.5)); //heat gradient blend
+			vec4 heatColour = texture(heatGradient, vec2(heatDot, 0.5)); //heat gradient blend
 			frag_color = color * light + specular;
 			frag_color.rgb = frag_color.rgb + heatColour.rgb;
 		}

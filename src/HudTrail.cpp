@@ -44,7 +44,7 @@ void HudTrail::Update(float time)
 void HudTrail::Render(Graphics::Renderer *r)
 {
 	//render trail
-	if (m_trailPoints.size() > 1) {
+	if (!m_trailPoints.empty()) {
 		const vector3d vpos = m_transform * m_body->GetInterpPosition();
 		m_transform[12] = vpos.x;
 		m_transform[13] = vpos.y;

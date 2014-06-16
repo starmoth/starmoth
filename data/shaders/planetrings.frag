@@ -9,7 +9,7 @@ void main(void)
 {
 	// Bits of ring in shadow!
 	vec4 col = vec4(0.0);
-	vec4 texCol = texture2D(texture0, gl_TexCoord[0].st);
+	vec4 texCol = texture(texture0, gl_TexCoord[0].st);
 
 	for (int i=0; i<NUM_LIGHTS; ++i) {
 		float l = findSphereEyeRayEntryDistance(-vec3(gl_TexCoord[1]), vec3(uViewMatrixInverse * uLight[i].position), 1.0);

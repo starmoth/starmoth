@@ -26,13 +26,15 @@ SpeedLines::SpeedLines(Ship *s)
 	}
 
 	m_varray.reset(new Graphics::VertexArray(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, (m_points.size() * 2)));
+	for( auto i = 0; i < (m_points.size() * 2); i++ )
+		m_varray->Add(vector3f(0.0f), Color::BLACK);
 
 	Graphics::RenderStateDesc rsd;
 	rsd.blendMode = Graphics::BLEND_ALPHA_ONE;
 	rsd.depthWrite = false;
 	m_renderState = Pi::renderer->CreateRenderState(rsd);
 
-	CreateVertexBuffer( Pi::renderer, m_points.size() );
+	CreateVertexBuffer( Pi::renderer, (m_points.size() * 2) );
 }
 
 void SpeedLines::Update(float time)
@@ -94,16 +96,9 @@ void SpeedLines::Update(float time)
 	}
 }
 
-#pragma pack(push, 4)
-struct SpeedPosColVert {
-	vector3f pos;
-	Color4ub col;
-};
-#pragma pack(pop)
-
 void SpeedLines::Render(Graphics::Renderer *r)
 {
-	if (!m_visible) return;
+	if (!m_visible || m_points.empty()) return;
 
 	const vector3f dir = m_dir * m_lineLength;
 
@@ -119,8 +114,6 @@ void SpeedLines::Render(Graphics::Renderer *r)
 		vtx += 2;
 	}
 
-	assert(sizeof(SpeedPosColVert) == 16);
-	assert(m_vbuffer->GetDesc().stride == sizeof(SpeedPosColVert));
 	m_vbuffer->Populate( *m_varray );
 
 	r->SetTransform(m_transform);

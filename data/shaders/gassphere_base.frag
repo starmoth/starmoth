@@ -115,7 +115,7 @@ void main(void)
 	float atmpower = (diff.r+diff.g+diff.b)/3.0;
 	vec4 sunset = vec4(0.8,clamp(pow(atmpower,0.8),0.0,1.0),clamp(pow(atmpower,1.2),0.0,1.0),1.0);
 	
-	vec4 texColor = textureCube(texture0, varyingTexCoord0);
+	vec4 texColor = texture(texture0, varyingTexCoord0);
 
 	frag_color =
 		material.emission +
