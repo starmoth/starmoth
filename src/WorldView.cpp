@@ -1233,9 +1233,7 @@ void NavTunnelWidget::DrawTargetGuideSquare(const vector2f &pos, const float siz
 
 	assert(sizeof(TunnelVert) == 16);
 	assert(m_vbuffer->GetDesc().stride == sizeof(TunnelVert));
-	auto vtxPtr = m_vbuffer->Map<TunnelVert>(Graphics::BUFFER_MAP_WRITE);
 	m_vbuffer->Populate( va );
-	m_vbuffer->Unmap();
 	
 	m_worldView->m_renderer->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get(), Graphics::LINE_LOOP);
 }

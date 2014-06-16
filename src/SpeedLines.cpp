@@ -121,9 +121,7 @@ void SpeedLines::Render(Graphics::Renderer *r)
 
 	assert(sizeof(SpeedPosColVert) == 16);
 	assert(m_vbuffer->GetDesc().stride == sizeof(SpeedPosColVert));
-	auto vtxPtr = m_vbuffer->Map<SpeedPosColVert>(Graphics::BUFFER_MAP_WRITE);
 	m_vbuffer->Populate( *m_varray );
-	m_vbuffer->Unmap();
 
 	r->SetTransform(m_transform);
 	r->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get(), Graphics::LINE_SINGLE);

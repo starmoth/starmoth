@@ -41,13 +41,6 @@ void HudTrail::Update(float time)
 	}
 }
 
-#pragma pack(push, 4)
-struct HudPosColVert {
-	vector3f pos;
-	Color4ub col;
-};
-#pragma pack(pop)
-
 void HudTrail::Render(Graphics::Renderer *r)
 {
 	//render trail
@@ -73,11 +66,7 @@ void HudTrail::Render(Graphics::Renderer *r)
 			RefreshVertexBuffer( r, va.GetNumVerts() );
 		}
 
-		assert(sizeof(HudPosColVert) == 16);
-		assert(m_vbuffer->GetDesc().stride == sizeof(HudPosColVert));
-		auto vtxPtr = m_vbuffer->Map<HudPosColVert>(Graphics::BUFFER_MAP_WRITE);
 		m_vbuffer->Populate( va );
-		m_vbuffer->Unmap();
 
 		r->SetTransform(m_transform);
 		r->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get(), Graphics::LINE_STRIP);
