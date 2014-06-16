@@ -36,7 +36,6 @@ Image::Image(Context *context, const std::string &filename, Uint32 sizeControlFl
 	va.Add(vector3f(1.0f, 0.0f, 0.0f), vector2f(texSize.x, 0.0f));
 	va.Add(vector3f(1.0f, 1.0f, 0.0f), vector2f(texSize.x, texSize.y));
 
-	m_vbuffer;
 	//create buffer and upload data
 	Graphics::VertexBufferDesc vbd;
 	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;

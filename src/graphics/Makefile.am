@@ -40,6 +40,7 @@ noinst_HEADERS = \
 	gl/SkyboxMaterial.h \
 	gl/UIMaterial.h \
 	gl/VtxColorMaterial.h \
+	gl/Attribute.h \
 	gl/Uniform.h
 
 libgraphics_a_SOURCES = \
@@ -53,8 +54,8 @@ libgraphics_a_SOURCES = \
 	TextureBuilder.cpp \
 	Drawables.cpp \
 	VertexBuffer.cpp \
-	gl/glRenderer.h \
-	gl/glTexture.h \
+	gl/glRenderer.cpp \
+	gl/glTexture.cpp \
 	gl/glMaterial.cpp \
 	gl/glRenderState.cpp \
 	gl/glRenderTarget.cpp \
@@ -68,4 +69,5 @@ libgraphics_a_SOURCES = \
 	gl/RingMaterial.cpp \
 	gl/UIMaterial.cpp \
 	gl/VtxColorMaterial.cpp \
+	gl/Attribute.cpp \
 	gl/Uniform.cpp

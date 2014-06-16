@@ -8,14 +8,11 @@
 #include "Serializer.h"
 #include "graphics/Material.h"
 #include "graphics/RenderState.h"
+#include "graphics/Drawables.h"
 
 class Frame;
 namespace Graphics {
 	class Renderer;
-	namespace Drawables {
-		class Sphere3D;
-		class PointSprites;
-	}
 }
 
 class Sfx {

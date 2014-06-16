@@ -5,8 +5,6 @@
 #include "graphics/VertexArray.h"
 #include "utils.h"
 
-extern void CheckRenderErrors();
-
 namespace Graphics { namespace PiGL {
 
 GLint get_num_components(VertexAttribFormat fmt)
@@ -68,7 +66,6 @@ VertexBuffer::VertexBuffer(const VertexBufferDesc &desc)
 	glBindVertexArray(m_vao);
 
 	glGenBuffers(1, &m_buffer);
-	CheckRenderErrors();
 
 	//Allocate initial data store
 	//Using zeroed m_data is not mandatory, but otherwise contents are undefined
@@ -78,7 +75,6 @@ VertexBuffer::VertexBuffer(const VertexBufferDesc &desc)
 	memset(m_data, 0, dataSize);
 	const GLenum usage = (m_desc.usage == BUFFER_USAGE_STATIC) ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
 	glBufferData(GL_ARRAY_BUFFER, dataSize, m_data, usage);
-	CheckRenderErrors();
 
 	//Setup the VAO pointers
 	for (Uint8 i = 0; i < MAX_ATTRIBS; i++) {
@@ -106,7 +102,6 @@ VertexBuffer::VertexBuffer(const VertexBufferDesc &desc)
 		default:
 			break;
 		}
-		CheckRenderErrors();
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);

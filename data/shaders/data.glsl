@@ -29,4 +29,5 @@ in vec4 a_color;
 in vec2 a_uv0;
 
 // nVidia complains if this isn't set even though I'm just using the regular "textureCube" sampler.
-#extension GL_NV_shadow_samplers_cube : enable
+//#extension GL_NV_shadow_samplers_cube : enable
+

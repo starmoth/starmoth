@@ -6,6 +6,7 @@
 
 #include "graphics/Frustum.h"
 #include "graphics/Light.h"
+#include "graphics/Drawables.h"
 #include "RefCounted.h"
 #include "vector3.h"
 #include "matrix4x4.h"

@@ -6,11 +6,10 @@
 
 #include "Widget.h"
 #include "SmartPtr.h"
+#include "text/TextureFont.h"
+#include "graphics/VertexBuffer.h"
 
 // single line of text
-
-namespace Text { class TextureFont; }
-namespace Graphics { class VertexBuffer; }
 
 namespace UI {
 

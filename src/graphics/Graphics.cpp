@@ -59,8 +59,6 @@ Renderer* Init(Settings vs)
 	width = window->GetWidth();
 	height = window->GetHeight();
 
-	CheckRenderErrors();
-
 	glewExperimental = true;
 	const GLenum err = glewInit();
 	if(err!=GLEW_OK)
@@ -68,14 +66,11 @@ Renderer* Init(Settings vs)
 		//Problem: glewInit failed, something is seriously wrong.
 		Error("glewInit failed, aborting.\n");
 	}
-	CheckRenderErrors();
 
 	if (!glewIsSupported("GL_VERSION_3_2") )
 		Error("OpenGL Version 3.2 is not supported. Pioneer cannot run on your graphics card.");
-	CheckRenderErrors();
 	
 	Renderer *renderer = new RendererGL(window, vs);
-	CheckRenderErrors();
 
 	Output("Initialized %s\n", renderer->GetName());
 
