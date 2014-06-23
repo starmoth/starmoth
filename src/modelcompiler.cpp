@@ -186,6 +186,7 @@ start:
 				"usage: modelcompiler [mode] [options...]\n"
 				"available modes:\n"
 				"    -compile     [-c]     model compiler\n"
+				"    -batch       [-b]     model compiler batch mode\n"
 				"    -version     [-v]     show version\n"
 				"    -help        [-h,-?]  this help\n"
 			);
