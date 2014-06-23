@@ -69,6 +69,14 @@ Renderer* Init(Settings vs)
 
 	if (!glewIsSupported("GL_VERSION_3_2") )
 		Error("OpenGL Version 3.2 is not supported. Pioneer cannot run on your graphics card.");
+
+	// due to a bug in GLEW it causes an error with any 3.x or newer OpenGL version, this just kills the errors.
+	GLenum errDump = glGetError();
+	if( errDump ) {
+		while (errDump != GL_NO_ERROR) {
+			errDump = glGetError();
+		}
+	}
 	
 	Renderer *renderer = new RendererGL(window, vs);
 
