@@ -57,6 +57,9 @@ void SetupRenderer()
 
 void RunCompiler(const std::string &modelName, const std::string &filepath)
 {
+	Profiler::Timer timer;
+	timer.Start();
+
 	//load the current model in a pristine state (no navlights, shields...)
 	//and then save it into binary
 	std::unique_ptr<SceneGraph::Model> model;
@@ -80,6 +83,9 @@ void RunCompiler(const std::string &modelName, const std::string &filepath)
 	} catch (const CouldNotOpenFileException&) {
 	} catch (const CouldNotWriteToFileException&) {
 	}
+
+	timer.Stop();
+	Output("Compiling \"%s\" took: %lf\n", modelName.c_str(), timer.millicycles());
 }
 
 
@@ -96,6 +102,8 @@ int main(int argc, char** argv)
 #ifdef PIONEER_PROFILER
 	Profiler::detect( argc, argv );
 #endif
+
+	OS::RedirectStdio();
 
 	RunMode mode = MODE_MODELCOMPILER;
 
@@ -168,6 +176,7 @@ start:
 			for (auto &modelName : list_model) {
 				RunCompiler(modelName.first, modelName.second);
 			}
+			break;
 		}
 
 		case MODE_VERSION: {
