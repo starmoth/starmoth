@@ -26,7 +26,7 @@ SpeedLines::SpeedLines(Ship *s)
 	}
 
 	m_varray.reset(new Graphics::VertexArray(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, (m_points.size() * 2)));
-	for( auto i = 0; i < (m_points.size() * 2); i++ )
+	for( Uint32 i = 0; i < (m_points.size() * 2); i++ )
 		m_varray->Add(vector3f(0.0f), Color::BLACK);
 
 	Graphics::RenderStateDesc rsd;

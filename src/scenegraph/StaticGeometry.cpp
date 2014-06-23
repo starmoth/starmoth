@@ -142,6 +142,7 @@ StaticGeometry *StaticGeometry::Load(NodeDatabase &db)
 		vbDesc.attrib[2].format   = Graphics::ATTRIB_FORMAT_FLOAT2;
 		vbDesc.usage = Graphics::BUFFER_USAGE_STATIC;
 		vbDesc.numVertices = db.rd->Int32();
+		material->SetupVertexBufferDesc( vbDesc );
 
 		RefCountedPtr<Graphics::VertexBuffer> vtxBuffer(db.loader->GetRenderer()->CreateVertexBuffer(vbDesc));
 		const Uint32 posOffset = vtxBuffer->GetDesc().GetOffset(Graphics::ATTRIB_POSITION);
