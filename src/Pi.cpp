@@ -244,6 +244,9 @@ void Pi::Init(const std::map<std::string,std::string> &options, bool no_gui)
 	Profiler::reset();
 #endif
 
+	Profiler::Timer timer;
+	timer.Start();
+
 	OS::NotifyLoadBegin();
 
 	FileSystem::Init();
@@ -506,6 +509,9 @@ void Pi::Init(const std::map<std::string,std::string> &options, bool no_gui)
 		fclose(pStatFile);
 	}
 #endif
+
+	timer.Stop();
+	Output("loading took: %lf\n", timer.millicycles());
 }
 
 void Pi::Quit()
