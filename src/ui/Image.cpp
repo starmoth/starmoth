@@ -8,13 +8,6 @@
 
 namespace UI {
 
-#pragma pack(push, 4)
-struct ImageVert {
-	vector3f pos;
-	vector2f uv;
-};
-#pragma pack(pop)
-
 Image::Image(Context *context, const std::string &filename, Uint32 sizeControlFlags): Widget(context)
 {
 	Graphics::Renderer *r = GetContext()->GetRenderer();
@@ -47,14 +40,7 @@ Image::Image(Context *context, const std::string &filename, Uint32 sizeControlFl
 	m_material->SetupVertexBufferDesc( vbd );
 
 	m_vbuffer.Reset( r->CreateVertexBuffer(vbd) );
-	ImageVert* vtxPtr = m_vbuffer->Map<ImageVert>(Graphics::BUFFER_MAP_WRITE);
-	assert(m_vbuffer->GetDesc().stride == sizeof(ImageVert));
-	for(Uint32 i=0 ; i<vbd.numVertices ; i++)
-	{
-		vtxPtr[i].pos	= va.position[i];
-		vtxPtr[i].uv	= va.uv0[i];
-	}
-	m_vbuffer->Unmap();
+	m_vbuffer->Populate(va);
 
 	SetSizeControlFlags(sizeControlFlags);
 }

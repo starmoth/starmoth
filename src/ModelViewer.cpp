@@ -18,13 +18,6 @@
 #include "ModManager.h"
 #include <sstream>
 
-#pragma pack(push, 4)
-struct BackgroundVert {
-	vector3f pos;
-	Color diff;
-};
-#pragma pack(pop)
-
 //default options
 ModelViewer::Options::Options()
 : attachGuns(false)
@@ -432,14 +425,7 @@ void ModelViewer::CreateBackground()
 	Graphics::vtxColorMaterial->SetupVertexBufferDesc( vbd );
 
 	m_bgVB.reset( m_renderer->CreateVertexBuffer(vbd) );
-	BackgroundVert* vtxPtr = m_bgVB->Map<BackgroundVert>(Graphics::BUFFER_MAP_WRITE);
-	assert(m_bgVB->GetDesc().stride == sizeof(BackgroundVert));
-	for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
-	{
-		vtxPtr[i].pos	= va.position[i];
-		vtxPtr[i].diff	= va.diffuse[i].ToColor4f();
-	}
-	m_bgVB->Unmap();
+	m_bgVB->Populate(va);
 }
 
 void ModelViewer::DrawBackground()
@@ -481,10 +467,6 @@ void ModelViewer::DrawGrid(const matrix4x4f &trans, float radius)
 			vertices.Add(vector3f(max,0,x));
 		}
 
-		struct LineVertex {
-			vector3f pos;
-		};
-
 		Graphics::MaterialDescriptor desc;
 		m_gridMaterial.Reset(m_renderer->CreateMaterial(desc));
 		m_gridMaterial->diffuse = Color(128);
@@ -493,19 +475,11 @@ void ModelViewer::DrawGrid(const matrix4x4f &trans, float radius)
 		Graphics::VertexBufferDesc vbd;
 		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
 		vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
-		vbd.attrib[0].offset   = offsetof(LineVertex, pos);
-		vbd.stride = sizeof(LineVertex);
 		vbd.numVertices = vertices.GetNumVerts();
 		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
 		m_gridMaterial->SetupVertexBufferDesc( vbd );
 		m_grid.reset(m_renderer->CreateVertexBuffer(vbd));
-		LineVertex* vtxPtr = m_grid->Map<LineVertex>(Graphics::BUFFER_MAP_WRITE);
-		assert(m_grid->GetDesc().stride == sizeof(LineVertex));
-		for(Uint32 i=0 ; i<vertices.GetNumVerts() ; i++)
-		{
-			vtxPtr[i].pos	= vertices.position[i];
-		}
-		m_grid->Unmap();
+		m_grid->Populate(vertices);
 	}
 
 	m_renderer->SetTransform(trans);

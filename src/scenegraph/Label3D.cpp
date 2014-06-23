@@ -9,14 +9,6 @@
 
 namespace SceneGraph {
 
-#pragma pack(push, 4)
-struct Label3DVert {
-	vector3f pos;
-	vector3f norm;
-	vector2f uv;
-};
-#pragma pack(pop)
-
 Label3D::Label3D(Graphics::Renderer *r, RefCountedPtr<Text::DistanceFieldFont> font)
 : Node(r, NODE_TRANSPARENT)
 , m_font(font)
@@ -71,15 +63,7 @@ void Label3D::SetText(const std::string &text)
 		m_material->SetupVertexBufferDesc( vbd );
 
 		m_vbuffer.reset( m_renderer->CreateVertexBuffer(vbd) );
-		Label3DVert* vtxPtr = m_vbuffer->Map<Label3DVert>(Graphics::BUFFER_MAP_WRITE);
-		assert(m_vbuffer->GetDesc().stride == sizeof(Label3DVert));
-		for(Uint32 i=0 ; i<vbd.numVertices ; i++)
-		{
-			vtxPtr[i].pos	= m_geometry->position[i];
-			vtxPtr[i].norm	= m_geometry->normal[i];
-			vtxPtr[i].uv	= m_geometry->uv0[i];
-		}
-		m_vbuffer->Unmap();
+		m_vbuffer->Populate(*m_geometry);
 	}
 }
 

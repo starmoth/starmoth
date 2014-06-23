@@ -96,10 +96,6 @@ void ScrollBar::SetupVertexBuffer(const vector2f &size, const float pos)
 		vertices.Add(vector3f(size.x-BORDER, BORDER+(size.y-2*BORDER)*pos, 0.f));
 	}
 
-	struct LineVertex {
-		vector3f pos;
-	};
-
 	Graphics::MaterialDescriptor desc;
 	m_lineMaterial.Reset(r->CreateMaterial(desc));
 	m_lineMaterial->diffuse = Color::WHITE;
@@ -108,19 +104,11 @@ void ScrollBar::SetupVertexBuffer(const vector2f &size, const float pos)
 	Graphics::VertexBufferDesc vbd;
 	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
 	vbd.attrib[0].format   = Graphics::ATTRIB_FORMAT_FLOAT3;
-	vbd.attrib[0].offset   = offsetof(LineVertex, pos);
-	vbd.stride = sizeof(LineVertex);
 	vbd.numVertices = vertices.GetNumVerts();
 	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
 	m_lineMaterial->SetupVertexBufferDesc( vbd );
 	m_line.Reset(r->CreateVertexBuffer(vbd));
-	LineVertex* vtxPtr = m_line->Map<LineVertex>(Graphics::BUFFER_MAP_WRITE);
-	assert(m_line->GetDesc().stride == sizeof(LineVertex));
-	for(Uint32 i=0 ; i<vertices.GetNumVerts() ; i++)
-	{
-		vtxPtr[i].pos	= vertices.position[i];
-	}
-	m_line->Unmap();
+	m_line->Populate(vertices);
 }
 
 void ScrollBar::GetSizeRequested(float size[2])

@@ -24,10 +24,6 @@ void Circle::Draw(Renderer *renderer) {
 
 void Circle::SetupVertexBuffer(const Graphics::VertexArray& vertices, Graphics::Renderer *r)
 {
-	struct CircleVertex {
-		vector3f pos;
-	};
-
 	MaterialDescriptor desc;
 	m_material.Reset(r->CreateMaterial(desc));
 
@@ -35,19 +31,11 @@ void Circle::SetupVertexBuffer(const Graphics::VertexArray& vertices, Graphics::
 	VertexBufferDesc vbd;
 	vbd.attrib[0].semantic = ATTRIB_POSITION;
 	vbd.attrib[0].format   = ATTRIB_FORMAT_FLOAT3;
-	vbd.attrib[0].offset   = offsetof(CircleVertex, pos);
-	vbd.stride = sizeof(CircleVertex);
 	vbd.numVertices = vertices.GetNumVerts();
 	vbd.usage = BUFFER_USAGE_STATIC;
 	m_material->SetupVertexBufferDesc(vbd);
 	m_vertexBuffer.Reset(r->CreateVertexBuffer(vbd));
-	CircleVertex* vtxPtr = m_vertexBuffer->Map<CircleVertex>(Graphics::BUFFER_MAP_WRITE);
-	assert(m_vertexBuffer->GetDesc().stride == sizeof(CircleVertex));
-	for(Uint32 i=0 ; i<vertices.GetNumVerts() ; i++)
-	{
-		vtxPtr[i].pos	= vertices.position[i];
-	}
-	m_vertexBuffer->Unmap();
+	m_vertexBuffer->Populate(vertices);
 }
 //------------------------------------------------------------
 
@@ -82,27 +70,15 @@ void Disk::SetColor(const Color &c)
 
 void Disk::SetupVertexBuffer(const Graphics::VertexArray& vertices, Graphics::Renderer *r)
 {
-	struct DiskVertex {
-		vector3f pos;
-	};
-
 	//Create vtx & index buffers and copy data
 	VertexBufferDesc vbd;
 	vbd.attrib[0].semantic = ATTRIB_POSITION;
 	vbd.attrib[0].format   = ATTRIB_FORMAT_FLOAT3;
-	vbd.attrib[0].offset   = offsetof(DiskVertex, pos);
-	vbd.stride = sizeof(DiskVertex);
 	vbd.numVertices = vertices.GetNumVerts();
 	vbd.usage = BUFFER_USAGE_STATIC;
 	m_material->SetupVertexBufferDesc(vbd);
 	m_vertexBuffer.reset(r->CreateVertexBuffer(vbd));
-	DiskVertex* vtxPtr = m_vertexBuffer->Map<DiskVertex>(Graphics::BUFFER_MAP_WRITE);
-	assert(m_vertexBuffer->GetDesc().stride == sizeof(DiskVertex));
-	for(Uint32 i=0 ; i<vertices.GetNumVerts() ; i++)
-	{
-		vtxPtr[i].pos	= vertices.position[i];
-	}
-	m_vertexBuffer->Unmap();
+	m_vertexBuffer->Populate(vertices);
 }
 //------------------------------------------------------------
 
@@ -316,14 +292,6 @@ static const int icosahedron_faces[20][3] = {
 	{6,1,10}, {9,0,11}, {9,11,2}, {9,2,5}, {7,2,11}
 };
 
-#pragma pack(push, 4)
-struct Sphere3DVertex {
-	vector3f pos;
-	vector3f nrm;
-	vector2f uv;
-};
-#pragma pack(pop)
-
 Sphere3D::Sphere3D(Renderer *renderer, RefCountedPtr<Material> mat, Graphics::RenderState *state, int subdivs, float scale)
 {
 	m_material = mat;
@@ -361,27 +329,15 @@ Sphere3D::Sphere3D(Renderer *renderer, RefCountedPtr<Material> mat, Graphics::Re
 	VertexBufferDesc vbd;
 	vbd.attrib[0].semantic = ATTRIB_POSITION;
 	vbd.attrib[0].format   = ATTRIB_FORMAT_FLOAT3;
-	vbd.attrib[0].offset   = offsetof(Sphere3DVertex, pos);
 	vbd.attrib[1].semantic = ATTRIB_NORMAL;
 	vbd.attrib[1].format   = ATTRIB_FORMAT_FLOAT3;
-	vbd.attrib[1].offset   = offsetof(Sphere3DVertex, nrm);
 	vbd.attrib[2].semantic = ATTRIB_UV0;
 	vbd.attrib[2].format   = ATTRIB_FORMAT_FLOAT2;
-	vbd.attrib[2].offset   = offsetof(Sphere3DVertex, uv);
-	vbd.stride = sizeof(Sphere3DVertex);
 	vbd.numVertices = vts.GetNumVerts();
 	vbd.usage = BUFFER_USAGE_STATIC;
 	m_material->SetupVertexBufferDesc(vbd);
 	m_vertexBuffer.reset(renderer->CreateVertexBuffer(vbd));
-
-	auto vtxPtr = m_vertexBuffer->Map<Sphere3DVertex>(Graphics::BUFFER_MAP_WRITE);
-	for (Uint32 i = 0; i < vts.GetNumVerts(); i++) {
-		vtxPtr->pos = vts.position[i];
-		vtxPtr->nrm = vts.normal[i];
-		vtxPtr->uv = vts.uv0[i];
-		vtxPtr++;
-	}
-	m_vertexBuffer->Unmap();
+	m_vertexBuffer->Populate(vts);
 
 	m_indexBuffer.reset(renderer->CreateIndexBuffer(indices.size(), BUFFER_USAGE_STATIC));
 	Uint16 *idxPtr = m_indexBuffer->Map(Graphics::BUFFER_MAP_WRITE);
@@ -456,36 +412,18 @@ TexturedQuad::TexturedQuad(Graphics::Renderer *r, Graphics::Texture *texture, co
 	vertices.Add(vector3f(pos.x,        pos.y+size.y, 0.0f), vector2f(texPos.x,           texPos.y));
 	vertices.Add(vector3f(pos.x+size.x, pos.y,        0.0f), vector2f(texPos.x+texSize.x, texPos.y+texSize.y));
 	vertices.Add(vector3f(pos.x+size.x, pos.y+size.y, 0.0f), vector2f(texPos.x+texSize.x, texPos.y));
-	
-	#pragma pack(push, 4)
-	struct QuadVertex {
-		vector3f pos;
-		vector2f uv;
-	};
-	#pragma pack(pop)
 
 	//Create vtx & index buffers and copy data
 	VertexBufferDesc vbd;
 	vbd.attrib[0].semantic = ATTRIB_POSITION;
 	vbd.attrib[0].format   = ATTRIB_FORMAT_FLOAT3;
-	vbd.attrib[0].offset   = offsetof(QuadVertex, pos);
 	vbd.attrib[1].semantic = ATTRIB_UV0;
 	vbd.attrib[1].format   = ATTRIB_FORMAT_FLOAT2;
-	vbd.attrib[1].offset   = offsetof(QuadVertex, uv);
-	vbd.stride = sizeof(QuadVertex);
 	vbd.numVertices = vertices.GetNumVerts();
 	vbd.usage = BUFFER_USAGE_STATIC;
 	m_material->SetupVertexBufferDesc( vbd );
 	m_vertexBuffer.reset(r->CreateVertexBuffer(vbd));
-
-	QuadVertex* vtxPtr = m_vertexBuffer->Map<QuadVertex>(Graphics::BUFFER_MAP_WRITE);
-	assert(m_vertexBuffer->GetDesc().stride == sizeof(QuadVertex));
-	for(Uint32 i=0 ; i<vertices.GetNumVerts() ; i++)
-	{
-		vtxPtr[i].pos	= vertices.position[i];
-		vtxPtr[i].uv	= vertices.uv0[i];
-	}
-	m_vertexBuffer->Unmap();
+	m_vertexBuffer->Populate(vertices);
 }
 
 void TexturedQuad::Draw(Graphics::Renderer *r)
@@ -530,32 +468,17 @@ Axes3D::Axes3D(Graphics::Renderer *r, Graphics::RenderState *state)
 		vertices.Add( vtsXYZ[i], colors[i] );
 	}
 
-	struct AxesVertex {
-		vector3f pos;
-		Color col;
-	};
-
 	//Create vtx & index buffers and copy data
 	VertexBufferDesc vbd;
 	vbd.attrib[0].semantic = ATTRIB_POSITION;
 	vbd.attrib[0].format   = ATTRIB_FORMAT_FLOAT3;
-	vbd.attrib[0].offset   = offsetof(AxesVertex, pos);
 	vbd.attrib[1].semantic = ATTRIB_DIFFUSE;
 	vbd.attrib[1].format   = ATTRIB_FORMAT_UBYTE4;
-	vbd.attrib[1].offset   = offsetof(AxesVertex, col);
-	vbd.stride = sizeof(AxesVertex);
 	vbd.numVertices = vertices.GetNumVerts();
 	vbd.usage = BUFFER_USAGE_STATIC;
 	m_material->SetupVertexBufferDesc( vbd );
 	m_vertexBuffer.Reset(r->CreateVertexBuffer(vbd));
-	AxesVertex* vtxPtr = m_vertexBuffer->Map<AxesVertex>(Graphics::BUFFER_MAP_WRITE);
-	assert(m_vertexBuffer->GetDesc().stride == sizeof(AxesVertex));
-	for(Uint32 i=0 ; i<vertices.GetNumVerts() ; i++)
-	{
-		vtxPtr[i].pos	= vertices.position[i];
-		vtxPtr[i].col	= vertices.diffuse[i];
-	}
-	m_vertexBuffer->Unmap();
+	m_vertexBuffer->Populate(vertices);
 }
 
 void Axes3D::Draw(Graphics::Renderer *r)

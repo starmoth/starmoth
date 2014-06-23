@@ -158,13 +158,7 @@ namespace Theme {
 
 		// Upload data
 		Graphics::VertexBuffer *vb = Screen::GetRenderer()->CreateVertexBuffer(vbd);
-		PosVert* vtxPtr = vb->Map<PosVert>(Graphics::BUFFER_MAP_WRITE);
-		assert(vb->GetDesc().stride == sizeof(PosVert));
-		for(Uint32 i=0 ; i<va.GetNumVerts() ; i++)
-		{
-			vtxPtr[i].pos	= va.position[i];
-		}
-		vb->Unmap();
+		vb->Populate(va);
 
 		return vb;
 	}
@@ -214,13 +208,7 @@ namespace Theme {
 
 		// Upload data
 		Graphics::VertexBuffer *vb = Screen::GetRenderer()->CreateVertexBuffer(vbd);
-		PosVert* vtxPtr = vb->Map<PosVert>(Graphics::BUFFER_MAP_WRITE);
-		assert(vb->GetDesc().stride == sizeof(PosVert));
-		for(Uint32 i=0 ; i<vts.GetNumVerts() ; i++)
-		{
-			vtxPtr[i].pos	= vts.position[i];
-		}
-		vb->Unmap();
+		vb->Populate(vts);
 
 		return vb;
 	}
