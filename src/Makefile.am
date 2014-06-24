@@ -302,18 +302,81 @@ textstress_LDADD += \
 
 modelcompiler_SOURCES = \
 	modelcompiler.cpp \
-	IniConfig.cpp \
+	Background.cpp \
+	BaseSphere.cpp \
+	Body.cpp \
+	Camera.cpp \
+	CameraController.cpp \
+	Color.cpp \
+	CityOnPlanet.cpp \
+	CRC32.cpp \
+	DeathView.cpp \
+	DynamicBody.cpp \
+	EnumStrings.cpp \
+	FaceGenManager.cpp \
 	FileSourceZip.cpp \
 	FileSystem.cpp \
-	utils.cpp \
+	FontCache.cpp \
+	FormController.cpp \
+	Frame.cpp \
+	GalacticView.cpp \
+	Game.cpp \
+	GasGiant.cpp \
+	GeoPatch.cpp \
+	GeoPatchContext.cpp \
+	GeoPatchID.cpp \
+	GeoPatchJobs.cpp \
+	GeoSphere.cpp \
+	HudTrail.cpp \
+	HyperspaceCloud.cpp \
+	IniConfig.cpp \
+	Intro.cpp \
+	JobQueue.cpp \
 	GameConfig.cpp \
-	SDLWrappers.cpp \
-	StringF.cpp \
-	Color.cpp \
-	ModManager.cpp \
+	KeyBindings.cpp \
 	Lang.cpp \
+	MathUtil.cpp \
+	ModelBody.cpp \
+	ModelCache.cpp \
+	ModManager.cpp \
+	ModelViewer.cpp \
+	NavLights.cpp \
+	ObjectViewerView.cpp \
+	Orbit.cpp \
+	Pi.cpp \
+	Planet.cpp \
+	Player.cpp \
+	PngWriter.cpp \
+	PropertyMap.cpp \
+	SDLWrappers.cpp \
+	SectorView.cpp \
+	Sensors.cpp \
 	Serializer.cpp \
-	PngWriter.cpp
+	StringF.cpp \
+	Sfx.cpp \
+	Shields.cpp \
+	Ship-AI.cpp \
+	Ship.cpp \
+	ShipAICmd.cpp \
+	ShipCockpit.cpp \
+	ShipController.cpp \
+	ShipType.cpp \
+	Slice.cpp \
+	Space.cpp \
+	SpaceStation.cpp \
+	SpaceStationType.cpp \
+	SpeedLines.cpp \
+	Star.cpp \
+	SystemInfoView.cpp \
+	SystemView.cpp \
+	TerrainBody.cpp \
+	Tombstone.cpp \
+	UIView.cpp \
+	View.cpp \
+	WorldView.cpp \
+	perlin.cpp \
+	utils.cpp \
+	enum_table.cpp
 
 modelcompiler_LDADD = \
 	collider/libcollider.a \
