@@ -13,7 +13,7 @@ AM_CFLAGS += $(WARN_CFLAGS)
 AM_CPPFLAGS += $(WARN_CPPFLAGS)
 AM_CXXFLAGS += $(STD_CXXFLAGS) $(WARN_CXXFLAGS)
 
-bin_PROGRAMS = pioneer
+bin_PROGRAMS = pioneer modelcompiler
 noinst_HEADERS = \
 	Aabb.h \
 	AnimationCurves.h \
@@ -300,14 +300,52 @@ textstress_LDADD += \
 	$(FREETYPE_LIBS) $(GL_LIBS) \
 	$(SDL2_LIBS) $(SIGC_LIBS) $(PNG_LIBS)
 
+modelcompiler_SOURCES = \
+	modelcompiler.cpp \
+	IniConfig.cpp \
+	FileSourceZip.cpp \
+	FileSystem.cpp \
+	utils.cpp \
+	GameConfig.cpp \
+	SDLWrappers.cpp \
+	StringF.cpp \
+	Color.cpp \
+	ModManager.cpp \
+	Lang.cpp \
+	Serializer.cpp \
+	PngWriter.cpp
+
+modelcompiler_LDADD = \
+	collider/libcollider.a \
+	gui/libgui.a \
+	graphics/libgraphics.a \
+	galaxy/libgalaxy.a \
+	scenegraph/libscenegraph.a \
+	text/libtext.a \
+	terrain/libterrain.a \
+	ui/libui.a \
+	gameui/libgameui.a \
+	../contrib/PicoDDS/libpicodds.a \
+	../contrib/jenkins/libjenkins.a \
+	../contrib/json/libjson.a \
+	../contrib/glew/libglew.a \
+	../contrib/profiler/libprofiler.a
+
+modelcompiler_LDADD += \
+	$(FREETYPE_LIBS) $(GL_LIBS) \
+	$(SDL2_LIBS) $(SIGC_LIBS) $(VORBIS_LIBS) \
+	$(PNG_LIBS) $(ASSIMP_LIBS) $(EXTRA_LIBS)
+
 AM_CPPFLAGS += -isystem @top_srcdir@/contrib
 
 if BUILD_WIN32
     pioneer_LDADD += win32/libwin32.a $(MINGW_LIBS)
+	modelcompiler_LDADD += win32/libwin32.a $(MINGW_LIBS)
 endif
 
 if BUILD_POSIX
     pioneer_LDADD += posix/libposix.a
+	modelcompiler_LDADD += posix/libposix.a
 endif
 
 if HAVE_WINDRES
