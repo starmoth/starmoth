@@ -56,3 +56,4 @@ gmon.out
 .project
 .cproject
 .dirstamp
+*.sgm
