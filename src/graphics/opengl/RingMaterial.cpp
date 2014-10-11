@@ -6,7 +6,7 @@
 #include "graphics/Graphics.h"
 #include "graphics/Light.h"
 #include "glRenderer.h"
-#include "graphics/gl/glTexture.h"
+#include "graphics/opengl/glTexture.h"
 
 namespace Graphics {
 namespace PiGL {

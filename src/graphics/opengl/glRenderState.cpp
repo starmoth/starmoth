@@ -1,7 +1,7 @@
 // Copyright © 2008-2014 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
-#include "graphics/gl/glRenderState.h"
+#include "graphics/opengl/glRenderState.h"
 
 namespace Graphics
 {

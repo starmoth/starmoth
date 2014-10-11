@@ -4,7 +4,7 @@
 #include "MultiMaterial.h"
 //#include "graphics/Light.h"
 #include "graphics/Material.h"
-#include "graphics/gl/glTexture.h"
+#include "graphics/opengl/glTexture.h"
 #include "graphics/Graphics.h"
 #include "glRenderer.h"
 #include <sstream>

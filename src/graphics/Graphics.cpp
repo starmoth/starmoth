@@ -4,7 +4,7 @@
 #include "Graphics.h"
 #include "FileSystem.h"
 #include "Material.h"
-#include "gl/glRenderer.h"
+#include "opengl/glRenderer.h"
 #include "OS.h"
 
 namespace Graphics {

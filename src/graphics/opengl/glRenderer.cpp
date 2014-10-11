@@ -8,8 +8,8 @@
 #include "OS.h"
 #include "StringF.h"
 #include "graphics/Texture.h"
-#include "graphics/gl/glTexture.h"
-#include "graphics/gl/glMaterial.h"
+#include "graphics/opengl/glTexture.h"
+#include "graphics/opengl/glMaterial.h"
 #include "graphics/VertexArray.h"
 #include "graphics/GLDebug.h"
 #include "GasGiantMaterial.h"
@@ -125,10 +125,10 @@ RendererGL::RendererGL(WindowSDL *window, const Graphics::Settings &vs)
 
 RendererGL::~RendererGL()
 {
-	while (!m_programs.empty()) {
+	/*while (!m_programs.empty()) {
 		delete m_programs.back().second;
 		m_programs.pop_back();
-	}
+	}*/
 
 	for (auto state : m_renderStates)
 		delete state.second;

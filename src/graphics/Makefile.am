@@ -23,25 +23,25 @@ noinst_HEADERS = \
 	Drawables.h \
 	Types.h \
 	VertexBuffer.h \
-	gl/glRenderer.h \
-	gl/glTexture.h \
-	gl/glMaterial.h \
-	gl/glRenderState.h \
-	gl/glRenderTarget.h \
-	gl/glVertexBuffer.h \
-	gl/FresnelColourMaterial.h \
-	gl/GasGiantMaterial.h \
-	gl/GeoSphereMaterial.h \
-	gl/MultiMaterial.h \
-	gl/Program.h \
-	gl/RingMaterial.h \
-	gl/ShieldMaterial.h \
-	gl/StarfieldMaterial.h \
-	gl/SkyboxMaterial.h \
-	gl/UIMaterial.h \
-	gl/VtxColorMaterial.h \
-	gl/Attribute.h \
-	gl/Uniform.h
+	opengl/glRenderer.h \
+	opengl/glTexture.h \
+	opengl/glMaterial.h \
+	opengl/glRenderState.h \
+	opengl/glRenderTarget.h \
+	opengl/glVertexBuffer.h \
+	opengl/FresnelColourMaterial.h \
+	opengl/GasGiantMaterial.h \
+	opengl/GeoSphereMaterial.h \
+	opengl/MultiMaterial.h \
+	opengl/Program.h \
+	opengl/RingMaterial.h \
+	opengl/ShieldMaterial.h \
+	opengl/StarfieldMaterial.h \
+	opengl/SkyboxMaterial.h \
+	opengl/UIMaterial.h \
+	opengl/VtxColorMaterial.h \
+	opengl/Attribute.h \
+	opengl/Uniform.h
 
 libgraphics_a_SOURCES = \
 	Graphics.cpp \
@@ -54,20 +54,20 @@ libgraphics_a_SOURCES = \
 	TextureBuilder.cpp \
 	Drawables.cpp \
 	VertexBuffer.cpp \
-	gl/glRenderer.cpp \
-	gl/glTexture.cpp \
-	gl/glMaterial.cpp \
-	gl/glRenderState.cpp \
-	gl/glRenderTarget.cpp \
-	gl/glVertexBuffer.cpp \
-	gl/FresnelColourMaterial.cpp \
-	gl/GasGiantMaterial.cpp \
-	gl/GeoSphereMaterial.cpp \
-	gl/MultiMaterial.cpp \
-	gl/Program.cpp \
-	gl/ShieldMaterial.cpp \
-	gl/RingMaterial.cpp \
-	gl/UIMaterial.cpp \
-	gl/VtxColorMaterial.cpp \
-	gl/Attribute.cpp \
-	gl/Uniform.cpp
+	opengl/glRenderer.cpp \
+	opengl/glTexture.cpp \
+	opengl/glMaterial.cpp \
+	opengl/glRenderState.cpp \
+	opengl/glRenderTarget.cpp \
+	opengl/glVertexBuffer.cpp \
+	opengl/FresnelColourMaterial.cpp \
+	opengl/GasGiantMaterial.cpp \
+	opengl/GeoSphereMaterial.cpp \
+	opengl/MultiMaterial.cpp \
+	opengl/Program.cpp \
+	opengl/ShieldMaterial.cpp \
+	opengl/RingMaterial.cpp \
+	opengl/UIMaterial.cpp \
+	opengl/VtxColorMaterial.cpp \
+	opengl/Attribute.cpp \
+	opengl/Uniform.cpp
